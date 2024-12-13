@@ -3,19 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebSQL with External SQL Script</title>
+    <title>WebSQL with Progress Bar</title>
+    <style>
+        #progressContainer {
+            width: 100%;
+            background-color: #f3f3f3;
+            border: 1px solid #ccc;
+        }
+
+        #progressBar {
+            width: 0%;
+            height: 30px;
+            background-color: #4caf50;
+            text-align: center;
+            line-height: 30px;
+            color: white;
+        }
+    </style>
 </head>
 <body>
-    <h1>WebSQL Example with External SQL Script</h1>
+    <h1>WebSQL Example with Progress Bar</h1>
     <button onclick="initializeDatabase()">Initialize Database</button>
     <button onclick="getData()">Get Data</button>
     <div id="output"></div>
+    <div id="progressContainer">
+        <div id="progressBar">0%</div>
+    </div>
     <script>
         const dbName = 'myDatabase';
         const dbVersion = '1.0';
         const dbDescription = 'Test DB';
         const dbSize = 2 * 1024 * 1024;
-        const sqlFileUrl = 'https://github.com/TimmyHymn/Thymn/Thymn.sql'; // 替換為您的 SQL 檔案 URL
+        const sqlFileUrl = 'https://https://github.com/TimmyHymn/Thymn/THYMN.SQL'; // 替換為您的 SQL 檔案 URL
 
         function initializeDatabase() {
             fetch(sqlFileUrl)
@@ -24,9 +43,19 @@
                     const db = openDatabase(dbName, dbVersion, dbDescription, dbSize);
                     db.transaction((tx) => {
                         const sqlStatements = sqlScript.split(';').filter(statement => statement.trim() !== '');
-                        sqlStatements.forEach((statement) => {
+                        const totalStatements = sqlStatements.length;
+                        let executedStatements = 0;
+
+                        sqlStatements.forEach((statement, index) => {
                             tx.executeSql(statement, [], () => {
-                                console.log('SQL statement executed:', statement);
+                                executedStatements++;
+                                const progress = Math.floor((executedStatements / totalStatements) * 100);
+                                document.getElementById('progressBar').style.width = progress + '%';
+                                document.getElementById('progressBar').innerText = progress + '%';
+
+                                if (executedStatements === totalStatements) {
+                                    alert('Database initialization complete!');
+                                }
                             }, (tx, error) => {
                                 console.log('Error executing SQL statement:', statement, error);
                             });
