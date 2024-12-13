@@ -33,12 +33,7 @@
             }, 500);
 
             fetch(sqlFileUrl, { mode: 'cors' })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.text();
-                })
+                .then(response => response.text())
                 .then(sqlScript => {
                     const db = openDatabase(dbName, dbVersion, dbDescription, dbSize);
                     const sqlStatements = sqlScript.split(/;\s*$/m).filter(statement => statement.trim() !== '');
@@ -67,8 +62,6 @@
                                             tx.executeSql(statement, [], () => {
                                                 executedStatements++;
                                                 executeNextStatement();
-                                            }, (tx, error) => {
-                                                console.error('Error executing SQL statement:', statement, error);
                                             });
                                         });
                                     }
@@ -79,15 +72,8 @@
                             }
 
                             executeNextStatement();
-                        }, (tx, error) => {
-                            console.error('Error dropping existing table:', error);
                         });
                     });
-                })
-                .catch(error => {
-                    clearInterval(intervalId);
-                    console.error('Error fetching SQL file:', error);
-                    document.getElementById('status').innerText = '錯誤：無法讀取 SQL 檔案';
                 });
         }
 
