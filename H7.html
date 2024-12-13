@@ -18,18 +18,10 @@
         const dbSize = 2 * 1024 * 1024;
         const sqlFileUrl = 'https://timmyhymn.github.io/Thymn/Thymn.sql';
 
-        let intervalId;
-
         function initializeDatabase() {
-            let dots = 0;
             let executedStatements = 0;
             let totalStatements = 0;
-            intervalId = setInterval(() => {
-                dots = (dots + 1) % 4;
-                const dotsText = '.'.repeat(dots);
-                const progress = Math.floor((executedStatements / totalStatements) * 100) || 0;
-                document.getElementById('status').innerText = `建立中，請稍後${dotsText} 完成度 ${progress}%`;
-            }, 500);
+            document.getElementById('status').innerText = '建立中，請稍後';
 
             fetch(sqlFileUrl)
                 .then(response => {
@@ -49,7 +41,12 @@
                         if (executedStatements < totalStatements) {
                             let statement = sqlStatements[executedStatements];
                             if (statement.includes('BEGIN TRANSACTION') || statement.includes('COMMIT')) {
-                                // 忽略不被支援的 SQL 語句
+                                // 忽略不被支援的 SQL 語句並停止在 COMMIT
+                                if (statement.includes('COMMIT')) {
+                                    clearInterval(intervalId);
+                                    document.getElementById('status').innerText = '建立完成！';
+                                    return;
+                                }
                                 executedStatements++;
                                 executeNextStatement();
                             } else {
@@ -57,6 +54,8 @@
                                 db.transaction(tx => {
                                     tx.executeSql(statement, [], () => {
                                         executedStatements++;
+                                        const progress = Math.floor((executedStatements / totalStatements) * 100);
+                                        document.getElementById('status').innerText = `建立中，請稍後...完成度 ${progress}%`;
                                         executeNextStatement();
                                     }, (tx, error) => {
                                         console.error('Error executing SQL statement:', statement, error);
