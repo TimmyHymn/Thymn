@@ -2,90 +2,17 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebSQL Initialization</title>
-    <script src="https://timmyhymn.github.io/Thymn/websql_init.js"></script>
-</head>
-<body>
-    <h1>WebSQL Example</h1>
-    <button onclick="initializeDatabase()">Initialize Database</button>
-    <button onclick="getData()">Get Data</button>
-    <button onclick="deleteData()">Delete Data</button>
-    <button onclick="checkDatabase()">Check Database</button>
-    <div id="output"></div>
-    <div id="status"></div>
-    <script>
-        function checkDatabaseExists(callback) {
-            var db = openDatabase('myDatabase', '1.0', 'Test DB', 2 * 1024 * 1024);
-            db.transaction(function(tx) {
-                tx.executeSql('SELECT name FROM sqlite_master WHERE type="table" AND name="hymn";', [], function(tx, results) {
-                    callback(results.rows.length > 0);
-                });
-            });
-        }
-
-        function checkDatabase() {
-            checkDatabaseExists(function(exists) {
-                if (exists) {
-                    alert('Database already exists.');
-                } else {
-                    alert('Database does not exist.');
-                }
-            });
-        }
-
+    <title>Initialize Database</title>
+    <script type="text/javascript" src="https://timmyhymn.github.io/websql_init.js"></script>
+    <script type="text/javascript">
         function initializeDatabase() {
-            checkDatabaseExists(function(exists) {
-                if (exists) {
-                    if (confirm('Database already exists. Do you want to overwrite it?')) {
-                        initializeDatabaseProcess();
-                    } else {
-                        alert('Initialization canceled.');
-                    }
-                } else {
-                    initializeDatabaseProcess();
-                }
-            });
-        }
-
-        function initializeDatabaseProcess() {
-            var db = openDatabase('myDatabase', '1.0', 'Test DB', 2 * 1024 * 1024);
-            db.transaction(function(tx) {
-                tx.executeSql('DROP TABLE IF EXISTS hymn', [], function() {
-                    for (var i = 0; i < sqlStatements.length; i++) {
-                        tx.executeSql(sqlStatements[i]);
-                    }
-                    alert('Database initialized successfully!');
-                });
-            });
-        }
-
-        function getData() {
-            var db = openDatabase('myDatabase', '1.0', 'Test DB', 2 * 1024 * 1024);
-            db.transaction(function(tx) {
-                tx.executeSql('SELECT * FROM hymn', [], function(tx, results) {
-                    var len = results.rows.length, i;
-                    var output = '<ul>';
-                    for (i = 0; i < len; i++) {
-                        output += '<li>Title: ' + results.rows.item(i).title + ', Body: ' + results.rows.item(i).body + '</li>';
-                    }
-                    output += '</ul>';
-                    document.getElementById('output').innerHTML = output;
-                });
-            });
-        }
-
-        function deleteData() {
-            var db = openDatabase('myDatabase', '1.0', 'Test DB', 2 * 1024 * 1024);
-            db.transaction(function(tx) {
-                tx.executeSql('DELETE FROM hymn', [], function(tx, results) {
-                    alert('All data deleted successfully!');
-                }, function(tx, error) {
-                    console.error('Error deleting data:', error);
-                    alert('Error deleting data.');
-                });
-            });
+            // 這裡假設你已經在websql_init.js中定義了需要的所有操作
+            console.log("Database initialized.");
         }
     </script>
+</head>
+<body>
+    <button onclick="initializeDatabase()">Initialize Database</button>
 </body>
 </html>
+在這個範例中：
