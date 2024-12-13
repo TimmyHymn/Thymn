@@ -19,20 +19,23 @@
         const sqlFileUrl = 'https://timmyhymn.github.io/Thymn/Thymn.sql';
 
         function initializeDatabase() {
-            document.getElementById('status').innerText = '建立中，請稍後...';
+            document.getElementById('status').innerText = '建立中，請稍後...完成度 0%';
             fetch(sqlFileUrl)
                 .then(response => response.text())
                 .then(sqlScript => {
                     const db = openDatabase(dbName, dbVersion, dbDescription, dbSize);
                     const sqlStatements = sqlScript.split(/;\s*$/m).filter(statement => statement.trim() !== '');
+                    const totalStatements = sqlStatements.length;
                     let executedStatements = 0;
 
                     function executeNextStatement() {
-                        if (executedStatements < sqlStatements.length) {
+                        if (executedStatements < totalStatements) {
                             const statement = sqlStatements[executedStatements];
                             db.transaction(tx => {
                                 tx.executeSql(statement, [], () => {
                                     executedStatements++;
+                                    const progress = Math.floor((executedStatements / totalStatements) * 100);
+                                    document.getElementById('status').innerText = `建立中，請稍後...完成度 ${progress}%`;
                                     executeNextStatement();
                                 }, (tx, error) => {
                                     console.error('Error executing SQL statement:', statement, error);
