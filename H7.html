@@ -24,12 +24,13 @@
             let dots = 0;
             let executedStatements = 0;
             let totalStatements = 0;
-            document.getElementById('status').innerText = '建立中，請稍後';
+            document.getElementById('status').innerText = '建立中，請稍後...0%';
 
             intervalId = setInterval(() => {
                 dots = (dots + 1) % 4;
                 const dotsText = '.'.repeat(dots);
-                document.getElementById('status').innerText = `建立中，請稍後${dotsText}`;
+                const progress = Math.floor((executedStatements / totalStatements) * 100) || 0;
+                document.getElementById('status').innerText = `建立中，請稍後${dotsText} 完成度 ${progress}%`;
             }, 500);
 
             fetch(sqlFileUrl)
