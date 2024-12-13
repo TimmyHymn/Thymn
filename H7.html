@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IndexedDB Demo</title>
+</head>
+<body>
+    <h1>IndexedDB Example</h1>
+    <button onclick="addData()">Add Data</button>
+    <button onclick="getData()">Get Data</button>
+    <script>
+        let db;
+        const request = indexedDB.open('myDatabase', 1);
+
+        request.onerror = function(event) {
+            console.log('Database error:', event.target.errorCode);
+        };
+
+        request.onsuccess = function(event) {
+            db = event.target.result;
+            console.log('Database opened successfully');
+        };
+
+        request.onupgradeneeded = function(event) {
+            db = event.target.result;
+            const objectStore = db.createObjectStore('myStore', { keyPath: 'id' });
+            objectStore.transaction.oncomplete = function(event) {
+                console.log('Object store created successfully');
+            };
+        };
+
+        function addData() {
+            const transaction = db.transaction(['myStore'], 'readwrite');
+            const objectStore = transaction.objectStore('myStore');
+            const data = { id: '1', name: 'Sample Data' };
+            const request = objectStore.add(data);
+            request.onsuccess = function(event) {
+                console.log('Data added successfully');
+            };
+        }
+
+        function getData() {
+            const transaction = db.transaction(['myStore'], 'readonly');
+            const objectStore = transaction.objectStore('myStore');
+            const request = objectStore.get('1');
+            request.onsuccess = function(event) {
+                if (request.result) {
+                    console.log('Data retrieved:', request.result);
+                } else {
+                    console.log('No data found');
+                }
+            };
+        }
+    </script>
+</body>
+</html>
