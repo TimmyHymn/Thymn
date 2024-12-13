@@ -25,6 +25,7 @@
                     if (!response.ok) {
                         throw new Error('Network response was not ok');
                     }
+                    console.log('SQL file fetched successfully');
                     return response.text();
                 })
                 .then(sqlScript => {
