@@ -28,13 +28,17 @@
                     const totalStatements = sqlStatements.length;
                     let executedStatements = 0;
 
+                    console.log('Total SQL statements:', totalStatements);
+
                     function executeNextStatement() {
                         if (executedStatements < totalStatements) {
                             const statement = sqlStatements[executedStatements];
+                            console.log('Executing statement:', statement);
                             db.transaction(tx => {
                                 tx.executeSql(statement, [], () => {
                                     executedStatements++;
                                     const progress = Math.floor((executedStatements / totalStatements) * 100);
+                                    console.log('Progress:', progress);
                                     document.getElementById('status').innerText = `建立中，請稍後...完成度 ${progress}%`;
                                     executeNextStatement();
                                 }, (tx, error) => {
