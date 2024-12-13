@@ -41,7 +41,7 @@
                 .then(response => response.text())
                 .then(sqlScript => {
                     const db = openDatabase(dbName, dbVersion, dbDescription, dbSize);
-                    const sqlStatements = sqlScript.split(';').filter(statement => statement.trim() !== '');
+                    const sqlStatements = sqlScript.split(/;\s*$/m).filter(statement => statement.trim() !== '');
                     const totalStatements = sqlStatements.length;
                     let executedStatements = 0;
 
