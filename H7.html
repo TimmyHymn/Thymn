@@ -22,10 +22,13 @@
 
         function initializeDatabase() {
             let dots = 0;
+            let executedStatements = 0;
+            let totalStatements = 0;
             intervalId = setInterval(() => {
                 dots = (dots + 1) % 4;
                 const dotsText = '.'.repeat(dots);
-                document.getElementById('status').innerText = `建立中，請稍後${dotsText}`;
+                const progress = Math.floor((executedStatements / totalStatements) * 100) || 0;
+                document.getElementById('status').innerText = `建立中，請稍後${dotsText} 完成度 ${progress}%`;
             }, 500);
 
             fetch(sqlFileUrl)
@@ -38,22 +41,28 @@
                 .then(sqlScript => {
                     const db = openDatabase(dbName, dbVersion, dbDescription, dbSize);
                     const sqlStatements = sqlScript.split(/;\s*$/m).filter(statement => statement.trim() !== '');
-                    let executedStatements = 0;
+                    totalStatements = sqlStatements.length;
 
-                    console.log('Total SQL statements:', sqlStatements.length);
+                    console.log('Total SQL statements:', totalStatements);
 
                     function executeNextStatement() {
-                        if (executedStatements < sqlStatements.length) {
-                            const statement = sqlStatements[executedStatements];
-                            console.log('Executing statement:', statement);
-                            db.transaction(tx => {
-                                tx.executeSql(statement, [], () => {
-                                    executedStatements++;
-                                    executeNextStatement();
-                                }, (tx, error) => {
-                                    console.error('Error executing SQL statement:', statement, error);
+                        if (executedStatements < totalStatements) {
+                            let statement = sqlStatements[executedStatements];
+                            if (statement.includes('BEGIN TRANSACTION') || statement.includes('COMMIT')) {
+                                // 忽略不被支援的 SQL 語句
+                                executedStatements++;
+                                executeNextStatement();
+                            } else {
+                                console.log('Executing statement:', statement);
+                                db.transaction(tx => {
+                                    tx.executeSql(statement, [], () => {
+                                        executedStatements++;
+                                        executeNextStatement();
+                                    }, (tx, error) => {
+                                        console.error('Error executing SQL statement:', statement, error);
+                                    });
                                 });
-                            });
+                            }
                         } else {
                             clearInterval(intervalId);
                             document.getElementById('status').innerText = '建立完成！';
