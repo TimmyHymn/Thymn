@@ -65,8 +65,10 @@
             request.onsuccess = function(event) {
                 if (request.result) {
                     console.log('Data retrieved:', request.result);
+                    alert(`Data retrieved: ${JSON.stringify(request.result)}`);
                 } else {
                     console.log('No data found');
+                    alert('No data found');
                 }
             };
 
