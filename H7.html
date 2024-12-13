@@ -11,24 +11,26 @@
     <button onclick="getData()">Get Data</button>
     <script>
         let db;
-        const request = indexedDB.open('myDatabase', 1);
+        document.addEventListener('DOMContentLoaded', () => {
+            const request = indexedDB.open('myDatabase', 1);
 
-        request.onerror = function(event) {
-            console.log('Database error:', event.target.errorCode);
-        };
-
-        request.onsuccess = function(event) {
-            db = event.target.result;
-            console.log('Database opened successfully');
-        };
-
-        request.onupgradeneeded = function(event) {
-            db = event.target.result;
-            const objectStore = db.createObjectStore('myStore', { keyPath: 'id' });
-            objectStore.transaction.oncomplete = function(event) {
-                console.log('Object store created successfully');
+            request.onerror = function(event) {
+                console.log('Database error:', event.target.errorCode);
             };
-        };
+
+            request.onsuccess = function(event) {
+                db = event.target.result;
+                console.log('Database opened successfully');
+            };
+
+            request.onupgradeneeded = function(event) {
+                db = event.target.result;
+                if (!db.objectStoreNames.contains('myStore')) {
+                    const objectStore = db.createObjectStore('myStore', { keyPath: 'id' });
+                    console.log('Object store created successfully');
+                }
+            };
+        });
 
         function addData() {
             const transaction = db.transaction(['myStore'], 'readwrite');
