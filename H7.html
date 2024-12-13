@@ -3,36 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebSQL Demo</title>
+    <title>WebSQL Version Check Demo</title>
 </head>
 <body>
-    <h1>WebSQL Example</h1>
-    <button onclick="addData()">Add Data</button>
-    <button onclick="getData()">Get Data</button>
+    <h1>WebSQL Version Check Example</h1>
+    <button onclick="checkDatabase()">Check Database</button>
+    <button id="smallApp" style="display:none;" onclick="runSmallApp()">Run Small App</button>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            if (!window.openDatabase) {
-                alert('WebSQL is not supported by your browser.');
-                return;
-            }
+        const dbName = 'myDatabase';
+        const dbVersion = '1.0';
+        const dbDescription = 'Test DB';
+        const dbSize = 2 * 1024 * 1024;
 
-            const db = openDatabase('myDatabase', '1.0', 'Test DB', 2 * 1024 * 1024);
-            db.transaction(tx => {
-                tx.executeSql('CREATE TABLE IF NOT EXISTS Users (user_id UNIQUE, name)');
+        function checkDatabase() {
+            const db = openDatabase(dbName, dbVersion, dbDescription, dbSize, (db) => {
+                console.log('Database does not exist, creating...');
+                initializeDatabase(db);
             });
-        });
 
-        function addData() {
-            const db = openDatabase('myDatabase', '1.0', 'Test DB', 2 * 1024 * 1024);
-            db.transaction(tx => {
-                tx.executeSql('INSERT INTO Users (user_id, name) VALUES (?, ?)', [1, 'Sample User']);
+            db.transaction((tx) => {
+                tx.executeSql('SELECT name FROM sqlite_master WHERE type="table" AND name="Users";', [], (tx, results) => {
+                    if (results.rows.length === 0) {
+                        console.log('Table does not exist, creating large database...');
+                        initializeDatabase(db);
+                    } else {
+                        console.log('Table exists, running small app...');
+                        document.getElementById('smallApp').style.display = 'block';
+                    }
+                });
             });
         }
 
-        function getData() {
-            const db = openDatabase('myDatabase', '1.0', 'Test DB', 2 * 1024 * 1024);
-            db.transaction(tx => {
-                tx.executeSql('SELECT * FROM Users', [], (tx, results) => {
+        function initializeDatabase(db) {
+            db.transaction((tx) => {
+                tx.executeSql('CREATE TABLE IF NOT EXISTS Users (user_id UNIQUE, name)', [], (tx, result) => {
+                    console.log('Table created');
+                    populateLargeDatabase(tx);
+                });
+            });
+        }
+
+        function populateLargeDatabase(tx) {
+            for (let i = 1; i <= 1000; i++) {
+                tx.executeSql('INSERT INTO Users (user_id, name) VALUES (?, ?)', [i, 'User ' + i]);
+            }
+            console.log('Large database populated');
+        }
+
+        function runSmallApp() {
+            alert('Running small app...');
+            const db = openDatabase(dbName, dbVersion, dbDescription, dbSize);
+            db.transaction((tx) => {
+                tx.executeSql('SELECT * FROM Users LIMIT 10', [], (tx, results) => {
                     const len = results.rows.length;
                     for (let i = 0; i < len; i++) {
                         const row = results.rows.item(i);
