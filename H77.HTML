@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>詩歌選擇系統</title>
     <style>
         body {
@@ -56,7 +56,7 @@
     <div class="container">
         <table>
             <tr>
-                <td width="25%"><input type="text" class="display" id="songbookName" value="" readonly></td>
+                <td width="25%"><input type="text" class="display" id="songbookName" value="請選擇歌本" readonly></td>
                 <td width="25%"><input type="text" class="display" id="songNumber" readonly></td>
                 <td width="25%"><button class="blue-button" onclick="removeLastDigit()">←</button></td>
                 <td width="25%"></td>
@@ -95,6 +95,16 @@
     </div>
 
     <script>
+        // 禁用雙擊縮放功能
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', (event) => {
+            const now = new Date().getTime();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+
         function selectSongbook(songbook) {
             document.getElementById('songbookName').value = songbook;
         }
@@ -105,7 +115,7 @@
         }
 
         function clearAll() {
-            document.getElementById('songbookName').value = '';
+            document.getElementById('songbookName').value = '請選擇歌本';
             document.getElementById('songNumber').value = '';
         }
 
