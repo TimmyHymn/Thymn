@@ -38,7 +38,12 @@
 
         function initializeDatabase() {
             fetch(sqlFileUrl)
-                .then(response => response.text())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok ' + response.statusText);
+                    }
+                    return response.text();
+                })
                 .then(sqlScript => {
                     const db = openDatabase(dbName, dbVersion, dbDescription, dbSize);
                     db.transaction((tx) => {
@@ -57,7 +62,7 @@
                                     alert('Database initialization complete!');
                                 }
                             }, (tx, error) => {
-                                console.log('Error executing SQL statement:', statement, error);
+                                console.error('Error executing SQL statement:', statement, error);
                             });
                         });
                     });
