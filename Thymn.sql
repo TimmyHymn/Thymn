@@ -1,4 +1,3 @@
-sql
 CREATE TABLE hymn (
     _id INTEGER PRIMARY KEY AUTOINCREMENT,
     book_id INT NOT NULL,
