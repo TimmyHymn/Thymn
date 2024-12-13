@@ -50,13 +50,16 @@
         input[readonly] {
             text-align: center;
         }
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <table>
             <tr>
-                <td width="25%"><input type="text" class="display" id="songbookName" value="請選擇歌本" readonly></td>
+                <td width="25%"><input type="text" class="display hidden" id="songbookName" value="" readonly></td>
                 <td width="25%"><input type="text" class="display" id="songNumber" readonly></td>
                 <td width="25%"><button class="blue-button" onclick="removeLastDigit()">←</button></td>
                 <td width="25%"></td>
@@ -115,14 +118,14 @@
         }
 
         function clearAll() {
-            document.getElementById('songbookName').value = '請選擇歌本';
+            document.getElementById('songbookName').value = '';
             document.getElementById('songNumber').value = '';
         }
 
         function confirmSelection() {
             let songbook = document.getElementById('songbookName').value;
             let songNumber = document.getElementById('songNumber').value;
-            if (songbook !== '請選擇歌本' && songNumber !== '') {
+            if (songbook !== '' && songNumber !== '') {
                 alert('歌本: ' + songbook + '\n歌號: ' + songNumber + ' 已確認!');
             } else {
                 alert('請先選擇歌本並輸入歌號');
