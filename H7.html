@@ -21,7 +21,12 @@
         function initializeDatabase() {
             document.getElementById('status').innerText = '建立中，請稍後...完成度 0%';
             fetch(sqlFileUrl)
-                .then(response => response.text())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.text();
+                })
                 .then(sqlScript => {
                     const db = openDatabase(dbName, dbVersion, dbDescription, dbSize);
                     const sqlStatements = sqlScript.split(/;\s*$/m).filter(statement => statement.trim() !== '');
