@@ -15,7 +15,7 @@
             const request = indexedDB.open('myDatabase', 1);
 
             request.onerror = function(event) {
-                console.log('Database error:', event.target.errorCode);
+                console.error('Database error:', event.target.errorCode);
             };
 
             request.onsuccess = function(event) {
@@ -33,25 +33,45 @@
         });
 
         function addData() {
+            if (!db) {
+                console.error('Database is not initialized');
+                return;
+            }
+
             const transaction = db.transaction(['myStore'], 'readwrite');
             const objectStore = transaction.objectStore('myStore');
             const data = { id: '1', name: 'Sample Data' };
             const request = objectStore.add(data);
+
             request.onsuccess = function(event) {
                 console.log('Data added successfully');
+            };
+
+            request.onerror = function(event) {
+                console.error('Error adding data:', event.target.errorCode);
             };
         }
 
         function getData() {
+            if (!db) {
+                console.error('Database is not initialized');
+                return;
+            }
+
             const transaction = db.transaction(['myStore'], 'readonly');
             const objectStore = transaction.objectStore('myStore');
             const request = objectStore.get('1');
+
             request.onsuccess = function(event) {
                 if (request.result) {
                     console.log('Data retrieved:', request.result);
                 } else {
                     console.log('No data found');
                 }
+            };
+
+            request.onerror = function(event) {
+                console.error('Error retrieving data:', event.target.errorCode);
             };
         }
     </script>
