@@ -18,8 +18,16 @@
         const dbSize = 2 * 1024 * 1024;
         const sqlFileUrl = 'https://timmyhymn.github.io/Thymn/Thymn.sql';
 
+        let intervalId;
+
         function initializeDatabase() {
-            document.getElementById('status').innerText = '建立中，請稍後...完成度 0%';
+            let dots = 0;
+            intervalId = setInterval(() => {
+                dots = (dots + 1) % 4;
+                const dotsText = '.'.repeat(dots);
+                document.getElementById('status').innerText = `建立中，請稍後${dotsText}`;
+            }, 500);
+
             fetch(sqlFileUrl)
                 .then(response => {
                     if (!response.ok) {
@@ -30,27 +38,24 @@
                 .then(sqlScript => {
                     const db = openDatabase(dbName, dbVersion, dbDescription, dbSize);
                     const sqlStatements = sqlScript.split(/;\s*$/m).filter(statement => statement.trim() !== '');
-                    const totalStatements = sqlStatements.length;
                     let executedStatements = 0;
 
-                    console.log('Total SQL statements:', totalStatements);
+                    console.log('Total SQL statements:', sqlStatements.length);
 
                     function executeNextStatement() {
-                        if (executedStatements < totalStatements) {
+                        if (executedStatements < sqlStatements.length) {
                             const statement = sqlStatements[executedStatements];
                             console.log('Executing statement:', statement);
                             db.transaction(tx => {
                                 tx.executeSql(statement, [], () => {
                                     executedStatements++;
-                                    const progress = Math.floor((executedStatements / totalStatements) * 100);
-                                    console.log('Progress:', progress);
-                                    document.getElementById('status').innerText = `建立中，請稍後...完成度 ${progress}%`;
                                     executeNextStatement();
                                 }, (tx, error) => {
                                     console.error('Error executing SQL statement:', statement, error);
                                 });
                             });
                         } else {
+                            clearInterval(intervalId);
                             document.getElementById('status').innerText = '建立完成！';
                         }
                     }
@@ -58,6 +63,7 @@
                     executeNextStatement();
                 })
                 .catch(error => {
+                    clearInterval(intervalId);
                     console.error('Error fetching SQL file:', error);
                     document.getElementById('status').innerText = '錯誤：無法讀取 SQL 檔案';
                 });
