@@ -1,14 +1,6 @@
-CREATE TABLE hymn (
-    _id INTEGER PRIMARY KEY AUTOINCREMENT,
-    book_id INT NOT NULL,
-    number INT NOT NULL,
-    title TEXT,
-    body TEXT,
-    tag_id INT
-);
-
-INSERT INTO hymn (book_id, number, title, body, tag_id) VALUES 
-(1,1,1,'頌讚三一神－祂的計畫','頌讚三一神－祂的計畫
+BEGIN TRANSACTION;
+CREATE TABLE hymn (`_id` integer PRIMARY KEY autoincrement,`book_id` int NOT NULL,`number` int NOT NULL,`title` text,`body` text,`tag_id`int );
+INSERT INTO `hymn` VALUES (1,1,1,'頌讚三一神－祂的計畫','頌讚三一神－祂的計畫
 8583（英1）
 降  A大調4/4
 
