@@ -11,6 +11,7 @@
     <button onclick="initializeDatabase()">Initialize Database</button>
     <button onclick="getData()">Get Data</button>
     <button onclick="deleteData()">Delete Data</button>
+    <button onclick="checkDatabase()">Check Database</button>
     <div id="output"></div>
     <div id="status"></div>
     <script>
@@ -20,6 +21,16 @@
                 tx.executeSql('SELECT name FROM sqlite_master WHERE type="table" AND name="hymn";', [], function(tx, results) {
                     callback(results.rows.length > 0);
                 });
+            });
+        }
+
+        function checkDatabase() {
+            checkDatabaseExists(function(exists) {
+                if (exists) {
+                    alert('Database already exists.');
+                } else {
+                    alert('Database does not exist.');
+                }
             });
         }
 
