@@ -2,16 +2,44 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Initialize Database</title>
-    <script type="text/javascript" src="https://timmyhymn.github.io/Thymn/websql_init.js"></script>
+    <title>Initialize and Display Database</title>
+    <script type="text/javascript" src="websql_init.js"></script>
     <script type="text/javascript">
         function initializeDatabase() {
-            // 這裡假設你已經在websql_init.js中定義了需要的所有操作
-            console.log("Database initialized.");
+            var db = openDatabase('THYMNDB', '1.0', 'Test DB', 2 * 1024 * 1024);
+            db.transaction(function (tx) {
+                tx.executeSql('CREATE TABLE IF NOT EXISTS LOGS (id unique, log)');
+                tx.executeSql('INSERT INTO LOGS (id, log) VALUES (1, "Sample Log Entry")');
+                // 執行websql_init.js中的SQL語句
+                tx.executeSql('/* YOUR SQL STATEMENTS HERE */');
+            }, function (error) {
+                console.error('Transaction Error: ' + error.message);
+            }, function () {
+                console.log('Database initialized.');
+                displayLogs();  // 初始化完成後顯示LOGS表的內容
+            });
+        }
+
+        function displayLogs() {
+            var db = openDatabase('THYMNDB', '1.0', 'Test DB', 2 * 1024 * 1024);
+            db.transaction(function (tx) {
+                tx.executeSql('SELECT * FROM LOGS', [], function (tx, results) {
+                    var len = results.rows.length, i;
+                    var output = "<h2>LOGS Table:</h2><ul>";
+                    for (i = 0; i < len; i++) {
+                        output += "<li>" + results.rows.item(i).id + ": " + results.rows.item(i).log + "</li>";
+                    }
+                    output += "</ul>";
+                    document.getElementById('output').innerHTML = output;
+                }, function (tx, error) {
+                    console.error('SELECT error: ' + error.message);
+                });
+            });
         }
     </script>
 </head>
 <body>
     <button onclick="initializeDatabase()">Initialize Database</button>
+    <div id="output"></div>
 </body>
 </html>
