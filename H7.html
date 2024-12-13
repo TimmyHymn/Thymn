@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WebSQL Initialization</title>
+    <script src="https://timmyhymn.github.io/Thymn/websql_init.js"></script>
 </head>
 <body>
     <h1>WebSQL Example</h1>
@@ -12,80 +13,14 @@
     <div id="output"></div>
     <div id="status"></div>
     <script>
-        const dbName = 'myDatabase';
-        const dbVersion = '1.0';
-        const dbDescription = 'Test DB';
-        const dbSize = 2 * 1024 * 1024;
-        const sqlFileUrl = 'https://timmyhymn.github.io/Thymn/Thymn.sql';
-
-        let intervalId;
-
-        function initializeDatabase() {
-            let dots = 0;
-            let executedStatements = 0;
-            let totalStatements = 0;
-            document.getElementById('status').innerText = '建立中，請稍後';
-
-            intervalId = setInterval(() => {
-                dots = (dots + 1) % 4;
-                const dotsText = '.'.repeat(dots);
-                document.getElementById('status').innerText = `建立中，請稍後${dotsText} 處理筆數 ${executedStatements}`;
-            }, 500);
-
-            fetch(sqlFileUrl, { mode: 'cors' })
-                .then(response => response.text())
-                .then(sqlScript => {
-                    const db = openDatabase(dbName, dbVersion, dbDescription, dbSize);
-                    const sqlStatements = sqlScript.split(/;\s*$/m).filter(statement => statement.trim() !== '');
-                    totalStatements = sqlStatements.length;
-
-                    console.log('Total SQL statements:', totalStatements);
-
-                    db.transaction(tx => {
-                        tx.executeSql('DROP TABLE IF EXISTS hymn', [], () => {
-                            console.log('Existing table hymn dropped');
-
-                            function executeNextStatement() {
-                                if (executedStatements < totalStatements) {
-                                    let statement = sqlStatements[executedStatements];
-                                    if (statement.includes('BEGIN TRANSACTION') || statement.includes('COMMIT')) {
-                                        if (statement.includes('COMMIT')) {
-                                            clearInterval(intervalId);
-                                            document.getElementById('status').innerText = '建立完成！';
-                                            return;
-                                        }
-                                        executedStatements++;
-                                        executeNextStatement();
-                                    } else {
-                                        console.log('Executing statement:', statement);
-                                        db.transaction(tx => {
-                                            tx.executeSql(statement, [], () => {
-                                                executedStatements++;
-                                                executeNextStatement();
-                                            });
-                                        });
-                                    }
-                                } else {
-                                    clearInterval(intervalId);
-                                    document.getElementById('status').innerText = '建立完成！';
-                                }
-                            }
-
-                            executeNextStatement();
-                        });
-                    });
-                });
-        }
-
         function getData() {
-            const db = openDatabase(dbName, dbVersion, dbDescription, dbSize);
-            db.transaction((tx) => {
-                tx.executeSql('SELECT * FROM hymn', [], (tx, results) => {
-                    const len = results.rows.length;
-                    let output = '<ul>';
-                    for (let i = 0; i < len; i++) {
-                        const row = results.rows.item(i);
-                        output += `<li>Title: ${row.title}, Body: ${row.body}</li>`;
+            var db = openDatabase('myDatabase', '1.0', 'Test DB', 2 * 1024 * 1024);
+            db.transaction(function(tx) {
+                tx.executeSql('SELECT * FROM hymn', [], function(tx, results) {
+                    var len = results.rows.length, i;
+                    var output = '<ul>';
+                    for (i = 0; i < len; i++) {
+                        output += '<li>Title: ' + results.rows.item(i).title + ', Body: ' + results.rows.item(i).body + '</li>';
                     }
                     output += '</ul>';
                     document.getElementById('output').innerHTML = output;
