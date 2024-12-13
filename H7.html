@@ -3,32 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebSQL with Progress Bar</title>
-    <style>
-        #progressContainer {
-            width: 100%;
-            background-color: #f3f3f3;
-            border: 1px solid #ccc;
-        }
-
-        #progressBar {
-            width: 0%;
-            height: 30px;
-            background-color: #4caf50;
-            text-align: center;
-            line-height: 30px;
-            color: white;
-        }
-    </style>
+    <title>WebSQL Initialization</title>
 </head>
 <body>
-    <h1>WebSQL Example with Progress Bar</h1>
+    <h1>WebSQL Example</h1>
     <button onclick="initializeDatabase()">Initialize Database</button>
     <button onclick="getData()">Get Data</button>
     <div id="output"></div>
-    <div id="progressContainer">
-        <div id="progressBar">0%</div>
-    </div>
+    <div id="status"></div>
     <script>
         const dbName = 'myDatabase';
         const dbVersion = '1.0';
@@ -37,37 +19,36 @@
         const sqlFileUrl = 'https://timmyhymn.github.io/Thymn/Thymn.sql';
 
         function initializeDatabase() {
+            document.getElementById('status').innerText = '建立中，請稍後...';
             fetch(sqlFileUrl)
                 .then(response => response.text())
                 .then(sqlScript => {
                     const db = openDatabase(dbName, dbVersion, dbDescription, dbSize);
                     const sqlStatements = sqlScript.split(/;\s*$/m).filter(statement => statement.trim() !== '');
-                    const totalStatements = sqlStatements.length;
                     let executedStatements = 0;
 
                     function executeNextStatement() {
-                        if (executedStatements < totalStatements) {
+                        if (executedStatements < sqlStatements.length) {
                             const statement = sqlStatements[executedStatements];
                             db.transaction(tx => {
                                 tx.executeSql(statement, [], () => {
                                     executedStatements++;
-                                    const progress = Math.floor((executedStatements / totalStatements) * 100);
-                                    document.getElementById('progressBar').style.width = progress + '%';
-                                    document.getElementById('progressBar').innerText = progress + '%';
-
-                                    executeNextStatement(); // Execute the next statement after the current one is done
+                                    executeNextStatement();
                                 }, (tx, error) => {
                                     console.error('Error executing SQL statement:', statement, error);
                                 });
                             });
                         } else {
-                            alert('Database initialization complete!');
+                            document.getElementById('status').innerText = '建立完成！';
                         }
                     }
 
-                    executeNextStatement(); // Start executing the first statement
+                    executeNextStatement();
                 })
-                .catch(error => console.error('Error fetching SQL file:', error));
+                .catch(error => {
+                    console.error('Error fetching SQL file:', error);
+                    document.getElementById('status').innerText = '錯誤：無法讀取 SQL 檔案';
+                });
         }
 
         function getData() {
