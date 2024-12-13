@@ -14,6 +14,41 @@
     <div id="output"></div>
     <div id="status"></div>
     <script>
+        function checkDatabaseExists(callback) {
+            var db = openDatabase('myDatabase', '1.0', 'Test DB', 2 * 1024 * 1024);
+            db.transaction(function(tx) {
+                tx.executeSql('SELECT name FROM sqlite_master WHERE type="table" AND name="hymn";', [], function(tx, results) {
+                    callback(results.rows.length > 0);
+                });
+            });
+        }
+
+        function initializeDatabase() {
+            checkDatabaseExists(function(exists) {
+                if (exists) {
+                    if (confirm('Database already exists. Do you want to overwrite it?')) {
+                        initializeDatabaseProcess();
+                    } else {
+                        alert('Initialization canceled.');
+                    }
+                } else {
+                    initializeDatabaseProcess();
+                }
+            });
+        }
+
+        function initializeDatabaseProcess() {
+            var db = openDatabase('myDatabase', '1.0', 'Test DB', 2 * 1024 * 1024);
+            db.transaction(function(tx) {
+                tx.executeSql('DROP TABLE IF EXISTS hymn', [], function() {
+                    for (var i = 0; i < sqlStatements.length; i++) {
+                        tx.executeSql(sqlStatements[i]);
+                    }
+                    alert('Database initialized successfully!');
+                });
+            });
+        }
+
         function getData() {
             var db = openDatabase('myDatabase', '1.0', 'Test DB', 2 * 1024 * 1024);
             db.transaction(function(tx) {
