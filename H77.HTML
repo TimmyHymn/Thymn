@@ -5,243 +5,90 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>詩歌選擇系統</title>
     <style>
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    overflow: auto; /* 允許滾動 */
-}
-
-.container {
-    width: 100%;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-table {
-    width: 100%;
-    table-layout: fixed;
-}
-
-.display {
-    border: 1px solid #000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 4vw;
-    background-color: #f0f0f0;
-    width: 100%;
-}
-
-button {
-    font-size: 4vw;
-    width: 100%;
-    height: 100%;
-    -webkit-user-select: none;
-    -webkit-touch-callout: none;
-}
-
-.blue-button {
-    background-color: #007BFF;
-    color: white;
-}
-
-.yellow-button {
-    background-color: #FFC107;
-    color: black;
-}
-
-input[readonly] {
-    text-align: center;
-}
-
-#SHOW {
-    width: 100%;
-    height: auto;
-    display: flex;
-    flex-direction: column; /* 確保內容垂直排列 */
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    margin-top: 20px; /* 確保顯示區域與按鈕區域之間有間隔 */
-    word-break: break-word; /* 避免單詞超出容器 */
-}
-
-#SHOW pre {
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    margin: 0;
-}
-
-#SHOW pre span.first-line {
-    color: red; /* 設置第一行的顏色 */
-}
-</style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            width: 100%;
+            height: 100%;
+        }
+        table {
+            width: 100%;
+            height: 100%;
+            table-layout: fixed;
+        }
+        .display {
+            border: 1px solid #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4vw;
+            background-color: #f0f0f0;
+            height: 100%;
+            width: 100%;
+        }
+        button {
+            font-size: 4vw;
+            width: 100%;
+            height: 100%;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+        .blue-button {
+            background-color: #007BFF;
+            color: white;
+        }
+        .yellow-button {
+            background-color: #FFC107;
+            color: black;
+        }
+        input[readonly] {
+            text-align: center;
+        }
+    </style>
     <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const dbName = 'hymn';
-    const dbVersion = '1.0'; // 設定資料庫版本
-    const dbSize = 2 * 1024 * 1024; // 設定資料庫大小
-    const currentVersion = '1.0'; // 目前的資料庫版本
+        document.addEventListener('DOMContentLoaded', function () {
+            const dbName = 'hymn';
+            const dbVersion = '1.0'; // 設定資料庫版本
+            const dbSize = 2 * 1024 * 1024; // 設定資料庫大小
+            const currentVersion = '1.0'; // 目前的資料庫版本
 
-    const db = openDatabase(dbName, dbVersion, 'Database for Hymn Selection', dbSize);
+            const db = openDatabase(dbName, dbVersion, 'Database for Hymn Selection', dbSize);
 
-    const songbookNames = {
-        '1': '詩歌',
-        '2': '補充',
-        '3': '新頌',
-        '4': '紅本',
-        '5': '兒童',
-        '6': '藍本'
-    };
-
-    // 檢查資料庫版本
-    db.transaction(function (tx) {
-        tx.executeSql('SELECT version FROM VersionInfo', [], function (tx, results) {
-            const storedVersion = results.rows.length > 0 ? results.rows.item(0).version : null;
-            if (storedVersion !== currentVersion) {
-                // 如果版本不同，載入setupWebSQL.js來重設資料庫
-                var script = document.createElement('script');
-                script.src = 'setupWebSQL.js';
-                document.head.appendChild(script);
-                script.onload = function() {
-                    setupWebSQL();
-                }
-            }
-        }, function (tx, error) {
-            // 如果表不存在，表示是第一次建立資料庫
-            if (error.code === 5 || error.message.indexOf('no such table') !== -1) { // 表不存在的錯誤碼
-                var script = document.createElement('script');
-                script.src = 'setupWebSQL.js';
-                document.head.appendChild(script);
-                script.onload = function() {
-                    setupWebSQL();
-                }
-            } else {
-                console.error('Error checking version:', error);
-            }
-        });
-    });
-
-    // 添加現有的功能
-    document.getElementById('selectSongbook1').addEventListener('click', function() {
-        selectSongbook('1');
-    });
-
-    document.getElementById('appendNumber1').addEventListener('click', function() {
-        appendNumber('1');
-    });
-
-    window.selectSongbook = function(songbook) {
-        document.getElementById('songbookName').value = songbookNames[songbook];
-    }
-
-    window.appendNumber = function(number) {
-        let songNumberElement = document.getElementById('songNumber');
-        songNumberElement.value += number;
-    }
-
-    window.clearAll = function() {
-        document.getElementById('songbookName').value = '';
-        document.getElementById('songNumber').value = '';
-        document.getElementById('SHOW').innerHTML = '';
-    }
-
-    window.confirmSelection = function() {
-        let songbook = document.getElementById('songbookName').value;
-        let songNumber = document.getElementById('songNumber').value;
-        let bookId = Object.keys(songbookNames).find(key => songbookNames[key] === songbook);
-        if (bookId !== undefined && songNumber !== '') {
-            // 查詢WebSQL數據庫
+            // 檢查資料庫版本
             db.transaction(function (tx) {
-                tx.executeSql('SELECT lyrics FROM Songs WHERE book_id=? AND song_id=?', [bookId, songNumber], function (tx, results) {
-                    if (results.rows.length > 0) {
-                        let song = results.rows.item(0);
-                        let lyricsLines = song.lyrics.split('\n');
-                        let formattedLyrics = lyricsLines.map((line, index) => {
-                            if (index === 0) {
-                                return `<span class="first-line">${line}</span>`;
-                            }
-                            return line;
-                        }).join('\n');
-                        
-                        let showElement = document.getElementById('SHOW');
-                        showElement.innerHTML = `<pre>${formattedLyrics}</pre>`;
-
-                        // 調整字體大小
-                        adjustFontSize(showElement);
-
-                        // 確保顯示區域可見
-                        setTimeout(() => {
-                            showElement.scrollIntoView({ behavior: 'smooth' });
-                        }, 100);
-                    } else {
-                        alert('找不到對應的歌曲，請確認輸入是否正確。');
+                tx.executeSql('SELECT version FROM VersionInfo', [], function (tx, results) {
+                    const storedVersion = results.rows.length > 0 ? results.rows.item(0).version : null;
+                    if (storedVersion !== currentVersion) {
+                        // 如果版本不同，載入setupWebSQL.js來重設資料庫
+                        var script = document.createElement('script');
+                        script.src = 'setupWebSQL.js';
+                        document.head.appendChild(script);
+                        script.onload = function() {
+                            setupWebSQL();
+                        }
                     }
                 }, function (tx, error) {
-                    console.error('Error querying database:', error);
+                    // 如果表不存在，表示是第一次建立資料庫
+                    if (error.code === 5 || error.message.indexOf('no such table') !== -1) { // 表不存在的錯誤碼
+                        var script = document.createElement('script');
+                        script.src = 'setupWebSQL.js';
+                        document.head.appendChild(script);
+                        script.onload = function() {
+                            setupWebSQL();
+                        }
+                    } else {
+                        console.error('Error checking version:', error);
+                    }
                 });
             });
-        } else {
-            alert('請先選擇歌本並輸入歌號');
-        }
-    }
-
-    window.removeLastDigit = function() {
-        let songNumberElement = document.getElementById('songNumber');
-        if (songNumberElement.value.length > 0) {
-            songNumberElement.value = songNumberElement.value.slice(0, -1);
-        }
-    }
-
-    window.searchLyrics = function() {
-        let searchQuery = prompt("請輸入要搜尋的歌詞關鍵字:");
-        if (searchQuery !== null && searchQuery.trim() !== '') {
-            alert("搜尋歌詞: " + searchQuery);
-            // 在這裡添加搜尋歌詞的邏輯
-        } else {
-            alert("請輸入有效的歌詞關鍵字");
-        }
-    }
-
-    window.openCatalog = function() {
-        alert("目錄功能尚未實作");
-        // 在這裡添加開啟目錄的邏輯
-    }
-
-    function adjustFontSize(element) {
-        const parentWidth = element.clientWidth;
-        let fontSize = 100; // 從一個較大的字體大小開始
-        element.style.fontSize = fontSize + 'px';
-
-        // 找到最長的那一行
-        const lines = element.querySelector('pre').innerText.split('\n');
-        const longestLine = lines.reduce((max, line) => line.length > max.length ? line : max, '');
-
-        // 動態調整字體大小，直到最長的那一行占滿螢幕寬度
-        const tempSpan = document.createElement('span');
-        tempSpan.style.visibility = 'hidden';
-        tempSpan.style.whiteSpace = 'nowrap';
-        tempSpan.style.fontSize = fontSize + 'px';
-        document.body.appendChild(tempSpan);
-        
-        let lineWidth = 0;
-        do {
-            fontSize--;
-            tempSpan.style.fontSize = fontSize + 'px';
-            tempSpan.innerText = longestLine;
-            lineWidth = tempSpan.clientWidth;
-        } while (lineWidth > parentWidth);
-
-        document.body.removeChild(tempSpan);
-        element.style.fontSize = fontSize + 'px';
-    }
-});
-</script>
+        });
+    </script>
 </head>
 <body>
     <div class="container">
@@ -253,37 +100,81 @@ document.addEventListener('DOMContentLoaded', function () {
                 <td width="25%"></td>
             </tr>
             <tr>
-                <td width="25%"><button class="blue-button" onclick="selectSongbook('1')">詩歌</button></td>
+                <td width="25%"><button class="blue-button" onclick="selectSongbook('詩歌')">詩歌</button></td>
                 <td width="25%"><button onclick="appendNumber('1')">1</button></td>
                 <td width="25%"><button onclick="appendNumber('2')">2</button></td>
                 <td width="25%"><button onclick="appendNumber('3')">3</button></td>
             </tr>
             <tr>
-                <td width="25%"><button class="blue-button" onclick="selectSongbook('2')">補充</button></td>
+                <td width="25%"><button class="blue-button" onclick="selectSongbook('補充')">補充</button></td>
                 <td width="25%"><button onclick="appendNumber('4')">4</button></td>
                 <td width="25%"><button onclick="appendNumber('5')">5</button></td>
                 <td width="25%"><button onclick="appendNumber('6')">6</button></td>
             </tr>
             <tr>
-                <td width="25%"><button class="blue-button" onclick="selectSongbook('3')">新頌</button></td>
+                <td width="25%"><button class="blue-button" onclick="selectSongbook('新頌')">新頌</button></td>
                 <td width="25%"><button onclick="appendNumber('7')">7</button></td>
                 <td width="25%"><button onclick="appendNumber('8')">8</button></td>
                 <td width="25%"><button onclick="appendNumber('9')">9</button></td>
             </tr>
             <tr>
-                <td width="25%"><button class="blue-button" onclick="selectSongbook('4')">紅本</button></td>
+                <td width="25%"><button class="blue-button" onclick="selectSongbook('紅本')">紅本</button></td>
                 <td width="25%"><button class="yellow-button" onclick="clearAll()">清除</button></td>
                 <td width="25%"><button onclick="appendNumber('0')">0</button></td>
                 <td width="25%"><button class="blue-button" onclick="confirmSelection()">確認</button></td>
             </tr>
             <tr>
-                <td width="25%"><button class="blue-button" onclick="selectSongbook('5')">兒童</button></td>
-                <td width="25%"><button class="blue-button" onclick="selectSongbook('6')">藍本</button></td>
+                <td width="25%"><button class="blue-button" onclick="selectSongbook('藍本')">藍本</button></td>
+                <td width="25%"><button class="blue-button" onclick="selectSongbook('兒童')">兒童</button></td>
                 <td width="25%"><button class="blue-button" onclick="searchLyrics()">搜尋</button></td>
                 <td width="25%"><button class="blue-button" onclick="openCatalog()">目錄</button></td>
             </tr>
         </table>
     </div>
-    <div id="SHOW"></div>
-</body>
-</html>
+
+    <script>
+        // 禁用雙擊縮放功能
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', (event) => {
+            const now = new Date().getTime();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+
+        function selectSongbook(songbook) {
+            document.getElementById('songbookName').value = songbook;
+        }
+
+        function appendNumber(number) {
+            let songNumberElement = document.getElementById('songNumber');
+            songNumberElement.value += number;
+        }
+
+        function clearAll() {
+            document.getElementById('songbookName').value = '';
+            document.getElementById('songNumber').value = '';
+        }
+
+        function confirmSelection() {
+            let songbook = document.getElementById('songbookName').value;
+            let songNumber = document.getElementById('songNumber').value;
+            if (songbook !== '' && songNumber !== '') {
+                alert('歌本: ' + songbook + '\n歌號: ' + songNumber + ' 已確認!');
+            } else {
+                alert('請先選擇歌本並輸入歌號');
+            }
+        }
+
+        function removeLastDigit() {
+            let songNumberElement = document.getElementById('songNumber');
+            if (songNumberElement.value.length > 0) {
+                songNumberElement.value = songNumberElement.value.slice(0, -1);
+            }
+        }
+
+        function searchLyrics() {
+            let searchQuery = prompt("請輸入要搜尋的歌詞關鍵字:");
+            if (searchQuery !== null && searchQuery.trim() !== '') {
+                alert("搜尋歌詞: " + searchQuery);
