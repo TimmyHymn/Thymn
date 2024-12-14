@@ -68,6 +68,7 @@ input[readonly] {
     justify-content: center;
     text-align: center;
     margin-top: 20px; /* 確保顯示區域與按鈕區域之間有間隔 */
+    word-break: break-word; /* 避免單詞超出容器 */
 }
 
 #SHOW pre {
@@ -179,15 +180,15 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         } else {
             alert('請先選擇歌本並輸入歌號');
-        }
-    }
+    } 
+   } 
 
-    window.removeLastDigit = function() {
-        let songNumberElement = document.getElementById('songNumber');
-        if (songNumberElement.value.length > 0) {
-            songNumberElement.value = songNumberElement.value.slice(0, -1);
-        }
-    }
+   window.removeLastDigit = function() {
+       let songNumberElement = document.getElementById('songNumber');
+       if (songNumberElement.value.length > 0) {
+           songNumberElement.value = songNumberElement.value.slice(0, -1);
+       }
+   }
 
     window.searchLyrics = function() {
         let searchQuery = prompt("請輸入要搜尋的歌詞關鍵字:");
