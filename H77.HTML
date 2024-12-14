@@ -104,7 +104,7 @@ document.addEventListener('DOMContentLoaded', function () {
         tx.executeSql('SELECT version FROM VersionInfo', [], function (tx, results) {
             const storedVersion = results.rows.length > 0 ? results.rows.item(0).version : null;
             if (storedVersion !== currentVersion) {
-                // 如果版本不同，載入setupWebSQL.js來重設資料庫
+                // 如果版本不同，載入 setupWebSQL.js 來重設資料庫
                 var script = document.createElement('script');
                 script.src = 'setupWebSQL.js';
                 document.head.appendChild(script);
@@ -148,7 +148,7 @@ document.addEventListener('DOMContentLoaded', function () {
         let songNumber = document.getElementById('songNumber').value;
         let bookId = Object.keys(songbookNames).find(key => songbookNames[key] === songbook);
         if (bookId !== undefined && songNumber !== '') {
-            // 查詢WebSQL數據庫
+            // 查詢 WebSQL 數據庫
             db.transaction(function (tx) {
                 tx.executeSql('SELECT lyrics FROM Songs WHERE book_id=? AND song_id=?', [bookId, songNumber], function (tx, results) {
                     if (results.rows.length > 0) {
@@ -180,15 +180,15 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         } else {
             alert('請先選擇歌本並輸入歌號');
-    } 
-   } 
+        }
+    }
 
-   window.removeLastDigit = function() {
-       let songNumberElement = document.getElementById('songNumber');
-       if (songNumberElement.value.length > 0) {
-           songNumberElement.value = songNumberElement.value.slice(0, -1);
-       }
-   }
+    window.removeLastDigit = function() {
+        let songNumberElement = document.getElementById('songNumber');
+        if (songNumberElement.value.length > 0) {
+            songNumberElement.value = songNumberElement.value.slice(0, -1);
+        }
+    }
 
     window.searchLyrics = function() {
         let searchQuery = prompt("請輸入要搜尋的歌詞關鍵字:");
