@@ -129,10 +129,10 @@
 
         function searchLyrics(bookName, bookNumber) {
 
-
+alert(bookName);
             const db = openDatabase('hymn', '', 'Hymn Database', 2 * 1024 * 1024);
             let book_id = 0;
-alert(bookName);
+
             switch(bookName) {
                 case '詩歌': book_id = 1; break;
                 case '補充': book_id = 2; break;
