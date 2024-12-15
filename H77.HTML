@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -78,44 +78,40 @@
     </style>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            checkWebSQL();
+            checkIndexedDB();
         });
 
-        function checkWebSQL() {
-            const dbName = 'hymn';
-            const dbVersion = '1.0';
-            const dbSize = 2 * 1024 * 1024; // 2MB 大小
-            const db = openDatabase(dbName, '', 'Hymn Database', dbSize);
+        function checkIndexedDB() {
+            const dbName = 'Timmy_hymn';
+            const dbVersion = 1;  // 你可以根據需要修改版本號
+            const request = indexedDB.open(dbName, dbVersion);
 
-            if (!db) {
-                alert("瀏覽器不支援 WebSQL，請使用支援的瀏覽器。");
-                return;
-            }
+            request.onsuccess = function(event) {
+                const db = event.target.result;
+                const currentVersion = db.version;
 
-            db.transaction(function(tx) {
-                tx.executeSql(
-                    "SELECT version FROM VersionInfo LIMIT 1", [], 
-                    function(tx, result) {
-                        const version = result.rows.item(0).version;
-                        console.log("Database version: " + version);
-                        if (version !== dbVersion) {
-                            loadSetupScript();
-                        } else {
-                            console.log("WebSQL 資料庫已存在且版本正確。");
-                        }
-                    },
-                    function(tx, error) {
-                        loadSetupScript();
-                    }
-                );
-            });
+                // 如果版本正確，則不載入初始化腳本
+                if (currentVersion === dbVersion) {
+                    console.log("IndexedDB 資料庫已存在且版本正確，無需載入 setup_indexdb.js");
+                    return;
+                } else {
+                    // 如果版本不符，則載入初始化腳本
+                    loadSetupScript();
+                }
+            };
+
+            request.onerror = function(event) {
+                // 若資料庫不存在，則載入初始化腳本
+                console.error("資料庫不存在或無法開啟，載入 setup_indexdb.js");
+                loadSetupScript();
+            };
         }
 
         function loadSetupScript() {
             const script = document.createElement('script');
-            script.src = 'setupWebSQL.js';
+            script.src = 'setup_indexdb.js';
             script.onload = function() {
-                setupWebSQL();
+                setupIndexedDB();
             };
             document.body.appendChild(script);
         }
@@ -128,8 +124,6 @@
         }
 
         function searchLyrics(bookName, bookNumber) {
-
-alert(bookName);
             const db = openDatabase('hymn', '', 'Hymn Database', 2 * 1024 * 1024);
             let book_id = 0;
 
@@ -140,19 +134,17 @@ alert(bookName);
                 case '紅本': book_id = 4; break;
                 default: book_id = 0; break;
             }
-alert(book_id);
+
             db.transaction(function(tx) {
                 const query = `SELECT lyrics FROM Songs WHERE book_id = ? AND song_id = ?`;
                 tx.executeSql(query, [book_id, bookNumber], function(tx, result) {
                     if (result.rows.length > 0) {
                         const lyrics = result.rows.item(0).lyrics;
                         const formattedLyrics = formatLyrics(lyrics);
-                        alert(lyrics);
                         document.getElementById('SHOW').innerHTML = formattedLyrics;
                         document.getElementById('SHOW').style.display = 'block';
                         document.getElementById('SHOW').scrollIntoView();
                     } else {
-                        alert("未找到該歌詞");
                         document.getElementById('SHOW').innerHTML = '未找到該歌詞。';
                         document.getElementById('SHOW').style.display = 'block';
                     }
@@ -238,33 +230,35 @@ alert(book_id);
         <tr>
             <td><input type="button" id="book-display" value="" class="btn-blue" disabled></td>
             <td><input type="button" id="book-number" value="" class="btn-blue" disabled></td>
-            <td><input type="button" value="?" class="D"></td>
+            <td><input type="button" value="⇤" class="D"></td>
         </tr>
         <tr>
             <td><input type="button" value="詩歌" class="btn-blue" onclick="showBookName('詩歌')"></td>
+            <td><input type="button" value="補充" class="btn-blue" onclick="showBookName('補充')"></td>
+            <td><input type="button" value="新頌" class="btn-blue" onclick="showBookName('新頌')"></td>
+        </tr>
+        <tr>
             <td><input type="button" value="1" class="btn-yellow"></td>
             <td><input type="button" value="2" class="btn-yellow"></td>
             <td><input type="button" value="3" class="btn-yellow"></td>
         </tr>
         <tr>
-            <td><input type="button" value="補充" class="btn-blue" onclick="showBookName('補充')"></td>
             <td><input type="button" value="4" class="btn-yellow"></td>
             <td><input type="button" value="5" class="btn-yellow"></td>
             <td><input type="button" value="6" class="btn-yellow"></td>
         </tr>
         <tr>
-            <td><input type="button" value="新頌" class="btn-blue" onclick="showBookName('新頌')"></td>
             <td><input type="button" value="7" class="btn-yellow"></td>
             <td><input type="button" value="8" class="btn-yellow"></td>
             <td><input type="button" value="9" class="btn-yellow"></td>
         </tr>
         <tr>
-            <td><input type="button" value="紅本" class="btn-blue" onclick="showBookName('紅本')"></td>
-            <td><input type="button" value="清除" class="btn-red"></td>
             <td><input type="button" value="0" class="btn-yellow"></td>
-            <td><input type="button" value="確定" class="btn-green"></td>
+            <td><input type="button" value="清除" class="btn-red"></td>
+            <td><input type="button" value="確認" class="btn-green"></td>
         </tr>
     </table>
-    <div id="SHOW" style="display:none;"></div>
+
+    <div id="SHOW"></div>
 </body>
 </html>
