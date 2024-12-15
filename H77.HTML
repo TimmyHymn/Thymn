@@ -166,7 +166,7 @@ function checkIndexedDB() {
 
 function loadSetupScript() {
     const script = document.createElement('script');
-    script.src = 'setup_indexdb.js'; // 載入初始化腳本
+    script.src = 'setup_indexDB.js'; // 載入初始化腳本
     script.onload = function() {
         console.log("setup_indexdb.js 已成功載入，開始初始化...");
         initializeDatabaseIfNeeded();
