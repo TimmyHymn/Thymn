@@ -140,7 +140,7 @@ alert("TEST0");
                 case '紅本': book_id = 4; break;
                 default: book_id = 0; break;
             }
-alert("TEST");
+alert(book_id);
             db.transaction(function(tx) {
                 const query = `SELECT lyrics FROM Songs WHERE book_id = ? AND song_id = ?`;
                 tx.executeSql(query, [book_id, bookNumber], function(tx, result) {
