@@ -1,0 +1,189 @@
+﻿<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>填滿螢幕的按鈕</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            font-family: Verdana, sans-serif;
+            height: 100%;
+            width: 100%;
+            background-color: #f7f7f7;
+        }
+
+        table {
+            width: 100%;
+            height: 100%;
+            border-collapse: collapse; /* 移除單元格之間的空隙 */
+            table-layout: fixed; /* 讓所有單元格大小平均 */
+        }
+
+        td {
+            padding: 2px; /* 按鈕之間的小間隔 */
+        }
+
+        input[type="button"] {
+            width: 100%;
+            height: 100%;
+            font-size: 3vw; /* 字體會隨著螢幕大小調整 */
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        input[type="button"]:hover {
+            background-color: #e0e0e0;
+        }
+
+        /* 按鈕顏色樣式 */
+        .btn-blue {
+            background-color: #0066cc;
+            color: #fff;
+        }
+
+        .btn-yellow {
+            background-color: #ffcc00;
+            color: #000;
+        }
+
+        .btn-red {
+            background-color: #ff3333;
+            color: #fff;
+        }
+
+        .btn-green {
+            background-color: #33cc33;
+            color: #fff;
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            checkWebSQL(); // 檢查 WebSQL 是否需要初始化
+        });
+
+        function checkWebSQL() {
+            const dbName = 'hymn';
+            const dbVersion = '1.0';
+            const dbSize = 2 * 1024 * 1024; // 2MB 大小
+            const db = openDatabase(dbName, '', 'Hymn Database', dbSize);
+
+            if (!db) {
+                alert("瀏覽器不支援 WebSQL，請使用支援的瀏覽器。");
+                return;
+            }
+
+            db.transaction(function(tx) {
+                // 檢查 VersionInfo 表格是否存在並確認版本
+                tx.executeSql(
+                    "SELECT version FROM VersionInfo LIMIT 1", [], 
+                    function(tx, result) {
+                        const version = result.rows.item(0).version;
+                        console.log("Database version: " + version);
+
+                        if (version !== dbVersion) {
+                            console.log("版本不同，重建資料庫。");
+                            loadSetupScript();
+                        } else {
+                            console.log("WebSQL 資料庫已存在且版本正確。");
+                        }
+                    },
+                    function(tx, error) {
+                        console.log("未找到資料庫，正在初始化...");
+                        loadSetupScript();
+                    }
+                );
+            });
+        }
+
+        function loadSetupScript() {
+            const script = document.createElement('script');
+            script.src = 'setupWebSQL.js';
+            script.onload = function() {
+                setupWebSQL(); // 呼叫 setupWebSQL 初始化函式
+            };
+            document.body.appendChild(script);
+        }
+
+        // 更新歌本名稱
+        function showBookName(bookName) {
+            // 更新第一列中的第一個 <td> 內的 <input> 的值
+            document.getElementById('book-display').value = bookName;
+        } 
+        
+document.addEventListener('DOMContentLoaded', function() {
+    // 監聽數字鍵
+    let numberValue = "";
+    const numberDisplay = document.getElementById('book-number');
+    
+    // 更新顯示數字
+    function updateNumberDisplay() {
+        numberDisplay.value = numberValue;
+    }
+
+    // 綁定數字鍵
+    const numberButtons = document.querySelectorAll('.btn-yellow');
+    numberButtons.forEach(function(button) {
+        button.addEventListener('click', function() {
+            numberValue += this.value; // 加上按下的數字
+            updateNumberDisplay();
+        });
+    });
+
+    // 綁定清除數字的按鈕 (⇤)
+    const backButton = document.querySelector('.D');
+    backButton.addEventListener('click', function() {
+        numberValue = numberValue.slice(0, -1); // 去掉最後一位
+        updateNumberDisplay();
+    });
+});        
+    </script>
+</head>
+<body>
+    <table>
+        <tr>
+            <!-- 這個是您希望顯示歌本名稱的區塊 -->
+            <td><input type="button" id="book-display" value="" class="btn-blue" disabled></td>
+            <td><input type="button" id="book-number" value="" class="btn-blue" disabled></td>
+            <td><input type="button" value="⇤" class="D"></td>
+        </tr>
+        <tr>
+            <td><input type="button" value="詩歌" class="btn-blue" onclick="showBookName('詩歌')"></td>
+            <td><input type="button" value="1" class="btn-yellow"></td>
+            <td><input type="button" value="2" class="btn-yellow"></td>
+            <td><input type="button" value="3" class="btn-yellow"></td>
+        </tr>
+        <tr>
+            <td><input type="button" value="補充" class="btn-blue" onclick="showBookName('補充')"></td>
+            <td><input type="button" value="4" class="btn-yellow"></td>
+            <td><input type="button" value="5" class="btn-yellow"></td>
+            <td><input type="button" value="6" class="btn-yellow"></td>
+        </tr>
+        <tr>
+            <td><input type="button" value="新頌" class="btn-blue" onclick="showBookName('新頌')"></td>
+            <td><input type="button" value="7" class="btn-yellow"></td>
+            <td><input type="button" value="8" class="btn-yellow"></td>
+            <td><input type="button" value="9" class="btn-yellow"></td>
+        </tr>
+        <tr>
+            <td><input type="button" value="紅本" class="btn-blue" onclick="showBookName('紅本')"></td>
+            <td><input type="button" value="C" class="btn-red"></td>
+            <td><input type="button" value="0" class="btn-yellow"></td>
+            <td><input type="button" value="確定" class="btn-green"></td>
+        </tr>
+        <tr>
+            <td><input type="button" value="藍本" class="btn-blue" onclick="showBookName('藍本')"></td>
+            <td><input type="button" value="兒童" class="btn-blue" onclick="showBookName('兒童')"></td>
+            <td><input type="button" value="搜尋" class="btn-blue"></td>
+            <td><input type="button" value="目錄" class="btn-blue"></td>
+        </tr>
+    </table>
+</body>
+</html>
