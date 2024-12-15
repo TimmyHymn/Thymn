@@ -145,6 +145,7 @@
                     if (result.rows.length > 0) {
                         const lyrics = result.rows.item(0).lyrics;
                         const formattedLyrics = formatLyrics(lyrics);
+                        alert(lyrics);
                         document.getElementById('SHOW').innerHTML = formattedLyrics;
                         document.getElementById('SHOW').style.display = 'block';
                         document.getElementById('SHOW').scrollIntoView();
