@@ -86,29 +86,35 @@
         </tr>
         <tr>
             <td><input type="button" value="詩歌" class="btn-blue" onclick="showBookName('詩歌')"></td>
-            <td><input type="button" value="補充" class="btn-blue" onclick="showBookName('補充')"></td>
-            <td><input type="button" value="新頌" class="btn-blue" onclick="showBookName('新頌')"></td>
-        </tr>
-        <tr>
             <td><input type="button" value="1" class="btn-yellow"></td>
             <td><input type="button" value="2" class="btn-yellow"></td>
             <td><input type="button" value="3" class="btn-yellow"></td>
         </tr>
         <tr>
+            <td><input type="button" value="補充" class="btn-blue" onclick="showBookName('補充')"></td>
             <td><input type="button" value="4" class="btn-yellow"></td>
             <td><input type="button" value="5" class="btn-yellow"></td>
             <td><input type="button" value="6" class="btn-yellow"></td>
         </tr>
         <tr>
+            <td><input type="button" value="新頌" class="btn-blue" onclick="showBookName('新頌')"></td>
             <td><input type="button" value="7" class="btn-yellow"></td>
             <td><input type="button" value="8" class="btn-yellow"></td>
             <td><input type="button" value="9" class="btn-yellow"></td>
         </tr>
         <tr>
-            <td><input type="button" value="0" class="btn-yellow"></td>
+            <td><input type="button" value="紅本" class="btn-blue" onclick="showBookName('紅本')"></td>
             <td><input type="button" value="清除" class="btn-red"></td>
+            <td><input type="button" value="0" class="btn-yellow"></td>
             <td><input type="button" value="確認" class="btn-green"></td>
         </tr>
+        <tr>
+            <td><input type="button" value="藍本" class="btn-blue" onclick="showBookName('藍本')"></td>
+            <td><input type="button" value="兒童" class="btn-blue" onclick="showBookName('兒童')"></td>
+            <td><input type="button" value="搜尋" class="btn-red"></td>
+            <td><input type="button" value="目錄" class="btn-red"></td>
+        </tr>
+
     </table>
 
     <div id="SHOW"></div>
@@ -166,7 +172,7 @@ function checkIndexedDB() {
 
 function loadSetupScript() {
     const script = document.createElement('script');
-    script.src = 'setup_indexDB.js'; // 載入初始化腳本
+    script.src = 'setup_indexdb.js'; // 載入初始化腳本
     script.onload = function() {
         console.log("setup_indexdb.js 已成功載入，開始初始化...");
         initializeDatabaseIfNeeded();
@@ -196,6 +202,9 @@ checkIndexedDB();
                 case '補充': book_id = 2; break;
                 case '新頌': book_id = 3; break;
                 case '紅本': book_id = 4; break;
+                case '兒童': book_id = 5; break;
+                case '藍本': book_id = 6; break;
+
                 default: book_id = 0; break;
             }
 
