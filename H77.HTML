@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -81,32 +81,44 @@
             checkIndexedDB();
         });
 
+        // 檢查 IndexedDB 是否存在且版本正確
         function checkIndexedDB() {
             const dbName = 'Timmy_hymn';
-            const dbVersion = 1;  // 你可以根據需要修改版本號
+            const dbVersion = 1;
+
             const request = indexedDB.open(dbName, dbVersion);
+
+            request.onerror = function(event) {
+                alert("瀏覽器不支援 IndexedDB，請使用支援的瀏覽器。");
+            };
 
             request.onsuccess = function(event) {
                 const db = event.target.result;
-                const currentVersion = db.version;
+                const transaction = db.transaction('VersionInfo', 'readonly');
+                const objectStore = transaction.objectStore('VersionInfo');
+                const getRequest = objectStore.get(1); // 假設版本信息在 ID 1
 
-                // 如果版本正確，則不載入初始化腳本
-                if (currentVersion === dbVersion) {
-                    console.log("IndexedDB 資料庫已存在且版本正確，無需載入 setup_indexdb.js");
-                    return;
-                } else {
-                    // 如果版本不符，則載入初始化腳本
+                getRequest.onsuccess = function() {
+                    const version = getRequest.result ? getRequest.result.version : null;
+                    console.log("資料庫版本: " + version);
+                    if (version !== dbVersion) {
+                        loadSetupScript();
+                    } else {
+                        console.log("資料庫版本正確");
+                    }
+                };
+
+                getRequest.onerror = function() {
                     loadSetupScript();
-                }
+                };
             };
 
-            request.onerror = function(event) {
-                // 若資料庫不存在，則載入初始化腳本
-                console.error("資料庫不存在或無法開啟，載入 setup_indexdb.js");
+            request.onupgradeneeded = function(event) {
                 loadSetupScript();
             };
         }
 
+        // 載入 setup_indexdb.js 進行初始化
         function loadSetupScript() {
             const script = document.createElement('script');
             script.src = 'setup_indexdb.js';
@@ -123,55 +135,71 @@
             document.getElementById('SHOW').style.display = 'none';
         }
 
+        // 使用 IndexedDB 查詢歌詞
         function searchLyrics(bookName, bookNumber) {
-            const db = openDatabase('hymn', '', 'Hymn Database', 2 * 1024 * 1024);
-            let book_id = 0;
+            const dbName = 'Timmy_hymn';
+            const dbVersion = 1;
+            const request = indexedDB.open(dbName, dbVersion);
 
-            switch(bookName) {
-                case '詩歌': book_id = 1; break;
-                case '補充': book_id = 2; break;
-                case '新頌': book_id = 3; break;
-                case '紅本': book_id = 4; break;
-                default: book_id = 0; break;
-            }
+            request.onerror = function(event) {
+                alert("無法打開資料庫");
+            };
 
-            db.transaction(function(tx) {
-                const query = `SELECT lyrics FROM Songs WHERE book_id = ? AND song_id = ?`;
-                tx.executeSql(query, [book_id, bookNumber], function(tx, result) {
-                    if (result.rows.length > 0) {
-                        const lyrics = result.rows.item(0).lyrics;
+            request.onsuccess = function(event) {
+                const db = event.target.result;
+                const transaction = db.transaction('Songs', 'readonly');
+                const objectStore = transaction.objectStore('Songs');
+                const index = objectStore.index('book_id_song_id');
+
+                let book_id = 0;
+                switch (bookName) {
+                    case '詩歌': book_id = 1; break;
+                    case '補充': book_id = 2; break;
+                    case '新頌': book_id = 3; break;
+                    case '紅本': book_id = 4; break;
+                    default: book_id = 0; break;
+                }
+
+                const queryKey = [book_id, bookNumber];
+                const getRequest = index.get(queryKey);
+
+                getRequest.onsuccess = function() {
+                    const result = getRequest.result;
+                    if (result) {
+                        const lyrics = result.lyrics;
                         const formattedLyrics = formatLyrics(lyrics);
                         document.getElementById('SHOW').innerHTML = formattedLyrics;
                         document.getElementById('SHOW').style.display = 'block';
-                        document.getElementById('SHOW').scrollIntoView();
                     } else {
                         document.getElementById('SHOW').innerHTML = '未找到該歌詞。';
                         document.getElementById('SHOW').style.display = 'block';
                     }
-                });
-            });
+                };
+
+                getRequest.onerror = function() {
+                    alert("查詢歌詞時發生錯誤");
+                };
+            };
         }
 
+        // 格式化歌詞顯示
         function formatLyrics(lyrics) {
             const lines = lyrics.split('\n');
             let longestLine = '';
 
-            // 找出最長的一行
             for (let i = 0; i < lines.length; i++) {
                 if (lines[i].length > longestLine.length) {
                     longestLine = lines[i];
                 }
             }
 
-            // 計算字型大小，讓最長行填滿螢幕寬度
             const screenWidth = window.innerWidth;
             const charCount = longestLine.length;
-            const fontSize = (screenWidth / charCount) * 0.9; // 調整比例
+            const fontSize = (screenWidth / charCount) * 0.9;
 
             let formattedLyrics = '';
             for (let i = 0; i < lines.length; i++) {
                 if (i === 0) {
-                    // 第一行顏色設為紅色
                     formattedLyrics += `<div style="font-size: ${fontSize}px; color: red;">${lines[i]}</div>`;
                 } else {
                     formattedLyrics += `<div style="font-size: ${fontSize}px;">${lines[i]}</div>`;
@@ -179,86 +207,31 @@
             }
             return formattedLyrics;
         }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            let numberValue = "";
-            const numberDisplay = document.getElementById('book-number');
-            
-            function updateNumberDisplay() {
-                numberDisplay.value = numberValue;
-            }
-
-            const numberButtons = document.querySelectorAll('.btn-yellow');
-            numberButtons.forEach(function(button) {
-                button.addEventListener('click', function() {
-                    numberValue += this.value;
-                    updateNumberDisplay();
-                });
-            });
-
-            const backButton = document.querySelector('.D');
-            backButton.addEventListener('click', function() {
-                numberValue = numberValue.slice(0, -1);
-                updateNumberDisplay();
-            });
-
-            const clearButton = document.querySelector('.btn-red');
-            clearButton.addEventListener('click', function() {
-                document.getElementById('book-display').value = '';
-                document.getElementById('book-number').value = '';
-                numberValue = '';
-                updateNumberDisplay();
-                document.getElementById('SHOW').innerHTML = '';
-                document.getElementById('SHOW').style.display = 'none';
-            });
-
-            const confirmButton = document.querySelector('.btn-green');
-            confirmButton.addEventListener('click', function() {
-                const bookName = document.getElementById('book-display').value;
-                const bookNumber = document.getElementById('book-number').value;
-                if (bookName && bookNumber) {
-                    searchLyrics(bookName, bookNumber);
-                } else {
-                    alert("請選擇歌本名稱並輸入歌本號碼。");
-                }
-            });
-        });
     </script>
 </head>
 <body>
     <table>
         <tr>
-            <td><input type="button" id="book-display" value="" class="btn-blue" disabled></td>
-            <td><input type="button" id="book-number" value="" class="btn-blue" disabled></td>
-            <td><input type="button" value="⇤" class="D"></td>
+            <td colspan="4">
+                <input id="book-display" type="text" value="" placeholder="請選擇歌本" disabled>
+            </td>
         </tr>
         <tr>
-            <td><input type="button" value="詩歌" class="btn-blue" onclick="showBookName('詩歌')"></td>
-            <td><input type="button" value="補充" class="btn-blue" onclick="showBookName('補充')"></td>
-            <td><input type="button" value="新頌" class="btn-blue" onclick="showBookName('新頌')"></td>
+            <td><input type="button" class="btn-blue" value="詩歌" onclick="showBookName('詩歌')"></td>
+            <td><input type="button" class="btn-blue" value="補充" onclick="showBookName('補充')"></td>
+            <td><input type="button" class="btn-blue" value="新頌" onclick="showBookName('新頌')"></td>
+            <td><input type="button" class="btn-blue" value="紅本" onclick="showBookName('紅本')"></td>
         </tr>
         <tr>
-            <td><input type="button" value="1" class="btn-yellow"></td>
-            <td><input type="button" value="2" class="btn-yellow"></td>
-            <td><input type="button" value="3" class="btn-yellow"></td>
+            <td colspan="4">
+                <input id="book-number" type="text" value="" placeholder="輸入歌曲編號" readonly>
+            </td>
         </tr>
         <tr>
-            <td><input type="button" value="4" class="btn-yellow"></td>
-            <td><input type="button" value="5" class="btn-yellow"></td>
-            <td><input type="button" value="6" class="btn-yellow"></td>
-        </tr>
-        <tr>
-            <td><input type="button" value="7" class="btn-yellow"></td>
-            <td><input type="button" value="8" class="btn-yellow"></td>
-            <td><input type="button" value="9" class="btn-yellow"></td>
-        </tr>
-        <tr>
-            <td><input type="button" value="0" class="btn-yellow"></td>
-            <td><input type="button" value="清除" class="btn-red"></td>
-            <td><input type="button" value="確認" class="btn-green"></td>
+            <td colspan="2"><input type="button" class="btn-red" value="清除"></td>
+            <td colspan="2"><input type="button" class="btn-green" value="確定" onclick="searchLyrics(document.getElementById('book-display').value, document.getElementById('book-number').value)"></td>
         </tr>
     </table>
-
     <div id="SHOW"></div>
 </body>
 </html>
