@@ -72,6 +72,8 @@
             text-align: center; /* 置中顯示歌詞 */
             word-wrap: break-word;
             overflow-wrap: break-word;
+            min-height: 200px; /* 最小高度確保顯示 */
+            display: block; /* 確保顯示區域是可見的 */
         }
     </style>
     <script>
@@ -259,6 +261,6 @@
             <td><input type="button" value="清除" class="btn-red"></td>
         </tr>
     </table>
-    <div id="SHOW" style="display: none;"></div>
+    <div id="SHOW" style="display:none;"></div>
 </body>
 </html>
