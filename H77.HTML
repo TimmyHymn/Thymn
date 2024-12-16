@@ -77,14 +77,27 @@
         }
  
  
-
 /* 搜尋輸入框樣式 */
 #search-container {
-    display: none;  /* 預設為不顯示，且不佔版面 */
+    display: none;  /* 預設為不顯示 */
     margin-top: 20px;
     text-align: center;
 }
 
+#search-input {
+    width: 80%;
+    padding: 10px;
+font-size: 6vw;
+
+}
+
+#search-button {
+    padding: 10px 20px;
+    font-size: 6vw;
+
+    margin-left: 10px;
+    cursor: pointer;
+}
     </style>
 </head>
 <body>
@@ -125,12 +138,10 @@
             <td><input type="button" value="目錄" class="btn-red"></td>
         </tr>
     </table> 
-
 <div id="search-container">
     <input type="text" id="search-input" placeholder="輸入搜尋關鍵字...">
     <button id="search-button" class="btn-blue" onclick="search()">搜尋</button>
 </div>
-
     
     <div id="SHOW"></div>
 
@@ -245,6 +256,8 @@ function showBookName(bookCode, bookName) {
                 updateNumberDisplay();
                 document.getElementById('SHOW').innerHTML = '';
                 document.getElementById('SHOW').style.display = 'none';
+ 
+                document.getElementById('search-container').style.display = 'none';    
             });
 
             const confirmButton = document.querySelector('.btn-green');
@@ -265,9 +278,27 @@ function toggleSearch() {
     const searchContainer = document.getElementById('search-container');
     if (searchContainer.style.display === 'none' || searchContainer.style.display === '') {
         searchContainer.style.display = 'block';
+ 
+        document.getElementById('search-container').scrollIntoView();
+
     } else {
         searchContainer.style.display = 'none';
     }
+}
+
+function formatLyrics(lyrics, keyword) {
+    const lines = lyrics.split('\n');
+    const regex = new RegExp(keyword, 'gi');
+    let formattedLyrics = '';
+
+    lines.forEach(line => {
+        if (regex.test(line)) {
+            const highlightedLine = line.replace(regex, match => `<span style="color: red;">${match}</span>`);
+            formattedLyrics += `<div>${highlightedLine}</div>`;
+        }
+    });
+
+    return formattedLyrics;
 }
 
 function search() {
@@ -315,9 +346,8 @@ function search() {
 
     document.getElementById('SHOW').innerHTML = results;
     document.getElementById('SHOW').style.display = 'block';
-
-    // 隱藏搜尋輸入框
-    document.getElementById('search-container').style.display = 'none';
+ 
+    document.getElementById('search-container').style.display = 'none';    
 }
 
 
