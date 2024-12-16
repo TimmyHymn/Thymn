@@ -1,0 +1,223 @@
+﻿<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>填滿螢幕的按鈕</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            font-family: Verdana, sans-serif;
+            height: 100%;
+            width: 100%;
+            background-color: #f7f7f7;
+        }
+
+        table {
+            width: 100%;
+            height: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        td {
+            padding: 2px;
+        }
+
+        input[type="button"] {
+            width: 100%;
+            height: 100%;
+            font-size: 6vw;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        input[type="button"]:hover {
+            background-color: #e0e0e0;
+        }
+
+        .btn-blue {
+            background-color: #0066cc;
+            color: #fff;
+        }
+
+        .btn-yellow {
+            background-color: #ffcc00;
+            color: #000;
+        }
+
+        .btn-red {
+            background-color: #ff3333;
+            color: #fff;
+        }
+
+        .btn-green {
+            background-color: #33cc33;
+            color: #fff;
+        }
+
+        /* SHOW 區域樣式 */
+        #SHOW {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            text-align: center; /* 置中顯示歌詞 */
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            min-height: 200px; /* 最小高度確保顯示 */
+            display: block; /* 確保顯示區域是可見的 */
+        }
+    </style>
+</head>
+<body>
+    <table>
+        <tr>
+            <td><input type="button" id="book-display" value="" class="btn-blue" disabled></td>
+            <td><input type="button" id="book-number" value="" class="btn-blue" disabled></td>
+            <td><input type="button" value="⇤" class="D"></td>
+        </tr>
+        <tr>
+            <td><input type="button" value="詩歌" class="btn-blue" onclick="showBookName(1, '詩歌')"></td>
+            <td><input type="button" value="1" class="btn-yellow"></td>
+            <td><input type="button" value="2" class="btn-yellow"></td>
+            <td><input type="button" value="3" class="btn-yellow"></td>
+        </tr>
+        <tr>
+            <td><input type="button" value="補充" class="btn-blue" onclick="showBookName(2, '補充')"></td>
+            <td><input type="button" value="4" class="btn-yellow"></td>
+            <td><input type="button" value="5" class="btn-yellow"></td>
+            <td><input type="button" value="6" class="btn-yellow"></td>
+        </tr>
+        <tr>
+            <td><input type="button" value="新頌" class="btn-blue" onclick="showBookName(3, '新頌')"></td>
+            <td><input type="button" value="7" class="btn-yellow"></td>
+            <td><input type="button" value="8" class="btn-yellow"></td>
+            <td><input type="button" value="9" class="btn-yellow"></td>
+        </tr>
+        <tr>
+            <td><input type="button" value="紅本" class="btn-blue" onclick="showBookName(4, '紅本')"></td>
+            <td><input type="button" value="清除" class="btn-red"></td>
+            <td><input type="button" value="0" class="btn-yellow"></td>
+            <td><input type="button" value="確認" class="btn-green"></td>
+        </tr>
+        <tr>
+            <td><input type="button" value="藍本" class="btn-blue" onclick="showBookName(5, '藍本')"></td>
+            <td><input type="button" value="兒童" class="btn-blue" onclick="showBookName(6, '兒童')"></td>
+            <td><input type="button" value="搜尋" class="btn-red"></td>
+            <td><input type="button" value="目錄" class="btn-red"></td>
+        </tr>
+    </table>
+
+    <div id="SHOW"></div>
+
+    <script>
+        // 檢查 localStorage 版本
+        const currentVersion = 1;
+        const storedVersion = localStorage.getItem('hymnsVersion');
+
+        // 如果 localStorage 版本不對或沒有 localStorage，載入 hymns.js
+        if (storedVersion !== String(currentVersion)) {
+            const script = document.createElement('script');
+            script.src = 'hymns.js';
+            document.head.appendChild(script);
+        }
+
+        function showBookName(bookCode, bookName) {
+            document.getElementById('book-display').value = bookCode;
+            document.getElementById('book-display-name').value = bookName;
+            document.getElementById('book-number').value = '';
+            document.getElementById('SHOW').innerHTML = '';
+            document.getElementById('SHOW').style.display = 'none';
+        }
+
+        function formatLyrics(lyrics) {
+            const lines = lyrics.split('\n');
+            let longestLine = '';
+
+            for (let i = 0; i < lines.length; i++) {
+                if (lines[i].length > longestLine.length) {
+                    longestLine = lines[i];
+                }
+            }
+
+            const screenWidth = window.innerWidth;
+            const charCount = longestLine.length;
+            const fontSize = (screenWidth / charCount) * 0.9;
+
+            let formattedLyrics = '';
+            for (let i = 0; i < lines.length; i++) {
+                if (i === 0) {
+                    formattedLyrics += `<div style="font-size: ${fontSize}px; color: red;">${lines[i]}</div>`;
+                } else {
+                    formattedLyrics += `<div style="font-size: ${fontSize}px;">${lines[i]}</div>`;
+                }
+            }
+            return formattedLyrics;
+        }
+
+        function searchLyrics(book, code) {
+            const hymns = JSON.parse(localStorage.getItem('hymns')) || [];
+            const hymn = hymns.find(hymn => hymn.book === book && hymn.code === code);
+            if (hymn) {
+                const formattedLyrics = formatLyrics(hymn.lyrics);
+                document.getElementById('SHOW').innerHTML = formattedLyrics;
+                document.getElementById('SHOW').style.display = 'block';
+            } else {
+                alert('找不到對應的歌詞');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            let numberValue = "";
+            const numberDisplay = document.getElementById('book-number');
+            
+            function updateNumberDisplay() {
+                numberDisplay.value = numberValue;
+            }
+
+            const numberButtons = document.querySelectorAll('.btn-yellow');
+            numberButtons.forEach(function(button) {
+                button.addEventListener('click', function() {
+                    numberValue += this.value;
+                    updateNumberDisplay();
+                });
+            });
+
+            const backButton = document.querySelector('.D');
+            backButton.addEventListener('click', function() {
+                numberValue = numberValue.slice(0, -1);
+                updateNumberDisplay();
+            });
+
+            const clearButton = document.querySelector('.btn-red');
+            clearButton.addEventListener('click', function() {
+                document.getElementById('book-display').value = '';
+                document.getElementById('book-number').value = '';
+                numberValue = '';
+                updateNumberDisplay();
+                document.getElementById('SHOW').innerHTML = '';
+                document.getElementById('SHOW').style.display = 'none';
+            });
+
+            const confirmButton = document.querySelector('.btn-green');
+            confirmButton.addEventListener('click', function() {
+                const bookCode = parseInt(document.getElementById('book-display').value, 10);
+                const bookNumber = parseInt(document.getElementById('book-number').value, 10);
+                if (bookCode && bookNumber) {
+                    searchLyrics(bookCode, bookNumber);
+                } else {
+                    alert("請選擇歌本名稱並輸入歌本號碼。");
+                }
+            });
+        });
+    </script>
+</body>
+</html>
