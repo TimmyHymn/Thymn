@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -135,7 +135,7 @@ font-size: 6vw;
             <td><input type="button" value="藍本" class="btn-blue" onclick="showBookName(5, '藍本')"></td>
             <td><input type="button" value="兒童" class="btn-blue" onclick="showBookName(6, '兒童')"></td>
             <td><input type="button" value="搜尋" class="btn-red" onclick="toggleSearch()"></td>
-            <td><input type="button" value="目錄" class="btn-red"></td>
+            <td><input type="button" value="說明" class="btn-red"></td>
         </tr>
     </table> 
 <div id="search-container">
@@ -189,32 +189,39 @@ function showBookName(bookCode, bookName) {
             return formattedLyrics;
         }
 
-        function searchLyrics(book, code) {
-            const hymns = JSON.parse(localStorage.getItem('hymns')) || [];
-  
+function searchLyrics(book, code) {
+    const hymns = JSON.parse(localStorage.getItem('hymns')) || [];
 
+    const bookCodeMap = {
+        '詩歌': 1,
+        '補充': 2,
+        '新頌': 3,
+        '紅本': 4,
+        '兒童': 5,
+        '藍本': 6
+    };
+    const hymn = hymns.find(hymn => hymn.book === bookCodeMap[book] && hymn.code === code);
 
-            const bookCodeMap = {
-                '詩歌': 1,
-                '補充': 2,
-                '新頌': 3,
-                '紅本': 4,
-                '兒童': 5,
-                '藍本': 6
-            };
-            const hymn = hymns.find(hymn => hymn.book === bookCodeMap[book] && hymn.code === code);
+    if (hymn) {
+        const formattedLyrics = formatLyrics(hymn.lyrics);
+        let result = formattedLyrics;
 
-            if (hymn) {
-                const formattedLyrics = formatLyrics(hymn.lyrics);
-                document.getElementById('SHOW').innerHTML = formattedLyrics;
-                document.getElementById('SHOW').style.display = 'block';
- 
-                document.getElementById('SHOW').scrollIntoView();
-
-            } else {
-                alert('找不到對應的歌詞');
-            }
+        // 取得並顯示上次點歌日期
+        const favorite = hymn.favorite;
+        if (favorite) {
+            // 直接顯示 favorite 的值
+            result += `<div style="font-size: 6vw; color: blue;">上次點歌日期: ${favorite}</div>`;
         }
+
+        // 顯示格式化後的歌詞
+        document.getElementById('SHOW').innerHTML = result;
+        document.getElementById('SHOW').style.display = 'block';
+        document.getElementById('SHOW').scrollIntoView();
+
+    } else {
+        alert('找不到對應的歌詞');
+    }
+}
 
         document.addEventListener('DOMContentLoaded', function() {
             let numberValue = "";
@@ -261,15 +268,50 @@ function showBookName(bookCode, bookName) {
             });
 
             const confirmButton = document.querySelector('.btn-green');
-            confirmButton.addEventListener('click', function() {
-                const bookName = document.getElementById('book-display').value;
-                const bookNumber = parseInt(document.getElementById('book-number').value, 10);
-                if (bookName && bookNumber) {
-                    searchLyrics(bookName, bookNumber);
-                } else {
-                    alert("請選擇歌本名稱並輸入歌本號碼。");
-                }
-            });
+confirmButton.addEventListener('click', function() {
+    const bookName = document.getElementById('book-display').value;
+    const bookNumber = parseInt(document.getElementById('book-number').value, 10);
+
+    if (bookName && bookNumber) {
+        searchLyrics(bookName, bookNumber);
+
+        // 取得當天的日期，並轉換為民國年格式
+        const today = new Date();
+        const gregorianYear = today.getFullYear();  // 公元年
+        const taiwanYear = gregorianYear - 1911;  // 民國年
+        const month = today.getMonth() + 1;  // 月份 (1-12)
+        const day = today.getDate();  // 日期 (1-31)
+
+        // 轉換為民國日期數字，格式：民國年（例如：1131216）
+        const taiwanDate = `${taiwanYear}${month.toString().padStart(2, '0')}${day.toString().padStart(2, '0')}`;
+
+        // 取得 hymns 資料並更新 favorite
+        const hymns = JSON.parse(localStorage.getItem('hymns')) || [];
+        const bookCodeMap = {
+            '詩歌': 1,
+            '補充': 2,
+            '新頌': 3,
+            '紅本': 4,
+            '兒童': 5,
+            '藍本': 6
+        };
+
+        // 尋找相對應的歌本和歌號
+        const hymn = hymns.find(hymn => hymn.book === bookCodeMap[bookName] && hymn.code === bookNumber);
+
+        if (hymn) {
+            // 儲存民國日期到 favorite 屬性
+            hymn.favorite = parseInt(taiwanDate, 10);
+
+            // 更新 hymns 並儲存回 localStorage
+            localStorage.setItem('hymns', JSON.stringify(hymns));
+        } else {
+            alert('找不到對應的歌詞');
+        }
+    } else {
+        alert("請選擇歌本名稱並輸入歌本號碼。");
+    }
+});
         });
  
         
