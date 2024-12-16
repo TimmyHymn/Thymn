@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>填滿螢幕的按鈕</title>
+    <title>網頁版詩歌</title>
     <style>
         * {
             margin: 0;
@@ -286,21 +286,68 @@ function toggleSearch() {
     }
 }
 
-function formatLyrics(lyrics, keyword) {
+// 合併字型放大與關鍵字高亮的功能
+        function formatLyrics(lyrics) {
+            const lines = lyrics.split('\n');
+            let longestLine = '';
+
+            for (let i = 0; i < lines.length; i++) {
+                if (lines[i].length > longestLine.length) {
+                    longestLine = lines[i];
+                }
+            }
+
+            const screenWidth = window.innerWidth;
+            const charCount = longestLine.length;
+            const fontSize = (screenWidth / charCount) * 0.9;
+
+            let formattedLyrics = '';
+            for (let i = 0; i < lines.length; i++) {
+                if (i === 0) {
+                    formattedLyrics += `<div style="font-size: ${fontSize}px; color: red;">${lines[i]}</div>`;
+                } else {
+                    formattedLyrics += `<div style="font-size: ${fontSize}px;">${lines[i]}</div>`;
+                }
+            }
+            return formattedLyrics;
+        }
+
+
+function formatLyricsWithHighlight(lyrics, keyword) {
     const lines = lyrics.split('\n');
-    const regex = new RegExp(keyword, 'gi');
+    let longestLine = '';
+
+    // 找到最長的一行來動態調整字體大小
+    for (let i = 0; i < lines.length; i++) {
+        if (lines[i].length > longestLine.length) {
+            longestLine = lines[i];
+        }
+    }
+
+    // 計算字體大小
+    const screenWidth = window.innerWidth;
+    const charCount = longestLine.length;
+    const fontSize = (screenWidth / charCount) * 0.9;
+
     let formattedLyrics = '';
 
-    lines.forEach(line => {
-        if (regex.test(line)) {
-            const highlightedLine = line.replace(regex, match => `<span style="color: red;">${match}</span>`);
-            formattedLyrics += `<div>${highlightedLine}</div>`;
+    // 格式化每一行歌詞並高亮關鍵字
+    for (let i = 0; i < lines.length; i++) {
+        let line = lines[i];
+
+        // 如果有關鍵字，則進行高亮處理
+        if (keyword) {
+            const regex = new RegExp(keyword, 'gi');
+            line = line.replace(regex, match => `<span style="color: red;">${match}</span>`); // 高亮顯示關鍵字
         }
-    });
+
+        formattedLyrics += `<div style="font-size: ${fontSize}px;">${line}</div>`;
+    }
 
     return formattedLyrics;
 }
 
+// 搜尋功能
 function search() {
     const keyword = document.getElementById('search-input').value.trim();
     if (!keyword) {
@@ -317,39 +364,75 @@ function search() {
         5: '兒童',
         6: '藍本'
     };
-    const regex = new RegExp(keyword, 'gi');
+
+    const regex = new RegExp(keyword, 'gi'); // 設定搜尋正則表達式
     let results = '';
+    let lastBook = null; // 用來追蹤上一個顯示的 book
 
     hymns.forEach(hymn => {
         let displayTitle = false;
         let displayLyrics = '';
 
+        // 檢查標題是否符合關鍵字
         if (regex.test(hymn.title)) {
             displayTitle = true;
         }
 
-        if (regex.test(hymn.lyrics)) {
-            displayLyrics = formatLyrics(hymn.lyrics, keyword);
+        // 檢查歌詞是否符合關鍵字，並對符合的部分高亮
+        let matchingLines = [];
+        const lines = hymn.lyrics.split('\n');
+        lines.forEach(line => {
+            if (regex.test(line)) {
+                // 高亮顯示匹配的歌詞行
+                matchingLines.push(formatLyricsLine(line, keyword));
+            }
+        });
+
+        // 如果有符合的歌詞行，顯示它們
+        if (matchingLines.length > 0) {
+            displayLyrics = matchingLines.join('<br/>');
         }
 
+        // 顯示符合條件的標題和歌詞
         if (displayTitle || displayLyrics) {
-            results += `<div><strong>${bookCodeMap[hymn.book]} ${hymn.code}</strong>: ${hymn.title}</div>`;
-            if (displayLyrics) {
-                results += `<div>${displayLyrics}</div>`;
+            // 如果 book 變更了，加入一個換行
+            if (lastBook && lastBook !== hymn.book) {
+                results += '<br/>'; // 加入額外的換行
             }
+
+            // 處理標題，設定顏色為深藍，並對關鍵字反紅
+            results += `<div style="font-size: 6vw; color: darkblue;">${bookCodeMap[hymn.book]} ${hymn.code}: ${formatTitleLine(hymn.title, keyword)}</div>`;
+            if (displayLyrics) {
+                results += `<div style="font-size: 6vw;">${displayLyrics}</div>`;
+            }
+
+            // 更新最後一次顯示的 book
+            lastBook = hymn.book;
         }
     });
 
+    // 若無符合結果，顯示提示
     if (!results) {
         results = '找不到符合的結果';
     }
 
+    // 將結果顯示到 SHOW 區域
     document.getElementById('SHOW').innerHTML = results;
     document.getElementById('SHOW').style.display = 'block';
- 
     document.getElementById('search-container').style.display = 'none';    
 }
 
+// 用來格式化歌詞行並高亮顯示搜尋關鍵字
+function formatLyricsLine(line, keyword) {
+    const regex = new RegExp(keyword, 'gi');
+    return line.replace(regex, match => `<span style="color: red;">${match}</span>`);
+}
+
+// 處理標題行，設定顏色為深藍並高亮關鍵字
+function formatTitleLine(title, keyword) {
+    const regex = new RegExp(keyword, 'gi');
+    return title.replace(regex, match => `<span style="color: red;">${match}</span>`);
+}
 
     </script>
 </body>
