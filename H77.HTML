@@ -287,30 +287,40 @@ function toggleSearch() {
 }
 
 // 合併字型放大與關鍵字高亮的功能
-        function formatLyrics(lyrics) {
-            const lines = lyrics.split('\n');
-            let longestLine = '';
+function formatLyrics(lyrics) {
+    const lines = lyrics.split('\n');
+    let longestLine = '';
 
-            for (let i = 0; i < lines.length; i++) {
-                if (lines[i].length > longestLine.length) {
-                    longestLine = lines[i];
-                }
-            }
-
-            const screenWidth = window.innerWidth;
-            const charCount = longestLine.length;
-            const fontSize = (screenWidth / charCount) * 0.9;
-
-            let formattedLyrics = '';
-            for (let i = 0; i < lines.length; i++) {
-                if (i === 0) {
-                    formattedLyrics += `<div style="font-size: ${fontSize}px; color: red;">${lines[i]}</div>`;
-                } else {
-                    formattedLyrics += `<div style="font-size: ${fontSize}px;">${lines[i]}</div>`;
-                }
-            }
-            return formattedLyrics;
+    for (let i = 0; i < lines.length; i++) {
+        const digitCount = (lines[i].match(/\d/g) || []).length;
+        if (lines[i].length > longestLine.length && digitCount <= 3) {
+            longestLine = lines[i];
         }
+    }
+
+    const screenWidth = window.innerWidth;
+    const charCount = longestLine.length;
+    const fontSize = (screenWidth / charCount) * 0.95;
+
+    let formattedLyrics = '';
+    for (let i = 0; i < lines.length; i++) {
+        if (i === 0) {
+            formattedLyrics += `<div style="font-size: ${fontSize}px; color: red;">${lines[i]}</div>`;
+        } else {
+            formattedLyrics += `<div style="font-size: ${fontSize}px;">${lines[i]}</div>`;
+        }
+    }
+    return formattedLyrics;
+}
+
+
+
+
+
+
+
+
+
 
 
 function formatLyricsWithHighlight(lyrics, keyword) {
