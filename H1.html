@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+s﻿<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -159,7 +159,8 @@ font-size: 6vw;
 
 function showBookName(bookCode, bookName) {
     document.getElementById('book-display').value = bookName;
-//    document.getElementById('book-number').value = ''; // 清空 book-number 的值     
+//    document.getElementById('book-number').value = ''; // 清空 book-number 的值
+     
     document.getElementById('SHOW').innerHTML = '';
     document.getElementById('SHOW').style.display = 'none';
 }
@@ -319,6 +320,7 @@ function HELPTEXT(){
         const TimmyMSG = formatLyrics(localStorage.getItem('TimmyMSG'));
         document.getElementById('SHOW').innerHTML = TimmyMSG; // 显示到 #SHOW 元素
         document.getElementById('SHOW').style.display = 'block'; // 显示 SHOW 元素
+        document.getElementById('search-container').scrollIntoView();
 }        
         
 function toggleSearch() {
