@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>網頁版詩歌</title>
+    <title>填滿螢幕的按鈕</title>
     <style>
         * {
             margin: 0;
@@ -75,6 +75,16 @@
             min-height: 200px; /* 最小高度確保顯示 */
             display: block; /* 確保顯示區域是可見的 */
         }
+ 
+ 
+
+/* 搜尋輸入框樣式 */
+#search-container {
+    display: none;  /* 預設為不顯示，且不佔版面 */
+    margin-top: 20px;
+    text-align: center;
+}
+
     </style>
 </head>
 <body>
@@ -82,7 +92,7 @@
         <tr>
             <td><input type="button" id="book-display" value="" class="btn-blue" disabled></td>
             <td><input type="button" id="book-number" value="" class="btn-blue" disabled></td>
-            <td><input type="button" value="⇤" class="D"></td>
+            <td><input type="button" value="⌫" class="D"></td>
         </tr>
         <tr>
             <td><input type="button" value="詩歌" class="btn-blue" onclick="showBookName(1, '詩歌')"></td>
@@ -111,11 +121,17 @@
         <tr>
             <td><input type="button" value="藍本" class="btn-blue" onclick="showBookName(5, '藍本')"></td>
             <td><input type="button" value="兒童" class="btn-blue" onclick="showBookName(6, '兒童')"></td>
-            <td><input type="button" value="搜尋" class="btn-red"></td>
+            <td><input type="button" value="搜尋" class="btn-red" onclick="toggleSearch()"></td>
             <td><input type="button" value="目錄" class="btn-red"></td>
         </tr>
-    </table>
+    </table> 
 
+<div id="search-container">
+    <input type="text" id="search-input" placeholder="輸入搜尋關鍵字...">
+    <button id="search-button" class="btn-blue" onclick="search()">搜尋</button>
+</div>
+
+    
     <div id="SHOW"></div>
 
     <script>
@@ -192,6 +208,7 @@ function showBookName(bookCode, bookName) {
         document.addEventListener('DOMContentLoaded', function() {
             let numberValue = "";
             const numberDisplay = document.getElementById('book-number');
+
     // 防止雙擊縮放
     let lastTouchEnd = 0;
     document.addEventListener('touchend', function(event) {
@@ -201,7 +218,7 @@ function showBookName(bookCode, bookName) {
         }
         lastTouchEnd = now;
     }, false);
-
+            
             function updateNumberDisplay() {
                 numberDisplay.value = numberValue;
             }
@@ -241,6 +258,69 @@ function showBookName(bookCode, bookName) {
                 }
             });
         });
+ 
+        
+        
+function toggleSearch() {
+    const searchContainer = document.getElementById('search-container');
+    if (searchContainer.style.display === 'none' || searchContainer.style.display === '') {
+        searchContainer.style.display = 'block';
+    } else {
+        searchContainer.style.display = 'none';
+    }
+}
+
+function search() {
+    const keyword = document.getElementById('search-input').value.trim();
+    if (!keyword) {
+        alert('請輸入搜尋關鍵字');
+        return;
+    }
+
+    const hymns = JSON.parse(localStorage.getItem('hymns')) || [];
+    const bookCodeMap = {
+        1: '詩歌',
+        2: '補充',
+        3: '新頌',
+        4: '紅本',
+        5: '兒童',
+        6: '藍本'
+    };
+    const regex = new RegExp(keyword, 'gi');
+    let results = '';
+
+    hymns.forEach(hymn => {
+        let displayTitle = false;
+        let displayLyrics = '';
+
+        if (regex.test(hymn.title)) {
+            displayTitle = true;
+        }
+
+        if (regex.test(hymn.lyrics)) {
+            displayLyrics = formatLyrics(hymn.lyrics, keyword);
+        }
+
+        if (displayTitle || displayLyrics) {
+            results += `<div><strong>${bookCodeMap[hymn.book]} ${hymn.code}</strong>: ${hymn.title}</div>`;
+            if (displayLyrics) {
+                results += `<div>${displayLyrics}</div>`;
+            }
+        }
+    });
+
+    if (!results) {
+        results = '找不到符合的結果';
+    }
+
+    document.getElementById('SHOW').innerHTML = results;
+    document.getElementById('SHOW').style.display = 'block';
+
+    // 隱藏搜尋輸入框
+    document.getElementById('search-container').style.display = 'none';
+}
+
+
     </script>
 </body>
 </html>
