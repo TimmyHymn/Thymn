@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -135,7 +135,7 @@ font-size: 6vw;
             <td><input type="button" value="藍本" class="btn-blue" onclick="showBookName(5, '藍本')"></td>
             <td><input type="button" value="兒童" class="btn-blue" onclick="showBookName(6, '兒童')"></td>
             <td><input type="button" value="搜尋" class="btn-red" onclick="toggleSearch()"></td>
-            <td><input type="button" value="說明" class="btn-red"></td>
+            <td><input type="button" value="說明" class="btn-red" onclick="HELPTEXT()"></td>
         </tr>
     </table> 
 <div id="search-container">
@@ -159,8 +159,7 @@ font-size: 6vw;
 
 function showBookName(bookCode, bookName) {
     document.getElementById('book-display').value = bookName;
-//    document.getElementById('book-number').value = ''; // 清空 book-number 的值
-     
+//    document.getElementById('book-number').value = ''; // 清空 book-number 的值     
     document.getElementById('SHOW').innerHTML = '';
     document.getElementById('SHOW').style.display = 'none';
 }
@@ -315,7 +314,12 @@ confirmButton.addEventListener('click', function() {
 });
         });
  
-        
+function HELPTEXT(){
+
+        const TimmyMSG = formatLyrics(localStorage.getItem('TimmyMSG'));
+        document.getElementById('SHOW').innerHTML = TimmyMSG; // 显示到 #SHOW 元素
+        document.getElementById('SHOW').style.display = 'block'; // 显示 SHOW 元素
+}        
         
 function toggleSearch() {
     const searchContainer = document.getElementById('search-container');
@@ -430,6 +434,12 @@ function search() {
         if (regex.test(hymn.title)) {
             displayTitle = true;
         }
+
+        if (regex.test(hymn.favorite)) {
+            displayTitle = true;
+        }
+         
+          
 
         // 檢查歌詞是否符合關鍵字，並對符合的部分高亮
         let matchingLine = '';
