@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -130,13 +130,12 @@
             document.head.appendChild(script);
         }
 
-        function showBookName(bookCode, bookName) {
-            document.getElementById('book-display').value = bookCode;
-            document.getElementById('book-display-name').value = bookName;
-            document.getElementById('book-number').value = '';
-            document.getElementById('SHOW').innerHTML = '';
-            document.getElementById('SHOW').style.display = 'none';
-        }
+function showBookName(bookCode, bookName) {
+    document.getElementById('book-display').value = bookName;
+    document.getElementById('book-number').value = ''; // 清空 book-number 的值
+    document.getElementById('SHOW').innerHTML = '';
+    document.getElementById('SHOW').style.display = 'none';
+}
 
         function formatLyrics(lyrics) {
             const lines = lyrics.split('\n');
@@ -165,11 +164,26 @@
 
         function searchLyrics(book, code) {
             const hymns = JSON.parse(localStorage.getItem('hymns')) || [];
-            const hymn = hymns.find(hymn => hymn.book === book && hymn.code === code);
+  
+
+
+            const bookCodeMap = {
+                '詩歌': 1,
+                '補充': 2,
+                '新頌': 3,
+                '紅本': 4,
+                '兒童': 5,
+                '藍本': 6
+            };
+            const hymn = hymns.find(hymn => hymn.book === bookCodeMap[book] && hymn.code === code);
+
             if (hymn) {
                 const formattedLyrics = formatLyrics(hymn.lyrics);
                 document.getElementById('SHOW').innerHTML = formattedLyrics;
                 document.getElementById('SHOW').style.display = 'block';
+ 
+                document.getElementById('SHOW').scrollIntoView();
+
             } else {
                 alert('找不到對應的歌詞');
             }
@@ -209,10 +223,10 @@
 
             const confirmButton = document.querySelector('.btn-green');
             confirmButton.addEventListener('click', function() {
-                const bookCode = parseInt(document.getElementById('book-display').value, 10);
+                const bookName = document.getElementById('book-display').value;
                 const bookNumber = parseInt(document.getElementById('book-number').value, 10);
-                if (bookCode && bookNumber) {
-                    searchLyrics(bookCode, bookNumber);
+                if (bookName && bookNumber) {
+                    searchLyrics(bookName, bookNumber);
                 } else {
                     alert("請選擇歌本名稱並輸入歌本號碼。");
                 }
