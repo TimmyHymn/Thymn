@@ -13841,7 +13841,9 @@ const hymns = [
   }
 ];
 const databaseVersion = 20241229;
+const TMSG = 'Timmy的前言：\n心疼年長者帶太多詩歌本，\n所以我個人獨立設計，免費供會所弟兄姊妹使用。\n由於經費相關問題，\n故不再開發安卓版\n未來網站維護若超過我個人所能負擔，\n該項造福工作也會就此結束\n\n\n大本詩歌附歌1-6歌號\n本系統為1001~1006\n\n\n本版功能特色：若使用系統後指示關閉網頁而不清除緩存，\n爾後開啟運作速度提升100倍以上且不戰流量\n\n歌詞部分自動放大而不需要再手動調整\n歷史點唱紀錄將紀錄於歌詞末端\n";
 
 // 儲存到 localStorage
 localStorage.setItem('hymns', JSON.stringify(hymns));
 localStorage.setItem('hymnsVersion', databaseVersion);
+localStorage.setItem('TimmyMSG', databaseVersion);
