@@ -103,8 +103,8 @@ font-size: 6vw;
 <body>
     <table>
         <tr>
-            <td><input type="button" id="book-display" value="" class="btn-blue" disabled></td>
-            <td><input type="button" id="book-number" value="" class="btn-blue" disabled></td>
+            <td><input type="button" id="book-display" value="" class="btn-green" disabled></td>
+            <td><input type="button" id="book-number" value="" class="btn-green" disabled></td>
             <td><input type="button" value="⌫" class="D"></td>
         </tr>
         <tr>
@@ -159,7 +159,8 @@ font-size: 6vw;
 
 function showBookName(bookCode, bookName) {
     document.getElementById('book-display').value = bookName;
-    document.getElementById('book-number').value = ''; // 清空 book-number 的值
+//    document.getElementById('book-number').value = ''; // 清空 book-number 的值
+     
     document.getElementById('SHOW').innerHTML = '';
     document.getElementById('SHOW').style.display = 'none';
 }
