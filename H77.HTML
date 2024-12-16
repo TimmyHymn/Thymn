@@ -367,7 +367,7 @@ function search() {
 
     const regex = new RegExp(keyword, 'gi'); // 設定搜尋正則表達式
     let results = '';
-    let lastBook = null; // 用來追蹤上一個顯示的 book
+    let lastCode = null; // 用來追蹤上一個顯示的 code
 
     hymns.forEach(hymn => {
         let displayTitle = false;
@@ -379,25 +379,26 @@ function search() {
         }
 
         // 檢查歌詞是否符合關鍵字，並對符合的部分高亮
-        let matchingLines = [];
+        let matchingLine = '';
         const lines = hymn.lyrics.split('\n');
-        lines.forEach(line => {
+        for (let line of lines) {
             if (regex.test(line)) {
-                // 高亮顯示匹配的歌詞行
-                matchingLines.push(formatLyricsLine(line, keyword));
+                // 只顯示第一個符合的歌詞行
+                matchingLine = formatLyricsLine(line, keyword);
+                break; // 找到第一個符合的行後就跳出
             }
-        });
+        }
 
-        // 如果有符合的歌詞行，顯示它們
-        if (matchingLines.length > 0) {
-            displayLyrics = matchingLines.join('<br/>');
+        // 如果有符合的歌詞行，顯示它
+        if (matchingLine) {
+            displayLyrics = matchingLine;
         }
 
         // 顯示符合條件的標題和歌詞
         if (displayTitle || displayLyrics) {
-            // 如果 book 變更了，加入一個換行
-            if (lastBook && lastBook !== hymn.book) {
-                results += '<br/>'; // 加入額外的換行
+            // 如果 code 變更了，加入一個換行
+            if (lastCode && lastCode !== hymn.code) {
+                results += '<br/><br/><br/>'; // 加入額外的換行
             }
 
             // 處理標題，設定顏色為深藍，並對關鍵字反紅
@@ -406,8 +407,8 @@ function search() {
                 results += `<div style="font-size: 6vw;">${displayLyrics}</div>`;
             }
 
-            // 更新最後一次顯示的 book
-            lastBook = hymn.book;
+            // 更新最後一次顯示的 code
+            lastCode = hymn.code;
         }
     });
 
