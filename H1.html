@@ -308,6 +308,14 @@ confirmButton.addEventListener('click', function() {
         } else {
             alert('找不到對應的歌詞');
         }
+
+        // 清空 numberValue 和顯示區域
+        numberValue = '';
+        updateNumberDisplay();
+        document.getElementById('book-number').value = ''; // 清空顯示的歌本號
+        document.getElementById('SHOW').innerHTML = '';
+        document.getElementById('SHOW').style.display = 'none';
+        document.getElementById('search-container').style.display = 'none'; // 隱藏搜尋框
     } else {
         alert("請選擇歌本名稱並輸入歌本號碼。");
     }
