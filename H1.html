@@ -211,7 +211,7 @@ function searchLyrics(book, code) {
         const favorite = hymn.favorite;
         if (favorite) {
             // 直接顯示 favorite 的值
-            result += `<div style="font-size: 6vw; color: blue;">上次點歌日期: ${favorite}</div>`;
+            result += `<div style="font-size: 6vw; color: blue; background-color: #BDA589;">上次點歌日期: ${favorite}</div>`;
         }
 
         // 顯示格式化後的歌詞
@@ -339,6 +339,7 @@ function toggleSearch() {
 function formatLyrics(lyrics) {
     const lines = lyrics.split('\n');
     let longestLine = '';
+    let currentColor = '';
 
     for (let i = 0; i < lines.length; i++) {
         const digitCount = (lines[i].match(/\d/g) || []).length;
@@ -351,16 +352,26 @@ function formatLyrics(lyrics) {
     const charCount = longestLine.length;
     const fontSize = (screenWidth / charCount) * 0.93;
 
+    function isNumeric(line) {
+        return /^\d+$/.test(line); // 檢查是否整行都是數字
+    }
+
     let formattedLyrics = '';
     for (let i = 0; i < lines.length; i++) {
         if (i === 0) {
-            formattedLyrics += `<div style="font-size: ${fontSize}px; color: red; background-color:#BDA589">${lines[i]}</div>`;
+            formattedLyrics += `<div style="font-size: ${fontSize}px; color: red; background-color: #BDA589;">${lines[i]}</div>`;
+        } else if (isNumeric(lines[i])) { // 檢查是否整行都是數字
+            currentColor = currentColor === 'MidnightBlue' ? 'DarkGreen' : 'MidnightBlue'; // 切換顏色
+            formattedLyrics += `<div style="font-size: ${fontSize}px; color: ${currentColor};">${lines[i]}</div>`;
         } else {
-            formattedLyrics += `<div style="font-size: ${fontSize}px;">${lines[i]}</div>`;
+            formattedLyrics += `<div style="font-size: ${fontSize}px; color: ${currentColor};">${lines[i]}</div>`;
         }
     }
     return formattedLyrics;
 }
+
+
+
 
 
 
