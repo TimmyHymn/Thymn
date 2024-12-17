@@ -549,7 +549,7 @@ function showDirectory() {
 
     hymns.forEach(hymn => {
         if (hymn.book === bookCode) {
-            result += `<div style="font-size: 5vw; color: ${currentColor};">${bookName} ${hymn.code}: ${hymn.title}</div><br/><br/><br/>`;
+            result += `<div style="font-size: 6vw; color: ${currentColor};">${bookName} ${hymn.code}: ${hymn.title}</div><br/><br/>`;
             currentColor = currentColor === 'MidnightBlue' ? 'DarkGreen' : 'MidnightBlue'; // 切換顏色
         }
     });
