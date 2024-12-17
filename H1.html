@@ -103,9 +103,10 @@ font-size: 6vw;
 <body>
     <table>
         <tr>
-            <td><input type="button" id="book-display" value="" class="btn-blue" style="color: yellow" disabled></td>
-            <td><input type="button" id="book-number" value="" class="btn-blue" style="color: yellow" disabled></td>
-            <td><input type="button" value="⌫" class="D"></td>
+            <td><input type="button" id="book-display" value="" class="btn-blue" style="color: yellow; border-radius: 50px;" disabled></td>
+            <td><input type="button" id="book-number" value="" class="btn-blue" style="color: yellow; border-radius: 50px;" disabled></td>
+            <td><input type="button" value="⌫" class="D"></td> 
+            <td><input type="button" value="目錄" class="btn-blue" onclick="showDirectory()"></td>
         </tr>
         <tr>
             <td><input type="button" value="詩歌" class="btn-blue" onclick="showBookName(1, '詩歌')"></td>
@@ -509,6 +510,57 @@ function formatLyricsLine(line, keyword) {
 function formatTitleLine(title, keyword) {
     const regex = new RegExp(keyword, 'gi');
     return title.replace(regex, match => `<span style="color: red;">${match}</span>`);
+}
+//處理目錄
+// 显示书名并存储当前书名和编号
+function showBookName(bookCode, bookName) {
+    document.getElementById('book-display').value = bookName;
+    document.getElementById('SHOW').innerHTML = '';
+    document.getElementById('SHOW').style.display = 'none';
+}
+
+// 顯示目錄
+function showDirectory() {
+    const bookName = document.getElementById('book-display').value;
+    if (!bookName) {
+        alert("請選擇歌本名稱，然後再按目錄。");
+        return;
+    }
+
+    const hymns = JSON.parse(localStorage.getItem('hymns')) || [];
+    const bookCodeMap = {
+        '詩歌': 1,
+        '補充': 2,
+        '新頌': 3,
+        '紅本': 4,
+        '兒童': 5,
+        '藍本': 6
+    };
+
+    const bookCode = bookCodeMap[bookName];
+    if (!bookCode) {
+        alert("無效的歌本名稱。");
+        return;
+    }
+
+    let result = '';
+    let currentColor = 'MidnightBlue';
+
+    hymns.forEach(hymn => {
+        if (hymn.book === bookCode) {
+            result += `<div style="font-size: 3vw; color: ${currentColor};">${bookName} ${hymn.code}: ${hymn.title}</div><br/><br/><br/>`;
+            currentColor = currentColor === 'MidnightBlue' ? 'DarkGreen' : 'MidnightBlue'; // 切換顏色
+        }
+    });
+
+    if (result === '') {
+        result = '找不到目錄。';
+    }
+
+    document.getElementById('SHOW').innerHTML = result;
+    document.getElementById('SHOW').style.display = 'block';
+    document.getElementById('search-container').style.display = 'none'; 
+    document.getElementById('SHOW').scrollIntoView();
 }
 
     </script>
