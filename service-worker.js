@@ -3,12 +3,11 @@ self.addEventListener('install', (event) => {
     caches.open('hymns-cache').then((cache) => {
       return cache.addAll([
         '/',
-        '/H1PWA.html',
-        '/styles.css',
-        '/hymns.js',
-        '/manifest.json',
-        '/icons/icon-192x192.png',
-        '/icons/icon-512x512.png'
+        '/Thymn/H1PWA.html',
+        '/Thymn/hymns.js',
+        '/Thymn/manifest.json',
+        '/Thymn/icon-192x192.png',
+        '/Thymn/icon-512x512.png'
       ]);
     })
   );
