@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
  
-<link rel="manifest" href="./manifest.json">
+<link rel="manifest" href="/Thymn/manifest.json">
 <meta name="theme-color" content="#0066cc">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
@@ -560,7 +560,7 @@ function showDirectory() {
 //採用PWA模式
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./service-worker.js')
+    navigator.serviceWorker.register('/Thymn/service-worker.js')
       .then((registration) => {
         console.log('Service Worker 註冊成功:', registration);
       })
