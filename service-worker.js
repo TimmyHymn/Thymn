@@ -3,7 +3,7 @@ self.addEventListener('install', (event) => {
     caches.open('hymns-cache').then((cache) => {
       return cache.addAll([
         '/',
-        '/index.html',
+        '/H1PWA.html',
         '/styles.css',
         '/hymns.js',
         '/manifest.json',
