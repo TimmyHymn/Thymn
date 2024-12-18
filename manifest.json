@@ -1,6 +1,6 @@
 {
-    "name": "網頁版詩歌",
-    "short_name": "詩歌",
+    "name": "Timmy的詩歌系統",
+    "short_name": "召會詩歌本",
     "start_url": "/Thymn/H1.html",
     "display": "standalone",
     "background_color": "#f7f7f7",
