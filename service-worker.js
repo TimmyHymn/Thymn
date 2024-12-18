@@ -5,10 +5,7 @@ self.addEventListener('install', event => {
             return cache.addAll([
                 '/Thymn/H1.html',
                 '/Thymn/manifest.json',
-                '/Thymn/style.css',
-                '/Thymn/script.js',
-                '/Thymn/icon-192x192.png',
-                '/Thymn/icon-512x512.png'
+                // 這裡是您擁有的其它資源
             ]).catch(error => {
                 console.error('Caching failed:', error);
             });
