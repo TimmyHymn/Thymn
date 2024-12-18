@@ -1,6 +1,8 @@
 ﻿<!DOCTYPE html>
 <html lang="zh-TW">
-<head>
+<head> 
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0066cc">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>網頁版詩歌</title>
@@ -550,6 +552,19 @@ function showDirectory() {
     document.getElementById('SHOW').style.display = 'block';
     document.getElementById('search-container').style.display = 'none'; 
     document.getElementById('SHOW').scrollIntoView();
+}
+
+//採用PWA模式
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then((registration) => {
+        console.log('Service Worker 註冊成功:', registration);
+      })
+      .catch((error) => {
+        console.log('Service Worker 註冊失敗:', error);
+      });
+  });
 }
 
     </script>
