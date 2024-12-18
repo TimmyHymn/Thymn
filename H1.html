@@ -359,16 +359,22 @@ function formatLyrics(lyrics) {
         if (i === 0) {
             formattedLyrics += `<div style="font-size: ${fontSize}px; color: red; background-color: #BDA589;"
                 onmouseover="this.style.backgroundColor='#FFD700';"
-                onmouseout="this.style.backgroundColor='#BDA589';">${lines[i]}</div>`;
+                onmouseout="this.style.backgroundColor='#BDA589';"
+                ontouchstart="this.style.backgroundColor='#FFD700';"
+                ontouchend="this.style.backgroundColor='#BDA589';">${lines[i]}</div>`;
         } else if (isNumeric(lines[i])) { // 檢查是否整行都是數字
             currentColor = currentColor === 'MidnightBlue' ? 'DarkGreen' : 'MidnightBlue'; // 切換顏色
             formattedLyrics += `<div style="font-size: ${fontSize}px; color: ${currentColor};"
                 onmouseover="this.style.backgroundColor='#FFD700';"
-                onmouseout="this.style.backgroundColor='';">${lines[i]}</div>`;
+                onmouseout="this.style.backgroundColor='';"
+                ontouchstart="this.style.backgroundColor='#FFD700';"
+                ontouchend="this.style.backgroundColor='';">${lines[i]}</div>`;
         } else {
             formattedLyrics += `<div style="font-size: ${fontSize}px; color: ${currentColor};"
                 onmouseover="this.style.backgroundColor='#FFD700';"
-                onmouseout="this.style.backgroundColor='';">${lines[i]}</div>`;
+                onmouseout="this.style.backgroundColor='';"
+                ontouchstart="this.style.backgroundColor='#FFD700';"
+                ontouchend="this.style.backgroundColor='';">${lines[i]}</div>`;
         }
     }
     return formattedLyrics;
