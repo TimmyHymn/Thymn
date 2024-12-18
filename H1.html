@@ -94,7 +94,6 @@ font-size: 6vw;
 #search-button {
     padding: 10px 20px;
     font-size: 6vw;
-
     margin-left: 10px;
     cursor: pointer;
 }
@@ -105,8 +104,7 @@ font-size: 6vw;
         <tr>
             <td><input type="button" id="book-display" value="" class="btn-blue" style="color: yellow; border-radius: 50px;" disabled></td>
             <td><input type="button" id="book-number" value="" class="btn-blue" style="color: yellow; border-radius: 50px;" disabled></td>
-            <td><input type="button" value="⌫" class="D"></td>
- 
+            <td><input type="button" value="⌫" class="D"></td> 
             <td><input type="button" value="目錄" class="btn-blue" onclick="showDirectory()"></td>
         </tr>
         <tr>
@@ -160,9 +158,7 @@ font-size: 6vw;
         }
 
 function showBookName(bookCode, bookName) {
-    document.getElementById('book-display').value = bookName;
-//    document.getElementById('book-number').value = ''; // 清空 book-number 的值
-     
+    document.getElementById('book-display').value = bookName;     
     document.getElementById('SHOW').innerHTML = '';
     document.getElementById('SHOW').style.display = 'none';
 }
@@ -361,28 +357,22 @@ function formatLyrics(lyrics) {
     let formattedLyrics = '';
     for (let i = 0; i < lines.length; i++) {
         if (i === 0) {
-            formattedLyrics += `<div style="font-size: ${fontSize}px; color: red; background-color: #BDA589;">${lines[i]}</div>`;
+            formattedLyrics += `<div style="font-size: ${fontSize}px; color: red; background-color: #BDA589;"
+                onmouseover="this.style.backgroundColor='#FFD700';"
+                onmouseout="this.style.backgroundColor='#BDA589';">${lines[i]}</div>`;
         } else if (isNumeric(lines[i])) { // 檢查是否整行都是數字
             currentColor = currentColor === 'MidnightBlue' ? 'DarkGreen' : 'MidnightBlue'; // 切換顏色
-            formattedLyrics += `<div style="font-size: ${fontSize}px; color: ${currentColor};">${lines[i]}</div>`;
+            formattedLyrics += `<div style="font-size: ${fontSize}px; color: ${currentColor};"
+                onmouseover="this.style.backgroundColor='#FFD700';"
+                onmouseout="this.style.backgroundColor='';">${lines[i]}</div>`;
         } else {
-            formattedLyrics += `<div style="font-size: ${fontSize}px; color: ${currentColor};">${lines[i]}</div>`;
+            formattedLyrics += `<div style="font-size: ${fontSize}px; color: ${currentColor};"
+                onmouseover="this.style.backgroundColor='#FFD700';"
+                onmouseout="this.style.backgroundColor='';">${lines[i]}</div>`;
         }
     }
     return formattedLyrics;
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 function formatLyricsWithHighlight(lyrics, keyword) {
@@ -399,7 +389,7 @@ function formatLyricsWithHighlight(lyrics, keyword) {
     // 計算字體大小
     const screenWidth = window.innerWidth;
     const charCount = longestLine.length;
-    const fontSize = (screenWidth / charCount) * 0.9;
+    const fontSize = (screenWidth / charCount) * 0.92;
 
     let formattedLyrics = '';
 
@@ -453,8 +443,6 @@ function search() {
         if (regex.test(hymn.favorite)) {
             displayTitle = true;
         }
-         
-          
 
         // 檢查歌詞是否符合關鍵字，並對符合的部分高亮
         let matchingLine = '';
@@ -549,7 +537,7 @@ function showDirectory() {
 
     hymns.forEach(hymn => {
         if (hymn.book === bookCode) {
-            result += `<div style="font-size: 6vw; color: ${currentColor};">${bookName} ${hymn.code}: ${hymn.title}</div><br/><br/>`;
+            result += `<div style="font-size: 5vw; color: ${currentColor};">${bookName} ${hymn.code}: ${hymn.title}</div><br/><br/><br/>`;
             currentColor = currentColor === 'MidnightBlue' ? 'DarkGreen' : 'MidnightBlue'; // 切換顏色
         }
     });
@@ -560,8 +548,7 @@ function showDirectory() {
 
     document.getElementById('SHOW').innerHTML = result;
     document.getElementById('SHOW').style.display = 'block';
-    document.getElementById('search-container').style.display = 'none';
- 
+    document.getElementById('search-container').style.display = 'none'; 
     document.getElementById('SHOW').scrollIntoView();
 }
 
