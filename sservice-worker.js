@@ -43,7 +43,7 @@ self.addEventListener('fetch', event => {
                 });
             });
         }).catch(() => {
-            return caches.match('/Thymn/H1.html');
+            return caches.match('/Thymn/H1S.html');
         })
     );
     console.log('Fetching:', event.request.url);
