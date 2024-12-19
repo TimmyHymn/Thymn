@@ -359,7 +359,7 @@ function formatLyrics(lyrics) {
     }
 
     const screenWidth = window.innerWidth;
-    const charCount = longestLine.length;
+    let charCount = longestLine.length;
  
 
     let FS = parseInt(localStorage.getItem('FS'), 10); // 這裡假設 FS 是一個整數
