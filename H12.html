@@ -359,12 +359,12 @@ function formatLyrics(lyrics) {
     }
 
     const screenWidth = window.innerWidth;
-    let charCount = longestLine.length;
+    const charCount = longestLine.length;
  
 
-    let FS = parseInt(localStorage.getItem('FS'), 10); // 這裡假設 FS 是一個整數
+    let FS = parseInt(localStorage.getItem('FS'), 10)||0; // 這裡假設 FS 是一個整數
     if (FS  > 0) { charCount += FS; }
-    const fontSize = (screenWidth / charCount * 0.93;
+    const fontSize = (screenWidth / charCount) * 0.93;
 
     function isNumeric(line) {
         return /^\d+$/.test(line); // 檢查是否整行都是數字
