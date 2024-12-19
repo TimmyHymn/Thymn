@@ -150,15 +150,24 @@ font-size: 6vw;
 
     <script>
         // 檢查 localStorage 版本
-        const currentVersion = 20241229;
-        const storedVersion = localStorage.getItem('hymnsVersion');
+const currentVersion = 20241219;
+const storedVersion = localStorage.getItem('hymnsVersion');
 
-        // 如果 localStorage 版本不對或沒有 localStorage，載入 hymns.js
-        if (storedVersion !== String(currentVersion)) {
-            const script = document.createElement('script');
-            script.src = 'hymns.js';
-            document.head.appendChild(script);
-        }
+// 如果 localStorage 版本不對或沒有 localStorage，載入相應的 JS 文件
+if (storedVersion !== String(currentVersion)) {
+    const script = document.createElement('script');
+    if (storedVersion === null) {
+        // 沒有 localStorage 資料，載入 hymns.js
+        script.src = 'hymns.js';
+    } else {
+        // 版本不對，載入 replacedata.js
+        script.src = 'replacedata.js';
+    }
+    document.head.appendChild(script);
+
+    // 更新 localStorage 的版本
+    localStorage.setItem('hymnsVersion', String(currentVersion));
+}
 
 function showBookName(bookCode, bookName) {
     document.getElementById('book-display').value = bookName;
