@@ -3,8 +3,8 @@ self.addEventListener('install', event => {
     event.waitUntil(
         caches.open('v1').then(cache => {
             return cache.addAll([
-                '/Thymn/H1.html',
-                '/Thymn/manifest.json',
+                '/Thymn/H12.html',
+                '/Thymn/tmanifest.json',
                 '/Thymn/style.css',
                 '/Thymn/script.js',
                 '/Thymn/icon-192x192.png',
