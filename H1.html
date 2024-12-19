@@ -149,16 +149,24 @@ font-size: 6vw;
 
     <script>
         // 檢查 localStorage 版本
-        const currentVersion = 20241229;
-        const storedVersion = localStorage.getItem('hymnsVersion');
+const currentVersion = 20241219;
+const storedVersion = localStorage.getItem('hymnsVersion');
 
-        // 如果 localStorage 版本不對或沒有 localStorage，載入 hymns.js
-        if (storedVersion !== String(currentVersion)) {
-            const script = document.createElement('script');
-            script.src = 'hymns.js';
-            document.head.appendChild(script);
-        }
+// 如果 localStorage 版本不對或沒有 localStorage，載入相應的 JS 文件
+if (storedVersion !== String(currentVersion)) {
+    const script = document.createElement('script');
+    if (storedVersion === null) {
+        // 沒有 localStorage 資料，載入 hymns.js
+        script.src = 'hymns.js';
+    } else {
+        // 版本不對，載入 replacedata.js
+        script.src = 'replacedata.js';
+    }
+    document.head.appendChild(script);
 
+    // 更新 localStorage 的版本
+    localStorage.setItem('hymnsVersion', String(currentVersion));
+}
 function showBookName(bookCode, bookName) {
     document.getElementById('book-display').value = bookName;     
     document.getElementById('SHOW').innerHTML = '';
@@ -349,8 +357,11 @@ function formatLyrics(lyrics) {
     }
 
     const screenWidth = window.innerWidth;
-    const charCount = longestLine.length;
-    const fontSize = (screenWidth / charCount) * 0.93;
+    const charCount = longestLine.length; 
+
+    let FS = parseInt(localStorage.getItem('FS'), 10)||0; // 這裡假設 FS 是一個整數
+
+    const fontSize = (screenWidth / (charCount+FS)) * 0.93;
 
     function isNumeric(line) {
         return /^\d+$/.test(line); // 檢查是否整行都是數字
@@ -411,12 +422,22 @@ function formatLyricsWithHighlight(lyrics, keyword) {
     return formattedLyrics;
 }
 
-// 搜尋功能
 function search() {
     const keyword = document.getElementById('search-input').value.trim();
     if (!keyword) {
         alert('請輸入搜尋關鍵字');
         return;
+    }
+
+    // 檢查關鍵字是否為數字
+    const fontSizeMatch = keyword.match(/^縮小字體(\d+)$/);
+    if (fontSizeMatch) {
+        const mfontSize = parseInt(fontSizeMatch[1], 10); // 取得縮小字體後面的數字
+        if (!isNaN(mfontSize)) {
+            localStorage.setItem('FS', mfontSize); // 更新 FS 為數字
+            alert(`字體大小已縮小幾個 ${mfontSize}`);
+            return; // 停止繼續執行搜尋，直接返回
+        }
     }
 
     const hymns = JSON.parse(localStorage.getItem('hymns')) || [];
@@ -489,7 +510,7 @@ function search() {
     document.getElementById('SHOW').innerHTML = results;
     document.getElementById('SHOW').style.display = 'block';
     document.getElementById('search-container').style.display = 'none';    
-}
+} 
 
 // 用來格式化歌詞行並高亮顯示搜尋關鍵字
 function formatLyricsLine(line, keyword) {
