@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"> 
-    <link rel="manifest" href="/Thymn/manifest.json">
+    <link rel="manifest" href="/Thymn/tmanifest.json">
     
     <title>網頁版詩歌</title>
     <style>
@@ -576,7 +576,7 @@ function showDirectory() {
 }
 //離線使用
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/Thymn/service-worker.js')
+        navigator.serviceWorker.register('/Thymn/tservice-worker.js')
             .then(registration => {
                 console.log('Service Worker registered with scope:', registration.scope);
             })
