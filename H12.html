@@ -363,7 +363,7 @@ function formatLyrics(lyrics) {
     let formattedLyrics = '';
     for (let i = 0; i < lines.length; i++) {
         const touchStartTime = new Date().getTime();
-        const touchEndTime = touchStartTime + 300; // 假設 300 毫秒內的連擊為雙擊
+        const touchEndTime = touchStartTime + 600; // 假設 300 毫秒內的連擊為雙擊
         
         if (i === 0) {
             formattedLyrics += `<div style="font-size: ${fontSize}px; color: red; background-color: #BDA589;"
