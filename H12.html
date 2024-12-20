@@ -381,26 +381,13 @@ function formatLyrics(lyrics) {
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
         const lineElement = `<div style="font-size: ${fontSize}px; color: ${currentColor};"
+            ondblclick="readAloud('${line}')"
             onmouseover="this.style.backgroundColor='#FFD700';"
-            onmouseout="this.style.backgroundColor='';"
-            onmousedown="startPressTimer(event, '${line}')"
-            onmouseup="clearPressTimer()"
-            onmouseleave="clearPressTimer()">${line}</div>`;
+            onmouseout="this.style.backgroundColor='#BDA589';">${line}</div>`;
         formattedLyrics += lineElement;
     }
 
     return formattedLyrics;
-}
-
-let pressTimer;
-function startPressTimer(event, text) {
-    pressTimer = setTimeout(() => {
-        readAloud(text);
-    }, 3000); // 按住3秒後啟動語音朗讀
-}
-
-function clearPressTimer() {
-    clearTimeout(pressTimer);
 }
 //以上有新增語音
 
