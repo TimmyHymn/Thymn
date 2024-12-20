@@ -9,6 +9,7 @@ const CACHE_FILES = [
 self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE_NAME).then(cache => {
+            console.log('Opening cache:', CACHE_NAME);
             return cache.addAll(CACHE_FILES);
         })
     );
@@ -19,6 +20,7 @@ self.addEventListener('activate', event => {
     const cacheWhitelist = [CACHE_NAME]; // 只保留當前版本的快取
     event.waitUntil(
         caches.keys().then(cacheNames => {
+            console.log('All cache names:', cacheNames);
             return Promise.all(
                 cacheNames.map(cacheName => {
                     if (!cacheWhitelist.includes(cacheName)) {
@@ -37,6 +39,7 @@ self.addEventListener('fetch', event => {
         caches.match(event.request).then(response => {
             return response || fetch(event.request).then(fetchResponse => {
                 return caches.open(CACHE_NAME).then(cache => {
+                    console.log(`Caching new resource: ${event.request.url}`);
                     // 儲存新的快取
                     cache.put(event.request, fetchResponse.clone());
                     return fetchResponse;
