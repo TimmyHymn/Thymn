@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -12,6 +12,7 @@
 </head>
 <body>
     <button onclick="startListening()">Start Listening</button>
+    <button onclick="stopListening()">Stop Listening</button>
     <div id="lyrics-container">
         <!-- 這裡是歌詞的例子 -->
         <div>這是第一行歌詞</div>
@@ -21,8 +22,14 @@
     </div>
 
     <script>
+        let recognition;
+        let isListening = false;
+
         function startListening() {
-            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            if (isListening) return;
+            isListening = true;
+
+            recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
             recognition.lang = 'zh-TW'; // 設定語言
             recognition.interimResults = false;
             recognition.maxAlternatives = 1;
@@ -33,21 +40,33 @@
                 highlightLyrics(speechResult);
             };
 
-            recognition.onspeechend = function() {
-                recognition.stop();
+            recognition.onend = function() {
+                if (isListening) {
+                    recognition.start(); // 重新開始聽
+                }
             };
 
             recognition.onerror = function(event) {
                 console.log('Error occurred in recognition: ' + event.error);
+                if (isListening) {
+                    recognition.start(); // 重新開始聽
+                }
             };
 
             recognition.start();
+        }
+
+        function stopListening() {
+            if (!isListening) return;
+            isListening = false;
+            recognition.stop();
         }
 
         function highlightLyrics(text) {
             const lyricsContainer = document.getElementById('lyrics-container');
             const lines = lyricsContainer.getElementsByTagName('div');
             for (let i = 0; i < lines.length; i++) {
+                lines[i].classList.remove('highlight'); // 移除所有高亮
                 if (lines[i].textContent.includes(text)) {
                     lines[i].classList.add('highlight');
                     lines[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
