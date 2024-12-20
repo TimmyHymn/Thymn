@@ -349,7 +349,7 @@ function toggleSearch() {
 function formatLyrics(lyrics) {
     const lines = lyrics.split('\n');
     let longestLine = '';
-    let currentColor = '';
+    let currentColor = 'MidnightBlue'; // 初始顏色
 
     for (let i = 0; i < lines.length; i++) {
         const digitCount = (lines[i].match(/\d/g) || []).length;
@@ -373,17 +373,20 @@ function formatLyrics(lyrics) {
     let formattedLyrics = '';
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
-        if (line.trim() === '' || isNumeric(line) || isOnlyPunctuation(line)) {
-            formattedLyrics += `<div style="font-size: ${fontSize}px; color: ${currentColor};">${line}</div>`;
-        } else {
-            const backgroundColor = i === 0 ? '#BDA589' : ''; // 保留第一行的背景色
-            formattedLyrics += `<div style="font-size: ${fontSize}px; color: ${currentColor}; background-color: ${backgroundColor};"
-                onclick="onClick(event, '${line}');"
-                onmouseover="this.style.backgroundColor='#FFD700';"
-                onmouseout="this.style.backgroundColor='${backgroundColor}';">${line}</div>`;
-            
+        let backgroundColor = '';
+
+        if (i === 0) {
+            backgroundColor = '#BDA589';
+        }
+
+        if (isNumeric(line)) {
             currentColor = currentColor === 'MidnightBlue' ? 'DarkGreen' : 'MidnightBlue'; // 切換顏色
         }
+
+        formattedLyrics += `<div style="font-size: ${fontSize}px; color: ${currentColor}; background-color: ${backgroundColor};"
+            onclick="onClick(event, '${line}');"
+            onmouseover="this.style.backgroundColor='#FFD700';"
+            onmouseout="this.style.backgroundColor='${backgroundColor}';">${line}</div>`;
     }
     return formattedLyrics;
 }
@@ -398,7 +401,7 @@ function onClick(event, text) {
     }
 
     clickTimeout = setTimeout(function() {
-        if (clickCount >= 3) {
+        if (clickCount >= 2) {
             speakText(text);
         }
         clickCount = 0;
