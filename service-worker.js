@@ -7,6 +7,7 @@ const CACHE_FILES = [
 ];
 
 self.addEventListener('install', event => {
+    self.skipWaiting(); // 新版本的 Service Worker 安裝後立即接管控制
     event.waitUntil(
         caches.open(CACHE_NAME).then(cache => {
             console.log('Opening cache:', CACHE_NAME);
@@ -31,12 +32,18 @@ self.addEventListener('activate', event => {
             );
         })
     );
+    self.clients.claim(); // 新版本的 Service Worker 激活後立即控制所有客戶端
     console.log('Service Worker activated');
 });
 
 self.addEventListener('fetch', event => {
     event.respondWith(
         caches.match(event.request).then(response => {
+            if (response) {
+                console.log(`Serving from cache: ${event.request.url}`);
+            } else {
+                console.log(`Fetching from network: ${event.request.url}`);
+            }
             return response || fetch(event.request).then(fetchResponse => {
                 return caches.open(CACHE_NAME).then(cache => {
                     console.log(`Caching new resource: ${event.request.url}`);
