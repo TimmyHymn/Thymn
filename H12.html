@@ -369,16 +369,52 @@ function formatLyrics(lyrics) {
     }
 
     let formattedLyrics = '';
+    let lastTapTime = 0;
+
+    function handleTouch(event, line) {
+        const currentTime = new Date().getTime();
+        const tapLength = currentTime - lastTapTime;
+
+        if (tapLength < 500 && tapLength > 0) {
+            readAloud(line);
+        }
+
+        lastTapTime = currentTime;
+    }
+
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
-        const lineElement = `<div style="font-size: ${fontSize}px; color: ${currentColor};"
-            ondblclick="readAloud('${line}')"
+        const lineElement = `<div style="font-size: ${fontSize}px; color: ${currentColor}; position: relative;"
+            ontouchstart="handleTouch(event, '${line}')"
             onmouseover="this.style.backgroundColor='#FFD700';"
             onmouseout="this.style.backgroundColor='#BDA589';">${line}</div>`;
         formattedLyrics += lineElement;
     }
 
     return formattedLyrics;
+}
+
+// 語音朗讀函數
+function readAloud(text) {
+    if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        window.speechSynthesis.speak(utterance);
+    } else {
+        alert('您的瀏覽器不支援語音朗讀功能。');
+    }
+}
+
+// 處理觸摸事件的計時器
+let lastTapTime = 0;
+function handleTouch(event, line) {
+    const currentTime = new Date().getTime();
+    const tapLength = currentTime - lastTapTime;
+
+    if (tapLength < 500 && tapLength > 0) {
+        readAloud(line);
+    }
+
+    lastTapTime = currentTime;
 }
 //以上有新增語音
 
