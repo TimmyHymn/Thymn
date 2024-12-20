@@ -363,28 +363,28 @@ function formatLyrics(lyrics) {
     let formattedLyrics = '';
     for (let i = 0; i < lines.length; i++) {
         formattedLyrics += `<div style="font-size: ${fontSize}px; color: ${currentColor};"
-            ontouchstart="onTouchStart(event, '${lines[i]}');"
+            onclick="onClick(event, '${lines[i]}');"
             onmouseover="this.style.backgroundColor='#FFD700';"
             onmouseout="this.style.backgroundColor='';">${lines[i]}</div>`;
     }
     return formattedLyrics;
 }
 
-let touchCount = 0;
-let touchTimeout;
+let clickCount = 0;
+let clickTimeout;
 
-function onTouchStart(event, text) {
-    touchCount++;
-    if (touchTimeout) {
-        clearTimeout(touchTimeout);
+function onClick(event, text) {
+    clickCount++;
+    if (clickTimeout) {
+        clearTimeout(clickTimeout);
     }
 
-    touchTimeout = setTimeout(function() {
-        if (touchCount >= 2) {
+    clickTimeout = setTimeout(function() {
+        if (clickCount >= 2) {
             speakText(text);
         }
-        touchCount = 0;
-    }, 300); // 300 毫秒內計算連續點擊次數
+        clickCount = 0;
+    }, 500); // 300 毫秒內計算連續點擊次數
 }
 
 function speakText(text) {
