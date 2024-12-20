@@ -1,6 +1,6 @@
 const CACHE_NAME = 'v3'; // 使用新版本號來強制更新緩存
 const CACHE_FILES = [
-    '/Thymn/H1.html',
+    '/Thymn/H1S.html',
     '/Thymn/manifest.json',
     '/Thymn/icon-192x192.png',
     '/Thymn/icon-512x512.png'
@@ -44,7 +44,7 @@ self.addEventListener('fetch', event => {
             });
         }).catch(() => {
             // 如果網絡失敗，返回預設的緩存頁面
-            return caches.match('/Thymn/H1.html');
+            return caches.match('/Thymn/H1S.html');
         })
     );
     console.log('Fetching:', event.request.url);
