@@ -373,13 +373,12 @@ function formatLyrics(lyrics) {
     let formattedLyrics = '';
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
-        if (line.trim() === '' || isNumeric(line) || isOnlyPunctuation(line)) {
-            formattedLyrics += `<div style="font-size: ${fontSize}px; color: ${currentColor};">${line}</div>`;
-        } else {
-            formattedLyrics += `<div style="font-size: ${fontSize}px; color: ${currentColor};"
-                onclick="onClick(event, '${line}');"
-                onmouseover="this.style.backgroundColor='#FFD700';"
-                onmouseout="this.style.backgroundColor='';">${line} <a href="javascript:void(0);" onclick="speakText('${line}', this.parentElement)" style="font-size: ${fontSize / 2}px;">讀</a></div>`;
+        formattedLyrics += `<div style="font-size: ${fontSize}px; color: ${currentColor};"
+            onclick="onClick(event, '${line}');"
+            onmouseover="this.style.backgroundColor='#FFD700';"
+            onmouseout="this.style.backgroundColor='';">${line}</div>`;
+        
+        if (!isNumeric(line) && !isOnlyPunctuation(line)) {
             currentColor = currentColor === 'MidnightBlue' ? 'DarkGreen' : 'MidnightBlue'; // 切換顏色
         }
     }
