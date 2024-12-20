@@ -1,0 +1,60 @@
+﻿<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lyrics Highlighter</title>
+    <style>
+        .highlight {
+            background-color: yellow;
+        }
+    </style>
+</head>
+<body>
+    <button onclick="startListening()">Start Listening</button>
+    <div id="lyrics-container">
+        <!-- 這裡是歌詞的例子 -->
+        <div>這是第一行歌詞</div>
+        <div>這是第二行歌詞</div>
+        <div>這是第三行歌詞</div>
+        <!-- 更多歌詞行... -->
+    </div>
+
+    <script>
+        function startListening() {
+            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.lang = 'zh-TW'; // 設定語言
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            recognition.onresult = function(event) {
+                const speechResult = event.results[0][0].transcript;
+                console.log('Speech received: ' + speechResult);
+                highlightLyrics(speechResult);
+            };
+
+            recognition.onspeechend = function() {
+                recognition.stop();
+            };
+
+            recognition.onerror = function(event) {
+                console.log('Error occurred in recognition: ' + event.error);
+            };
+
+            recognition.start();
+        }
+
+        function highlightLyrics(text) {
+            const lyricsContainer = document.getElementById('lyrics-container');
+            const lines = lyricsContainer.getElementsByTagName('div');
+            for (let i = 0; i < lines.length; i++) {
+                if (lines[i].textContent.includes(text)) {
+                    lines[i].classList.add('highlight');
+                    lines[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    break;
+                }
+            }
+        }
+    </script>
+</body>
+</html>
