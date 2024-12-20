@@ -354,118 +354,74 @@ function toggleSearch() {
 }
 
 // 合併字型放大與關鍵字高亮的功能含語音
-    function formatLyrics(lyrics) {
-        const lines = lyrics.split('\n');
-        let longestLine = '';
-        let currentColor = 'MidnightBlue'; // 初始顏色
+function formatLyrics(lyrics) {
+    const lines = lyrics.split('\n');
+    let longestLine = '';
+    let currentColor = 'MidnightBlue'; // 初始顏色
 
-        for (let i = 0; i < lines.length; i++) {
-            const digitCount = (lines[i].match(/\d/g) || []).length;
-            if (lines[i].length > longestLine.length && digitCount <= 3) {
-                longestLine = lines[i];
-            }
+    for (let i = 0; i < lines.length; i++) {
+        const digitCount = (lines[i].match(/\d/g) || []).length;
+        if (lines[i].length > longestLine.length && digitCount <= 3) {
+            longestLine = lines[i];
         }
-
-        const screenWidth = window.innerWidth;
-        const charCount = longestLine.length;
-        const fontSize = (screenWidth / charCount) * 0.93;
-
-        function isNumeric(line) {
-            return /^\d+$/.test(line); // 檢查是否整行都是數字
-        }
-
-        function isOnlyPunctuation(line) {
-            return /^[.,\/#!$%\^&\*;:{}=\-_`~()]+$/.test(line); // 檢查是否整行都是標點符號
-        }
-
-        let formattedLyrics = '';
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i];
-            let backgroundColor = '';
-
-            if (i === 0) {
-                backgroundColor = '#BDA589';
-            }
-
-            if (isNumeric(line)) {
-                currentColor = currentColor === 'MidnightBlue' ? 'DarkGreen' : 'MidnightBlue'; // 切換顏色
-            }
-
-            formattedLyrics += `<div style="font-size: ${fontSize}px; color: ${currentColor}; background-color: ${backgroundColor};"
-                onclick="onClick(event, '${line}');"
-                onmouseover="this.style.backgroundColor='#FFD700';"
-                onmouseout="this.style.backgroundColor='${backgroundColor}';">${line}</div>`;
-        }
-        return formattedLyrics;
     }
+
+    const screenWidth = window.innerWidth;
+    const charCount = longestLine.length;
+    const fontSize = (screenWidth / charCount) * 0.93;
+
+    function isNumeric(line) {
+        return /^\d+$/.test(line); // 檢查是否整行都是數字
+    }
+
+    function isOnlyPunctuation(line) {
+        return /^[.,\/#!$%\^&\*;:{}=\-_`~()]+$/.test(line); // 檢查是否整行都是標點符號
+    }
+
+    let formattedLyrics = '';
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        let backgroundColor = '';
+
+        if (i === 0) {
+            backgroundColor = '#BDA589';
+        }
+
+        if (isNumeric(line)) {
+            currentColor = currentColor === 'MidnightBlue' ? 'DarkGreen' : 'MidnightBlue'; // 切換顏色
+        }
+
+        formattedLyrics += `<div style="font-size: ${fontSize}px; color: ${currentColor}; background-color: ${backgroundColor};"
+            onclick="onClick(event, '${line}');"
+            onmouseover="this.style.backgroundColor='#FFD700';"
+            onmouseout="this.style.backgroundColor='${backgroundColor}';">${line}</div>`;
+    }
+    return formattedLyrics;
+}
 
 let clickCount = 0;
 let clickTimeout;
-const firstLine = document.querySelector('#SHOW div:first-child'); // 找到第一行
 
-// 為整個 #SHOW 添加點擊事件
-document.getElementById('SHOW').addEventListener('click', function(event) {
-    clearTimeout(clickTimeout); // 清除計時器
+function onClick(event, text) {
     clickCount++;
-
-    if (event.target === firstLine) {
-        // 如果點擊的是第一行，判斷點擊次數
-        clickTimeout = setTimeout(function() {
-            if (clickCount >= 2) {
-                speakText(event.target.innerText); // 點擊2次時朗讀文字
-            }
-            if (clickCount >= 2) {
-                shareLyrics(); // 點擊3次時分享
-            }
-            clickCount = 0; // 重置點擊次數
-        }, 300);
-    } else {
-        // 如果點擊的是其他行，只執行朗讀
-        clickTimeout = setTimeout(function() {
-            if (clickCount >= 2) {
-                speakText(event.target.innerText);
-            }
-            clickCount = 0;
-        }, 300);
+    if (clickTimeout) {
+        clearTimeout(clickTimeout);
     }
-});
+
+    clickTimeout = setTimeout(function() {
+        if (clickCount >= 2) {
+            speakText(text);
+        }
+        clickCount = 0;
+    }, 300); // 300 毫秒內計算連續點擊次數
+}
 
 function speakText(text) {
     const speech = new SpeechSynthesisUtterance(text);
-    speech.rate = 0.85; // 設定語速為 0.85
+    speech.rate = 0.85; // 設定語速為 0.75
     window.speechSynthesis.speak(speech);
 }
-
-function shareLyrics() {
-    const lyrics = document.getElementById('SHOW').innerText;
-    if (navigator.share) {
-        navigator.share({
-            title: '分享歌詞',
-            text: lyrics
-        }).then(() => {
-            console.log('分享成功');
-        }).catch(err => {
-            console.error('分享失敗:', err);
-        });
-    } else {
-        // 替代方案：複製到剪貼簿
-        navigator.clipboard.writeText(lyrics).then(() => {
-            alert('歌詞已複製到剪貼簿');
-        }).catch(err => {
-            console.error('複製失敗:', err);
-        });
-    }
-}
-//以上含分享
-    function onSwipe(event) {
-        if (event.type === 'swipeleft') {
-            const lyrics = getCurrentLyrics(); // 假設這是一個獲取當前歌詞的函數
-            shareLyrics(lyrics);
-        }
-    }
-
-    document.addEventListener('swipeleft', onSwipe); // 假設你有一個滑動偵測的函數
-//以上含語音及分享
+//以上含語音
 
 function formatLyricsWithHighlight(lyrics, keyword) {
     const lines = lyrics.split('\n');
