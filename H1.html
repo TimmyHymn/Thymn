@@ -399,44 +399,64 @@ function toggleSearch() {
         return formattedLyrics;
     }
 
-    let clickCount = 0;
-    let clickTimeout;
+let clickCount = 0;
+let clickTimeout;
+const firstLine = document.querySelector('#SHOW div:first-child'); // 找到第一行
 
-    function onClick(event, text) {
-        clickCount++;
-        if (clickTimeout) {
-            clearTimeout(clickTimeout);
-        }
+// 為整個 #SHOW 添加點擊事件
+document.getElementById('SHOW').addEventListener('click', function(event) {
+    clearTimeout(clickTimeout); // 清除計時器
+    clickCount++;
 
+    if (event.target === firstLine) {
+        // 如果點擊的是第一行，判斷點擊次數
         clickTimeout = setTimeout(function() {
             if (clickCount >= 2) {
-                speakText(text);
+                speakText(event.target.innerText); // 點擊2次時朗讀文字
+            }
+            if (clickCount >= 2) {
+                shareLyrics(); // 點擊3次時分享
+            }
+            clickCount = 0; // 重置點擊次數
+        }, 300);
+    } else {
+        // 如果點擊的是其他行，只執行朗讀
+        clickTimeout = setTimeout(function() {
+            if (clickCount >= 2) {
+                speakText(event.target.innerText);
             }
             clickCount = 0;
-        }, 300); // 300 毫秒內計算連續點擊次數
+        }, 300);
     }
+});
 
-    function speakText(text) {
-        const speech = new SpeechSynthesisUtterance(text);
-        speech.rate = 0.85; // 設定語速為 0.75
-        window.speechSynthesis.speak(speech);
+function speakText(text) {
+    const speech = new SpeechSynthesisUtterance(text);
+    speech.rate = 0.85; // 設定語速為 0.85
+    window.speechSynthesis.speak(speech);
+}
+
+function shareLyrics() {
+    const lyrics = document.getElementById('SHOW').innerText;
+    if (navigator.share) {
+        navigator.share({
+            title: '分享歌詞',
+            text: lyrics
+        }).then(() => {
+            console.log('分享成功');
+        }).catch(err => {
+            console.error('分享失敗:', err);
+        });
+    } else {
+        // 替代方案：複製到剪貼簿
+        navigator.clipboard.writeText(lyrics).then(() => {
+            alert('歌詞已複製到剪貼簿');
+        }).catch(err => {
+            console.error('複製失敗:', err);
+        });
     }
-
-    function shareLyrics(lyrics) {
-        if (navigator.share) {
-            navigator.share({
-                title: '歌詞分享',
-                text: lyrics,
-            }).then(() => {
-                console.log('分享成功');
-            }).catch((error) => {
-                console.log('分享失敗', error);
-            });
-        } else {
-            alert('Web Share API 不支援此瀏覽器');
-        }
-    }
-
+}
+//以上含分享
     function onSwipe(event) {
         if (event.type === 'swipeleft') {
             const lyrics = getCurrentLyrics(); // 假設這是一個獲取當前歌詞的函數
@@ -646,47 +666,6 @@ function showDirectory() {
                 console.log('Service Worker registration failed:', error);
             });
     }
-//分享應用
-let longPressStartTime;
-const longPressDuration = 800; // 長按時間 0.8秒
-let touchCount = 0;
-
-document.getElementById('SHOW').addEventListener('touchstart', function(event) {
-    if (event.touches.length === 2) {
-        longPressStartTime = Date.now();
-        touchCount = event.touches.length;
-    }
-});
-
-document.getElementById('SHOW').addEventListener('touchend', function(event) {
-    const touchEndTime = Date.now();
-    if (touchCount === 2 && (touchEndTime - longPressStartTime >= longPressDuration)) {
-        shareLyrics();
-    }
-    touchCount = 0; // 重置觸控計數
-});
-
-    function shareLyrics() {
-        const lyrics = document.getElementById('SHOW').innerText;
-        if (navigator.share) {
-            navigator.share({
-                title: '分享歌詞',
-                text: lyrics
-            }).then(() => {
-                console.log('分享成功');
-            }).catch(err => {
-                console.error('分享失敗:', err);
-            });
-        } else {
-            // 替代方案：複製到剪貼簿
-            navigator.clipboard.writeText(lyrics).then(() => {
-                alert('歌詞已複製到剪貼簿');
-            }).catch(err => {
-                console.error('複製失敗:', err);
-            });
-        }
-    }
-//以上是分享應用        
     </script>
 </body>
 </html>
