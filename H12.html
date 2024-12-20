@@ -620,6 +620,44 @@ function showDirectory() {
                 console.log('Service Worker registration failed:', error);
             });
     }
+        //分享偵測
+    let startX;
+
+    // 在此處添加觸控事件偵測
+    document.getElementById('SHOW').addEventListener('touchstart', function(event) {
+        const touch = event.touches[0];
+        startX = touch.clientX;
+    });
+
+    document.getElementById('SHOW').addEventListener('touchend', function(event) {
+        const touch = event.changedTouches[0];
+        const endX = touch.clientX;
+        if (startX < endX) {
+            shareLyrics(); // 呼叫分享函數
+        }
+    });
+
+    function shareLyrics() {
+        const lyrics = document.getElementById('SHOW').innerText;
+        if (navigator.share) {
+            navigator.share({
+                title: '分享歌詞',
+                text: lyrics
+            }).then(() => {
+                console.log('分享成功');
+            }).catch(err => {
+                console.error('分享失敗:', err);
+            });
+        } else {
+            // 替代方案：複製到剪貼簿
+            navigator.clipboard.writeText(lyrics).then(() => {
+                alert('歌詞已複製到剪貼簿');
+            }).catch(err => {
+                console.error('複製失敗:', err);
+            });
+        }
+    }
+
     </script>
 </body>
 </html>
