@@ -352,48 +352,40 @@ function formatLyrics(lyrics) {
     const screenWidth = window.innerWidth;
     const charCount = longestLine.length;
 
-    let FS = parseInt(localStorage.getItem('FS'), 10) || 0; // 假設 FS 是一個整數
+    let FS = parseInt(localStorage.getItem('FS'), 10) || 0; // 這裡假設 FS 是一個整數
+
     const fontSize = (screenWidth / (charCount + FS)) * 0.93;
 
     function isNumeric(line) {
         return /^\d+$/.test(line); // 檢查是否整行都是數字
     }
 
-    function readAloud(text) {
-        if ('speechSynthesis' in window) {
-            const utterance = new SpeechSynthesisUtterance(text);
-            window.speechSynthesis.speak(utterance);
-        } else {
-            alert('您的瀏覽器不支援語音朗讀功能。');
-        }
-    }
-
     let formattedLyrics = '';
-    let lastTapTime = 0;
-
-    function handleTouch(event, line) {
-        const currentTime = new Date().getTime();
-        const tapLength = currentTime - lastTapTime;
-
-        if (tapLength < 500 && tapLength > 0) {
-            readAloud(line);
-        }
-
-        lastTapTime = currentTime;
-    }
-
     for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        const lineElement = `<div style="font-size: ${fontSize}px; color: ${currentColor}; position: relative;"
-            ontouchstart="handleTouch(event, '${line}')"
-            onmouseover="this.style.backgroundColor='#FFD700';"
-            onmouseout="this.style.backgroundColor='#BDA589';">${line}</div>`;
-        formattedLyrics += lineElement;
+        let highlightButton = `<button onclick="speakText('${lines[i]}')">讀</button>`;
+        
+        if (i === 0) {
+            formattedLyrics += `<div style="font-size: ${fontSize}px; color: red; background-color: #BDA589;"
+                onmouseover="this.style.backgroundColor='#FFD700';"
+                onmouseout="this.style.backgroundColor='#BDA589';">${highlightButton}${lines[i]}</div>`;
+        } else if (isNumeric(lines[i])) { // 檢查是否整行都是數字
+            currentColor = currentColor === 'MidnightBlue' ? 'DarkGreen' : 'MidnightBlue'; // 切換顏色
+            formattedLyrics += `<div style="font-size: ${fontSize}px; color: ${currentColor};"
+                onmouseover="this.style.backgroundColor='#FFD700';"
+                onmouseout="this.style.backgroundColor='';">${highlightButton}${lines[i]}</div>`;
+        } else {
+            formattedLyrics += `<div style="font-size: ${fontSize}px; color: ${currentColor};"
+                onmouseover="this.style.backgroundColor='#FFD700';"
+                onmouseout="this.style.backgroundColor='';">${highlightButton}${lines[i]}</div>`;
+        }
     }
-
     return formattedLyrics;
 }
 
+function speakText(text) {
+    const speech = new SpeechSynthesisUtterance(text);
+    window.speechSynthesis.speak(speech);
+}
 // 語音朗讀函數
 function readAloud(text) {
     if ('speechSynthesis' in window) {
