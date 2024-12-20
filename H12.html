@@ -2,7 +2,8 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+ 
     <link rel="manifest" href="/Thymn/manifest.json">
     
     <title>網頁版詩歌</title>
@@ -106,7 +107,8 @@ font-size: 6vw;
         <tr>
             <td><input type="button" id="book-display" value="" class="btn-blue" style="color: yellow; border-radius: 50px;" disabled></td>
             <td><input type="button" id="book-number" value="" class="btn-blue" style="color: yellow; border-radius: 50px;" disabled></td>
-            <td><input type="button" value="⌫" class="D"></td> 
+            <td><input type="button" value="⌫" class="D"></td>
+ 
             <td><input type="button" value="目錄" class="btn-blue" onclick="showDirectory()"></td>
         </tr>
         <tr>
@@ -357,36 +359,50 @@ function formatLyrics(lyrics) {
     }
 
     const screenWidth = window.innerWidth;
-    const charCount = longestLine.length; 
+    const charCount = longestLine.length;
 
-    let FS = parseInt(localStorage.getItem('FS'), 10)||0; // 這裡假設 FS 是一個整數
-
-    const fontSize = (screenWidth / (charCount+FS)) * 0.93;
+    let FS = parseInt(localStorage.getItem('FS'), 10) || 0; // 假設 FS 是一個整數
+    const fontSize = (screenWidth / (charCount + FS)) * 0.93;
 
     function isNumeric(line) {
         return /^\d+$/.test(line); // 檢查是否整行都是數字
     }
 
-    let formattedLyrics = '';
-    for (let i = 0; i < lines.length; i++) {
-        if (i === 0) {
-            formattedLyrics += `<div style="font-size: ${fontSize}px; color: red; background-color: #BDA589;"
-                onmouseover="this.style.backgroundColor='#FFD700';"
-                onmouseout="this.style.backgroundColor='#BDA589';">${lines[i]}</div>`;
-        } else if (isNumeric(lines[i])) { // 檢查是否整行都是數字
-            currentColor = currentColor === 'MidnightBlue' ? 'DarkGreen' : 'MidnightBlue'; // 切換顏色
-            formattedLyrics += `<div style="font-size: ${fontSize}px; color: ${currentColor};"
-                onmouseover="this.style.backgroundColor='#FFD700';"
-                onmouseout="this.style.backgroundColor='';">${lines[i]}</div>`;
+    function readAloud(text) {
+        if ('speechSynthesis' in window) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            window.speechSynthesis.speak(utterance);
         } else {
-            formattedLyrics += `<div style="font-size: ${fontSize}px; color: ${currentColor};"
-                onmouseover="this.style.backgroundColor='#FFD700';"
-                onmouseout="this.style.backgroundColor='';">${lines[i]}</div>`;
+            alert('您的瀏覽器不支援語音朗讀功能。');
         }
     }
+
+    let formattedLyrics = '';
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const lineElement = `<div style="font-size: ${fontSize}px; color: ${currentColor};"
+            onmouseover="this.style.backgroundColor='#FFD700';"
+            onmouseout="this.style.backgroundColor='';"
+            onmousedown="startPressTimer(event, '${line}')"
+            onmouseup="clearPressTimer()"
+            onmouseleave="clearPressTimer()">${line}</div>`;
+        formattedLyrics += lineElement;
+    }
+
     return formattedLyrics;
 }
 
+let pressTimer;
+function startPressTimer(event, text) {
+    pressTimer = setTimeout(() => {
+        readAloud(text);
+    }, 3000); // 按住3秒後啟動語音朗讀
+}
+
+function clearPressTimer() {
+    clearTimeout(pressTimer);
+}
+//以上有新增語音
 
 function formatLyricsWithHighlight(lyrics, keyword) {
     const lines = lyrics.split('\n');
@@ -571,7 +587,8 @@ function showDirectory() {
 
     document.getElementById('SHOW').innerHTML = result;
     document.getElementById('SHOW').style.display = 'block';
-    document.getElementById('search-container').style.display = 'none'; 
+    document.getElementById('search-container').style.display = 'none';
+ 
     document.getElementById('SHOW').scrollIntoView();
 }
 //離線使用
