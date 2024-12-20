@@ -647,21 +647,24 @@ function showDirectory() {
             });
     }
 //分享應用
-    let startX;
+let longPressStartTime;
+const longPressDuration = 800; // 長按時間 0.8秒
+let touchCount = 0;
 
-    // 在此處添加觸控事件偵測
-    document.getElementById('SHOW').addEventListener('touchstart', function(event) {
-        const touch = event.touches[0];
-        startX = touch.clientX;
-    });
+document.getElementById('SHOW').addEventListener('touchstart', function(event) {
+    if (event.touches.length === 2) {
+        longPressStartTime = Date.now();
+        touchCount = event.touches.length;
+    }
+});
 
-    document.getElementById('SHOW').addEventListener('touchend', function(event) {
-        const touch = event.changedTouches[0];
-        const endX = touch.clientX;
-        if (startX < endX) {
-            shareLyrics(); // 呼叫分享函數
-        }
-    });
+document.getElementById('SHOW').addEventListener('touchend', function(event) {
+    const touchEndTime = Date.now();
+    if (touchCount === 2 && (touchEndTime - longPressStartTime >= longPressDuration)) {
+        shareLyrics();
+    }
+    touchCount = 0; // 重置觸控計數
+});
 
     function shareLyrics() {
         const lyrics = document.getElementById('SHOW').innerText;
