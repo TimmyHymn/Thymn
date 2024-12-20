@@ -2,7 +2,8 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+ 
     <link rel="manifest" href="/Thymn/manifest.json">
     
     <title>網頁版詩歌</title>
@@ -106,7 +107,8 @@ font-size: 6vw;
         <tr>
             <td><input type="button" id="book-display" value="" class="btn-blue" style="color: yellow; border-radius: 50px;" disabled></td>
             <td><input type="button" id="book-number" value="" class="btn-blue" style="color: yellow; border-radius: 50px;" disabled></td>
-            <td><input type="button" value="⌫" class="D"></td> 
+            <td><input type="button" value="⌫" class="D"></td>
+ 
             <td><input type="button" value="目錄" class="btn-blue" onclick="showDirectory()"></td>
         </tr>
         <tr>
@@ -357,7 +359,8 @@ function formatLyrics(lyrics) {
     }
 
     const screenWidth = window.innerWidth;
-    const charCount = longestLine.length; 
+    const charCount = longestLine.length;
+ 
 
     let FS = parseInt(localStorage.getItem('FS'), 10)||0; // 這裡假設 FS 是一個整數
 
@@ -434,8 +437,10 @@ function search() {
     if (fontSizeMatch) {
         const mfontSize = parseInt(fontSizeMatch[1], 10); // 取得縮小字體後面的數字
         if (!isNaN(mfontSize)) {
+            if (mfontSize > 10) { mfontSize = 10; }
             localStorage.setItem('FS', mfontSize); // 更新 FS 為數字
             alert(`字體大小已縮小幾個 ${mfontSize}`);
+            document.getElementById('search-container').style.display = 'none';    
             return; // 停止繼續執行搜尋，直接返回
         }
     }
@@ -571,7 +576,8 @@ function showDirectory() {
 
     document.getElementById('SHOW').innerHTML = result;
     document.getElementById('SHOW').style.display = 'block';
-    document.getElementById('search-container').style.display = 'none'; 
+    document.getElementById('search-container').style.display = 'none';
+ 
     document.getElementById('SHOW').scrollIntoView();
 }
 //離線使用
