@@ -362,24 +362,38 @@ function formatLyrics(lyrics) {
 
     let formattedLyrics = '';
     for (let i = 0; i < lines.length; i++) {
-        let highlightButton = `<button onclick="speakText('${lines[i]}')">讀</button>`;
+        const touchStartTime = new Date().getTime();
+        const touchEndTime = touchStartTime + 300; // 假設 300 毫秒內的連擊為雙擊
         
         if (i === 0) {
             formattedLyrics += `<div style="font-size: ${fontSize}px; color: red; background-color: #BDA589;"
+                ontouchstart="onTouchStart(event, '${lines[i]}', ${touchEndTime});"
                 onmouseover="this.style.backgroundColor='#FFD700';"
-                onmouseout="this.style.backgroundColor='#BDA589';">${highlightButton}${lines[i]}</div>`;
+                onmouseout="this.style.backgroundColor='#BDA589';">${lines[i]}</div>`;
         } else if (isNumeric(lines[i])) { // 檢查是否整行都是數字
             currentColor = currentColor === 'MidnightBlue' ? 'DarkGreen' : 'MidnightBlue'; // 切換顏色
             formattedLyrics += `<div style="font-size: ${fontSize}px; color: ${currentColor};"
+                ontouchstart="onTouchStart(event, '${lines[i]}', ${touchEndTime});"
                 onmouseover="this.style.backgroundColor='#FFD700';"
-                onmouseout="this.style.backgroundColor='';">${highlightButton}${lines[i]}</div>`;
+                onmouseout="this.style.backgroundColor='';">${lines[i]}</div>`;
         } else {
             formattedLyrics += `<div style="font-size: ${fontSize}px; color: ${currentColor};"
+                ontouchstart="onTouchStart(event, '${lines[i]}', ${touchEndTime});"
                 onmouseover="this.style.backgroundColor='#FFD700';"
-                onmouseout="this.style.backgroundColor='';">${highlightButton}${lines[i]}</div>`;
+                onmouseout="this.style.backgroundColor='';">${lines[i]}</div>`;
         }
     }
     return formattedLyrics;
+}
+
+let lastTouchTime = 0;
+function onTouchStart(event, text, touchEndTime) {
+    const currentTime = new Date().getTime();
+    if (currentTime - lastTouchTime < 600) {
+        // 在 300 毫秒內再次觸摸，觸發雙擊事件
+        speakText(text);
+    }
+    lastTouchTime = currentTime;
 }
 
 function speakText(text) {
