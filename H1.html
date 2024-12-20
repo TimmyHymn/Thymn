@@ -354,74 +354,98 @@ function toggleSearch() {
 }
 
 // 合併字型放大與關鍵字高亮的功能含語音
-function formatLyrics(lyrics) {
-    const lines = lyrics.split('\n');
-    let longestLine = '';
-    let currentColor = 'MidnightBlue'; // 初始顏色
+    function formatLyrics(lyrics) {
+        const lines = lyrics.split('\n');
+        let longestLine = '';
+        let currentColor = 'MidnightBlue'; // 初始顏色
 
-    for (let i = 0; i < lines.length; i++) {
-        const digitCount = (lines[i].match(/\d/g) || []).length;
-        if (lines[i].length > longestLine.length && digitCount <= 3) {
-            longestLine = lines[i];
+        for (let i = 0; i < lines.length; i++) {
+            const digitCount = (lines[i].match(/\d/g) || []).length;
+            if (lines[i].length > longestLine.length && digitCount <= 3) {
+                longestLine = lines[i];
+            }
+        }
+
+        const screenWidth = window.innerWidth;
+        const charCount = longestLine.length;
+        const fontSize = (screenWidth / charCount) * 0.93;
+
+        function isNumeric(line) {
+            return /^\d+$/.test(line); // 檢查是否整行都是數字
+        }
+
+        function isOnlyPunctuation(line) {
+            return /^[.,\/#!$%\^&\*;:{}=\-_`~()]+$/.test(line); // 檢查是否整行都是標點符號
+        }
+
+        let formattedLyrics = '';
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            let backgroundColor = '';
+
+            if (i === 0) {
+                backgroundColor = '#BDA589';
+            }
+
+            if (isNumeric(line)) {
+                currentColor = currentColor === 'MidnightBlue' ? 'DarkGreen' : 'MidnightBlue'; // 切換顏色
+            }
+
+            formattedLyrics += `<div style="font-size: ${fontSize}px; color: ${currentColor}; background-color: ${backgroundColor};"
+                onclick="onClick(event, '${line}');"
+                onmouseover="this.style.backgroundColor='#FFD700';"
+                onmouseout="this.style.backgroundColor='${backgroundColor}';">${line}</div>`;
+        }
+        return formattedLyrics;
+    }
+
+    let clickCount = 0;
+    let clickTimeout;
+
+    function onClick(event, text) {
+        clickCount++;
+        if (clickTimeout) {
+            clearTimeout(clickTimeout);
+        }
+
+        clickTimeout = setTimeout(function() {
+            if (clickCount >= 2) {
+                speakText(text);
+            }
+            clickCount = 0;
+        }, 300); // 300 毫秒內計算連續點擊次數
+    }
+
+    function speakText(text) {
+        const speech = new SpeechSynthesisUtterance(text);
+        speech.rate = 0.85; // 設定語速為 0.75
+        window.speechSynthesis.speak(speech);
+    }
+
+    function shareLyrics(lyrics) {
+        if (navigator.share) {
+            navigator.share({
+                title: '歌詞分享',
+                text: lyrics,
+            }).then(() => {
+                console.log('分享成功');
+            }).catch((error) => {
+                console.log('分享失敗', error);
+            });
+        } else {
+            alert('Web Share API 不支援此瀏覽器');
         }
     }
 
-    const screenWidth = window.innerWidth;
-    const charCount = longestLine.length;
-    const fontSize = (screenWidth / charCount) * 0.93;
-
-    function isNumeric(line) {
-        return /^\d+$/.test(line); // 檢查是否整行都是數字
-    }
-
-    function isOnlyPunctuation(line) {
-        return /^[.,\/#!$%\^&\*;:{}=\-_`~()]+$/.test(line); // 檢查是否整行都是標點符號
-    }
-
-    let formattedLyrics = '';
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        let backgroundColor = '';
-
-        if (i === 0) {
-            backgroundColor = '#BDA589';
+    function onSwipe(event) {
+        if (event.type === 'swipeleft') {
+            const lyrics = getCurrentLyrics(); // 假設這是一個獲取當前歌詞的函數
+            shareLyrics(lyrics);
         }
-
-        if (isNumeric(line)) {
-            currentColor = currentColor === 'MidnightBlue' ? 'DarkGreen' : 'MidnightBlue'; // 切換顏色
-        }
-
-        formattedLyrics += `<div style="font-size: ${fontSize}px; color: ${currentColor}; background-color: ${backgroundColor};"
-            onclick="onClick(event, '${line}');"
-            onmouseover="this.style.backgroundColor='#FFD700';"
-            onmouseout="this.style.backgroundColor='${backgroundColor}';">${line}</div>`;
-    }
-    return formattedLyrics;
-}
-
-let clickCount = 0;
-let clickTimeout;
-
-function onClick(event, text) {
-    clickCount++;
-    if (clickTimeout) {
-        clearTimeout(clickTimeout);
     }
 
-    clickTimeout = setTimeout(function() {
-        if (clickCount >= 2) {
-            speakText(text);
-        }
-        clickCount = 0;
-    }, 300); // 300 毫秒內計算連續點擊次數
-}
-
-function speakText(text) {
-    const speech = new SpeechSynthesisUtterance(text);
-    speech.rate = 0.85; // 設定語速為 0.75
-    window.speechSynthesis.speak(speech);
-}
-//以上含語音
+    document.addEventListener('swipeleft', onSwipe); // 假設你有一個滑動偵測的函數
+//以上含語音及分享
 
 function formatLyricsWithHighlight(lyrics, keyword) {
     const lines = lyrics.split('\n');
