@@ -362,23 +362,20 @@ function formatLyrics(lyrics) {
 
     let formattedLyrics = '';
     for (let i = 0; i < lines.length; i++) {
-        const touchStartTime = new Date().getTime();
-        const touchEndTime = touchStartTime + 600; // 假設 300 毫秒內的連擊為雙擊
-        
         if (i === 0) {
             formattedLyrics += `<div style="font-size: ${fontSize}px; color: red; background-color: #BDA589;"
-                ontouchstart="onTouchStart(event, '${lines[i]}', ${touchEndTime});"
+                ontouchstart="onTouchStart(event, '${lines[i]}');"
                 onmouseover="this.style.backgroundColor='#FFD700';"
                 onmouseout="this.style.backgroundColor='#BDA589';">${lines[i]}</div>`;
         } else if (isNumeric(lines[i])) { // 檢查是否整行都是數字
             currentColor = currentColor === 'MidnightBlue' ? 'DarkGreen' : 'MidnightBlue'; // 切換顏色
             formattedLyrics += `<div style="font-size: ${fontSize}px; color: ${currentColor};"
-                ontouchstart="onTouchStart(event, '${lines[i]}', ${touchEndTime});"
+                ontouchstart="onTouchStart(event, '${lines[i]}');"
                 onmouseover="this.style.backgroundColor='#FFD700';"
                 onmouseout="this.style.backgroundColor='';">${lines[i]}</div>`;
         } else {
             formattedLyrics += `<div style="font-size: ${fontSize}px; color: ${currentColor};"
-                ontouchstart="onTouchStart(event, '${lines[i]}', ${touchEndTime});"
+                ontouchstart="onTouchStart(event, '${lines[i]}');"
                 onmouseover="this.style.backgroundColor='#FFD700';"
                 onmouseout="this.style.backgroundColor='';">${lines[i]}</div>`;
         }
@@ -387,9 +384,9 @@ function formatLyrics(lyrics) {
 }
 
 let lastTouchTime = 0;
-function onTouchStart(event, text, touchEndTime) {
+function onTouchStart(event, text) {
     const currentTime = new Date().getTime();
-    if (currentTime - lastTouchTime < 600) {
+    if (currentTime - lastTouchTime < 500) {
         // 在 300 毫秒內再次觸摸，觸發雙擊事件
         speakText(text);
     }
