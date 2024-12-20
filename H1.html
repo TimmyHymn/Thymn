@@ -7,141 +7,149 @@
     <link rel="manifest" href="/Thymn/manifest.json">
     
     <title>網頁版詩歌</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
 
-        html, body {
-            font-family: Verdana, sans-serif;
-            height: 100%;
-            width: 100%;
-            background-color: #f7f7f7;
-        }
+    html, body {
+        font-family: Verdana, sans-serif;
+        height: 100%;
+        width: 100%;
+        background-color: #f7f7f7;
+    }
 
-        table {
-            width: 100%;
-            height: 100%;
-            border-collapse: collapse;
-            table-layout: fixed;
-        }
+    table {
+        width: 100%;
+        height: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+    }
 
-        td {
-            padding: 2px;
-        }
+    td {
+        padding: 2px;
+    }
 
-        input[type="button"] {
-            width: 100%;
-            height: 100%;
-            font-size: 6vw;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
+    input[type="button"] {
+        width: 100%;
+        height: 100%;
+        font-size: 6vw;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+    }
 
-        input[type="button"]:hover {
-            background-color: #e0e0e0;
-        }
+    input[type="button"]:hover {
+        background-color: #e0e0e0;
+    }
 
-        .btn-blue {
-            background-color: #0066cc;
-            color: #fff;
-        }
+    .btn-blue, .btn-yellow, .btn-red, .btn-green {
+        color: white;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+    }
 
-        .btn-yellow {
-            background-color: #ffcc00;
-            color: #000;
-        }
+    .btn-blue {
+        background: linear-gradient(145deg, #0066cc, #003399);
+    }
 
-        .btn-red {
-            background-color: #ff3333;
-            color: #fff;
-        }
+    .btn-yellow {
+        background: linear-gradient(145deg, #ffcc00, #cc9900);
+    }
 
-        .btn-green {
-            background-color: #33cc33;
-            color: #fff;
-        }
+    .btn-red {
+        background: linear-gradient(145deg, #ff3333, #cc0000);
+    }
 
-        /* SHOW 區域樣式 */
-        #SHOW {
-            margin-top: 20px;
-            padding: 10px;
-            background-color: #f0f0f0;
-            border-radius: 5px;
-            text-align: center; /* 置中顯示歌詞 */
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-            min-height: 200px; /* 最小高度確保顯示 */
-            display: block; /* 確保顯示區域是可見的 */
-        }
- 
- 
-/* 搜尋輸入框樣式 */
-#search-container {
-    display: none;  /* 預設為不顯示 */
-    margin-top: 20px;
-    text-align: center;
-}
+    .btn-green {
+        background: linear-gradient(145deg, #33cc33, #009900);
+    }
 
-#search-input {
-    width: 80%;
-    padding: 10px;
-font-size: 6vw;
+    .btn-3d {
+        box-shadow: 0 5px #666;
+    }
 
-}
+    .btn-3d:active {
+        box-shadow: 0 2px #666;
+        transform: translateY(4px);
+    }
 
-#search-button {
-    padding: 10px 20px;
-    font-size: 6vw;
-    margin-left: 10px;
-    cursor: pointer;
-}
-    </style>
+    /* SHOW 區域樣式 */
+    #SHOW {
+        margin-top: 20px;
+        padding: 10px;
+        background-color: #f0f0f0;
+        border-radius: 5px;
+        text-align: center;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        min-height: 200px;
+        display: block;
+    }
+
+    /* 搜尋輸入框樣式 */
+    #search-container {
+        display: none;
+        margin-top: 20px;
+        text-align: center;
+    }
+
+    #search-input {
+        width: 80%;
+        padding: 10px;
+        font-size: 6vw;
+    }
+
+    #search-button {
+        padding: 10px 20px;
+        font-size: 6vw;
+        margin-left: 10px;
+        cursor: pointer;
+    }
+</style>
 </head>
 <body>
-    <table>
-        <tr>
-            <td><input type="button" id="book-display" value="" class="btn-blue" style="color: yellow; border-radius: 50px;" disabled></td>
-            <td><input type="button" id="book-number" value="" class="btn-blue" style="color: yellow; border-radius: 50px;" disabled></td>
-            <td><input type="button" value="⌫" class="D"></td>
- 
-            <td><input type="button" value="目錄" class="btn-blue" onclick="showDirectory()"></td>
-        </tr>
-        <tr>
-            <td><input type="button" value="詩歌" class="btn-blue" onclick="showBookName(1, '詩歌')"></td>
-            <td><input type="button" value="1" class="btn-yellow"></td>
-            <td><input type="button" value="2" class="btn-yellow"></td>
-            <td><input type="button" value="3" class="btn-yellow"></td>
-        </tr>
-        <tr>
-            <td><input type="button" value="補充" class="btn-blue" onclick="showBookName(2, '補充')"></td>
-            <td><input type="button" value="4" class="btn-yellow"></td>
-            <td><input type="button" value="5" class="btn-yellow"></td>
-            <td><input type="button" value="6" class="btn-yellow"></td>
-        </tr>
-        <tr>
-            <td><input type="button" value="新頌" class="btn-blue" onclick="showBookName(3, '新頌')"></td>
-            <td><input type="button" value="7" class="btn-yellow"></td>
-            <td><input type="button" value="8" class="btn-yellow"></td>
-            <td><input type="button" value="9" class="btn-yellow"></td>
-        </tr>
-        <tr>
-            <td><input type="button" value="紅本" class="btn-blue" onclick="showBookName(4, '紅本')"></td>
-            <td><input type="button" value="清除" class="btn-red"></td>
-            <td><input type="button" value="0" class="btn-yellow"></td>
-            <td><input type="button" value="確認" class="btn-green"></td>
-        </tr>
-        <tr>
-            <td><input type="button" value="藍本" class="btn-blue" onclick="showBookName(5, '藍本')"></td>
-            <td><input type="button" value="兒童" class="btn-blue" onclick="showBookName(6, '兒童')"></td>
-            <td><input type="button" value="搜尋" class="btn-red" onclick="toggleSearch()"></td>
-            <td><input type="button" value="說明" class="btn-red" onclick="HELPTEXT()"></td>
-        </tr>
-    </table> 
+<table>
+    <tr>
+        <td><input type="button" id="book-display" value="" class="btn-blue" style="color: yellow; border-radius: 50px;" disabled></td>
+        <td><input type="button" id="book-number" value="" class="btn-blue" style="color: yellow; border-radius: 50px;" disabled></td>
+        <td><input type="button" value="?" class="D"></td>
+        <td><input type="button" value="目錄" class="btn-blue" onclick="showDirectory()"></td>
+    </tr>
+    <tr>
+        <td><input type="button" value="詩歌" class="btn-blue btn-3d" onclick="showBookName(1, '詩歌')"></td>
+        <td><input type="button" value="1" class="btn-yellow btn-3d"></td>
+        <td><input type="button" value="2" class="btn-yellow btn-3d"></td>
+        <td><input type="button" value="3" class="btn-yellow btn-3d"></td>
+    </tr>
+    <tr>
+        <td><input type="button" value="補充" class="btn-blue btn-3d" onclick="showBookName(2, '補充')"></td>
+        <td><input type="button" value="4" class="btn-yellow btn-3d"></td>
+        <td><input type="button" value="5" class="btn-yellow btn-3d"></td>
+        <td><input type="button" value="6" class="btn-yellow btn-3d"></td>
+    </tr>
+    <tr>
+        <td><input type="button" value="新頌" class="btn-blue btn-3d" onclick="showBookName(3, '新頌')"></td>
+        <td><input type="button" value="7" class="btn-yellow btn-3d"></td>
+        <td><input type="button" value="8" class="btn-yellow btn-3d"></td>
+        <td><input type="button" value="9" class="btn-yellow btn-3d"></td>
+    </tr>
+    <tr>
+        <td><input type="button" value="紅本" class="btn-blue btn-3d" onclick="showBookName(4, '紅本')"></td>
+        <td><input type="button" value="清除" class="btn-red btn-3d"></td>
+        <td><input type="button" value="0" class="btn-yellow btn-3d"></td>
+        <td><input type="button" value="確認" class="btn-green btn-3d"></td>
+    </tr>
+    <tr>
+        <td><input type="button" value="藍本" class="btn-blue btn-3d" onclick="showBookName(5, '藍本')"></td>
+        <td><input type="button" value="兒童" class="btn-blue btn-3d" onclick="showBookName(6, '兒童')"></td>
+        <td><input type="button" value="搜尋" class="btn-red btn-3d" onclick="toggleSearch()"></td>
+        <td><input type="button" value="說明" class="btn-red btn-3d" onclick="HELPTEXT()"></td>
+    </tr>
+</table>
 <div id="search-container">
     <input type="text" id="search-input" placeholder="輸入搜尋關鍵字...">
     <button id="search-button" class="btn-blue" onclick="search()">搜尋</button>
