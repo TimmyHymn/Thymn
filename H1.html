@@ -435,7 +435,7 @@ function search() {
     // 檢查關鍵字是否為數字
     const fontSizeMatch = keyword.match(/^縮小字體(\d+)$/);
     if (fontSizeMatch) {
-        const mfontSize = parseInt(fontSizeMatch[1], 10); // 取得縮小字體後面的數字
+        let mfontSize = parseInt(fontSizeMatch[1], 10); // 取得縮小字體後面的數字
         if (!isNaN(mfontSize)) {
             if (mfontSize > 10) { mfontSize = 10; }
             localStorage.setItem('FS', mfontSize); // 更新 FS 為數字
