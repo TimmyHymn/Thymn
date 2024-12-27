@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -31,8 +31,11 @@
             justify-content: space-between;
         }
         .btn {
-            flex: 1 1 calc(50% - 10px);
+            flex: 1 1 calc(50% - 10px);  /* 每行顯示兩個按鈕 */
             margin: 5px;
+            font-size: 24px;  /* 調整字體大小 */
+            padding: 10px;
+            box-sizing: border-box;
         }
         #search-input-container {
             display: flex;
@@ -54,19 +57,20 @@
 </head>
 <body>
     <div id="search-container">
-        <button class="btn" onclick="showBooksByRange('福音類書籍')">福音類書籍</button>
-        <button class="btn" onclick="showBooksByRange('造就類書籍')">造就類書籍</button>
-        <button class="btn" onclick="showBooksByRange('教會事奉類書籍')">教會事奉類書籍</button>
-        <button class="btn" onclick="showBooksByRange('讀經類書籍')">讀經類書籍</button>
-        <button class="btn" onclick="showBooksByRange('傳記文集類書籍')">傳記文集類書籍</button>
-        <button class="btn" onclick="showBooksByRange('代售期刊類書籍')">代售期刊類書籍</button>
-        <button class="btn" onclick="showBooksByRange('福音單張類')">福音單張類</button>
-        <button class="btn" onclick="showAllBooks()">書庫所有書籍</button>
+        <button class="btn" onclick="showBooksByRange('福音類書籍')">福音類</button>
+        <button class="btn" onclick="showBooksByRange('造就類書籍')">造就類</button>
+        <button class="btn" onclick="showBooksByRange('教會事奉類書籍')">事奉類</button>
+        <button class="btn" onclick="showBooksByRange('讀經類書籍')">讀經類</button>
+        <button class="btn" onclick="showBooksByRange('傳記文集類書籍')">傳記文集</button>
+        <button class="btn" onclick="showBooksByRange('代售期刊類書籍')">代售期刊</button>
+        <button class="btn" onclick="showBooksByRange('福音單張類')">福音單張</button>
+        <button class="btn" onclick="showAllBooks()">書庫所有書</button>
         <div id="search-input-container">
             <input type="text" id="search-input" placeholder="輸入搜尋關鍵字...">
             <button id="search-button" class="btn-blue" onclick="search()">搜尋</button>
         </div>
     </div>
+
     <div id="progress-container" class="hidden">
         <div id="progress-bar">0%</div>
     </div>
