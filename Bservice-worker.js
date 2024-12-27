@@ -3,7 +3,8 @@ const CACHE_FILES = [
     '/Thymn/TimmyBook.html',
     '/Thymn/bman.json',
     '/Thymn/B192.png',
-    '/Thymn/B512.png'
+    '/Thymn/B512.png',
+    'https://storage.hash.cloud/3PJihHipIoNllV9KqGa5qJPEfsl1/TIMMYBOOKS1//BookDB.js'
 ];
 
 // 安裝事件
