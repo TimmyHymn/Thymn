@@ -6,6 +6,7 @@ const CACHE_FILES = [
     '/Thymn/icon-512x512.png'
 ];
 
+// 安裝事件
 self.addEventListener('install', event => {
     self.skipWaiting(); // 新版本的 Service Worker 安裝後立即接管控制
     event.waitUntil(
@@ -17,6 +18,7 @@ self.addEventListener('install', event => {
     console.log('Service Worker installed');
 });
 
+// 激活事件
 self.addEventListener('activate', event => {
     const cacheWhitelist = [CACHE_NAME]; // 只保留當前版本的快取
     event.waitUntil(
@@ -29,13 +31,24 @@ self.addEventListener('activate', event => {
                         return caches.delete(cacheName); // 刪除舊版本的快取
                     }
                 })
-            );
+            ).then(() => {
+                // 檢查並刪除特定文件
+                caches.open(CACHE_NAME).then(cache => {
+                    cache.delete('/Thymn/hymns.js').then(deleted => {
+                        if (deleted) console.log('Deleted hymns.js from cache');
+                    });
+                    cache.delete('/Thymn/replacedata.js').then(deleted => {
+                        if (deleted) console.log('Deleted replacedata.js from cache');
+                    });
+                });
+            });
         })
     );
     self.clients.claim(); // 新版本的 Service Worker 激活後立即控制所有客戶端
     console.log('Service Worker activated');
 });
 
+// 抓取事件
 self.addEventListener('fetch', event => {
     event.respondWith(
         caches.match(event.request).then(response => {
