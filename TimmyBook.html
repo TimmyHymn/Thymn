@@ -400,22 +400,28 @@ function showBookContent(bookId) {
             var output = document.getElementById("output");
             output.innerHTML = "<h3>" + book.book + "</h3>";
 
-            // 遍历书本内容并进行高亮显示
             book.content.forEach(function(item) {
                 if (item.type === "text") {
                     var contentElement = document.createElement("p");
-                    // 高亮关键字
-                    var highlightedText = item.value.replace(new RegExp(searchInput, 'gi'), match => `<span class="highlight">${match}</span>`);
-                    contentElement.innerHTML = highlightedText;
+
+                    // 如果搜尋關鍵字不為空，進行高亮顯示
+                    if (searchInput) {
+                        var highlightedContent = item.value.replace(new RegExp(searchInput, 'gi'), match => `<span class="highlight">${match}</span>`);
+                        contentElement.innerHTML = highlightedContent;
+                    } else {
+                        contentElement.innerHTML = item.value;
+                    }
+
                     if (item.color) {
                         contentElement.style.color = item.color;
                     }
+
                     output.appendChild(contentElement);
                 } else if (item.type === "image") {
                     var contentElement = document.createElement("img");
                     contentElement.src = item.value;
                     contentElement.alt = "Image";
-                    contentElement.style.width = "100%";  // 确保图像符合网页宽度
+                    contentElement.style.width = "100%";  // 確保圖像符合網頁寬度
                     contentElement.style.height = "auto";
                     output.appendChild(contentElement);
                 }
@@ -427,7 +433,6 @@ function showBookContent(bookId) {
         console.error("Error retrieving book content: " + event.target.errorCode);
     };
 }
-        }
 //離線使用
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/Thymn/Bservice-worker.js')
