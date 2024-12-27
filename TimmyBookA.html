@@ -387,42 +387,52 @@
             }
         }
 
-        function showBookContent(bookId) {
-            var transaction = db.transaction(["books"], "readonly");
-            var objectStore = transaction.objectStore("books");
+function showBookContent(bookId) {
+    var searchInput = document.getElementById("search-input").value.trim().toLowerCase();
+    var transaction = db.transaction(["books"], "readonly");
+    var objectStore = transaction.objectStore("books");
 
-            var request = objectStore.get(Number(bookId));
+    var request = objectStore.get(Number(bookId));
 
-            request.onsuccess = function(event) {
-                var book = request.result;
-                if (book) {
-                    var output = document.getElementById("output");
-                    output.innerHTML = "<h3>" + book.book + "</h3>";
+    request.onsuccess = function(event) {
+        var book = request.result;
+        if (book) {
+            var output = document.getElementById("output");
+            output.innerHTML = "<h3>" + book.book + "</h3>";
 
-                    book.content.forEach(function(item) {
-                        if (item.type === "text") {
-                            var contentElement = document.createElement("p");
-                            contentElement.innerHTML = item.value.replace(new RegExp(document.getElementById("search-input").value, 'gi'), match => `<span class="highlight">${match}</span>`);
-                            if (item.color) {
-                                contentElement.style.color = item.color;
-                            }
-                            output.appendChild(contentElement);
-                        } else if (item.type === "image") {
-                            var contentElement = document.createElement("img");
-                            contentElement.src = item.value;
-                            contentElement.alt = "Image";
-                            contentElement.style.width = "100%";  // 確保圖像符合網頁寬度
-                            contentElement.style.height = "auto";
-                            output.appendChild(contentElement);
-                        }
-                    });
+            book.content.forEach(function(item) {
+                if (item.type === "text") {
+                    var contentElement = document.createElement("p");
+
+                    // 如果搜尋關鍵字不為空，進行高亮顯示
+                    if (searchInput) {
+                        var highlightedContent = item.value.replace(new RegExp(searchInput, 'gi'), match => `<span class="highlight">${match}</span>`);
+                        contentElement.innerHTML = highlightedContent;
+                    } else {
+                        contentElement.innerHTML = item.value;
+                    }
+
+                    if (item.color) {
+                        contentElement.style.color = item.color;
+                    }
+
+                    output.appendChild(contentElement);
+                } else if (item.type === "image") {
+                    var contentElement = document.createElement("img");
+                    contentElement.src = item.value;
+                    contentElement.alt = "Image";
+                    contentElement.style.width = "100%";  // 確保圖像符合網頁寬度
+                    contentElement.style.height = "auto";
+                    output.appendChild(contentElement);
                 }
-            };
-
-            request.onerror = function(event) {
-                console.error("Error retrieving book content: " + event.target.errorCode);
-            };
+            });
         }
+    };
+
+    request.onerror = function(event) {
+        console.error("Error retrieving book content: " + event.target.errorCode);
+    };
+}
 //離線使用
     /*if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/Thymn/Bservice-worker.js')
