@@ -1,99 +1,335 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>書籍內容搜尋與顯示</title>
+    <link rel="manifest" href="/Thymn/bman.json">
+    <title>Timmy的私房屬靈書櫃</title>
     <style>
+        img {
+            width: 100%;
+            height: auto;
+        }
         .highlight {
             background-color: yellow;
+            font-weight: bold;
         }
-        #output img {
-            margin: 10px 0;
+        #progress-container {
+            margin-top: 20px;
+        }
+        #progress-bar {
+            width: 0;
+            height: 20px;
+            background-color: green;
+            text-align: center;
+            color: white;
+        }
+        #progress-container.hidden {
+            display: none;
+        }
+        #search-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+        .btn {
+            flex: 1 1 calc(50% - 10px);  /* 每行顯示兩個按鈕 */
+            margin: 5px;
+            font-size: 24px;  /* 調整字體大小 */
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        #search-input-container {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            margin-top: 10px;
+        }
+        #search-input {
+            flex: 1;
+            padding: 10px;
+            font-size: 16px;
+        }
+        #search-button {
+            margin-left: 5px;
+            padding: 10px 20px;
+            font-size: 16px;
         }
     </style>
 </head>
 <body>
-    <h1>書籍內容檢索系統</h1>
-    <label for="search-input">搜尋關鍵字：</label>
-    <input type="text" id="search-input" placeholder="輸入關鍵字">
-    <button onclick="showBookContent(1)">顯示書本內容</button>
+    <div id="search-container">
+        <button class="btn" onclick="showBooksByRange('福音類書籍')">福音類</button>
+        <button class="btn" onclick="showBooksByRange('造就類書籍')">造就類</button>
+        <button class="btn" onclick="showBooksByRange('教會事奉類書籍')">事奉類</button>
+        <button class="btn" onclick="showBooksByRange('讀經類書籍')">讀經類</button>
+        <button class="btn" onclick="showBooksByRange('傳記文集類書籍')">傳記文集</button>
+        <button class="btn" onclick="showBooksByRange('代售期刊類書籍')">代售期刊</button>
+        <button class="btn" onclick="showBooksByRange('福音單張類')">福音單張</button>
+        <button class="btn" onclick="showAllBooks()">所有書</button>
+        <div id="search-input-container">
+            <input type="text" id="search-input" placeholder="輸入搜尋關鍵字...">
+            <button id="search-button" class="btn-blue" onclick="search()">搜尋</button>
+        </div>
+    </div>
 
+    <div id="progress-container" class="hidden">
+        <div id="progress-bar">0%</div>
+    </div>
     <div id="output"></div>
 
     <script>
-        // 假設 IndexedDB 已經設置並包含書籍資料
-        let db;
-        const request = indexedDB.open("BookDatabase", 1);
+        var db;
+        var request = indexedDB.open("TimmyBook", 1);
 
         request.onupgradeneeded = function(event) {
             db = event.target.result;
-            const objectStore = db.createObjectStore("books", { keyPath: "id", autoIncrement: true });
+            var objectStore = db.createObjectStore("books", { keyPath: "id", autoIncrement: true });
+            objectStore.createIndex("NID", "NID", { unique: false });
             objectStore.createIndex("book", "book", { unique: false });
             objectStore.createIndex("content", "content", { unique: false });
-
-            // 預設添加一本書
-            objectStore.add({
-                id: 1,
-                book: "信仰的力量",
-                content: [
-                    { "type": "text", "value": "耶穌愛你，祂為你捨命，你當相信祂的愛。" },
-                    { "type": "text", "value": "神的愛長闊高深，祂永遠不改變。" },
-                    { "type": "image", "value": "example.jpg" }
-                ]
-            });
+            console.log("Object store and indexes created successfully");
         };
 
         request.onsuccess = function(event) {
             db = event.target.result;
+            console.log("Database opened successfully");
+            checkAndLoadData(db);
         };
 
         request.onerror = function(event) {
             console.error("Database error: " + event.target.errorCode);
+            loadBookDB();
         };
 
-        function showBookContent(bookId) {
+        function loadBookDB() {
+            console.log("Loading BookDB.js...");
+
+            var script = document.createElement("script");
+            script.src = "https://storage.hash.cloud/3PJihHipIoNllV9KqGa5qJPEfsl1/TIMMYBOOKS1//BookDB.js";
+            document.head.appendChild(script);
+
+            script.onload = function() {
+                console.log("BookDB.js loaded successfully");
+            };
+
+            script.onerror = function() {
+                console.error("Error loading BookDB.js");
+            };
+        }
+
+        function checkAndLoadData(db) {
             var transaction = db.transaction(["books"], "readonly");
             var objectStore = transaction.objectStore("books");
+            var countRequest = objectStore.count();
 
-            var request = objectStore.get(Number(bookId));
-
-            request.onsuccess = function(event) {
-                var book = request.result;
-                if (book) {
-                    var output = document.getElementById("output");
-                    output.innerHTML = "<h3>" + book.book + "</h3>";
-
-                    // 獲取搜尋輸入的關鍵字
-                    var searchInput = document.getElementById("search-input").value.trim();
-                    var regex = new RegExp(searchInput, "gi"); // 正則表達式匹配，不區分大小寫
-
-                    book.content.forEach(function(item) {
-                        if (item.type === "text") {
-                            var contentElement = document.createElement("p");
-                            if (searchInput) {
-                                // 替換匹配的關鍵字並加上高亮標籤
-                                contentElement.innerHTML = item.value.replace(regex, match => `<span class="highlight">${match}</span>`);
-                            } else {
-                                // 若無搜尋關鍵字，顯示原始內容
-                                contentElement.textContent = item.value;
-                            }
-                            output.appendChild(contentElement);
-                        } else if (item.type === "image") {
-                            var contentElement = document.createElement("img");
-                            contentElement.src = item.value;
-                            contentElement.alt = "Image";
-                            contentElement.style.width = "100%"; // 確保圖像符合網頁寬度
-                            contentElement.style.height = "auto";
-                            output.appendChild(contentElement);
-                        }
-                    });
+            countRequest.onsuccess = function() {
+                if (countRequest.result === 0) {
+                    loadBookDB();
                 }
             };
 
-            request.onerror = function(event) {
-                console.error("Error retrieving book content: " + event.target.errorCode);
+            countRequest.onerror = function(event) {
+                console.error("Error checking books count: " + event.target.errorCode);
             };
+        }
+
+        function search() {
+            var searchInput = document.getElementById("search-input").value.trim().toLowerCase();
+            if (!searchInput) return;
+
+            if (searchInput === "重建資料") {
+                rebuildDatabase();
+                return;
+            }
+
+            var output = document.getElementById("output");
+            output.innerHTML = ""; // 清除上次的顯示結果
+
+            var progressContainer = document.getElementById("progress-container");
+            progressContainer.classList.remove("hidden"); // 顯示進度條
+
+            var transaction = db.transaction(["books"], "readonly");
+            var objectStore = transaction.objectStore("books");
+
+            // 進度條相關變數
+            var progressBar = document.getElementById("progress-bar");
+            var totalBooks = 0;
+            var processedBooks = 0;
+
+            // 計算書籍總數
+            objectStore.count().onsuccess = function(event) {
+                totalBooks = event.target.result;
+            };
+
+            var bookRequest = objectStore.openCursor();
+            bookRequest.onsuccess = function(event) {
+                var cursor = event.target.result;
+                if (cursor) {
+                    var book = cursor.value;
+                    var bookMatches = book.book.toLowerCase().includes(searchInput);
+
+                    var matchingContent = [];
+                    var contentFound = false;
+                    book.content.forEach(function(item) {
+                        if (!contentFound && item.type === "text" && item.value.toLowerCase().includes(searchInput)) {
+                            var highlightedContent = item.value.replace(new RegExp(searchInput, 'gi'), match => `<span class="highlight">${match}</span>`);
+                            matchingContent.push(highlightedContent);
+                            contentFound = true;
+                        }
+                    });
+
+                    if (bookMatches || contentFound) {
+                        var bookElement = document.createElement("div");
+                        bookElement.innerHTML = "<h3 class='book-title' data-id='" + book.id + "'>" + book.book + "</h3>";
+
+                        if (contentFound) {
+                            var contentElement = document.createElement("div");
+                            contentElement.innerHTML = "<p>" + matchingContent.join("<br>") + "</p>";
+                            bookElement.appendChild(contentElement);
+                        }
+
+                        output.appendChild(bookElement);
+
+                        // 增加點擊事件監聽器以顯示書籍內容
+                        bookElement.addEventListener("click", function() {
+                            showBookContent(book.id);
+                        });
+                    }
+
+                    processedBooks++;
+                    updateProgressBar();
+                    cursor.continue();
+                } else {
+                    progressContainer.classList.add("hidden"); // 隱藏進度條
+                    if (output.innerHTML === "") {
+                        output.innerHTML = "<p>沒有找到符合條件的書籍。</p>";
+                    }
+                }
+            };
+
+            bookRequest.onerror = function(event) {
+                console.error("Error searching books: " + event.target.errorCode);
+            };
+
+            function updateProgressBar() {
+                if (totalBooks > 0) {
+                    var progress = Math.floor((processedBooks / totalBooks) * 100);
+                    progressBar.style.width = progress + "%";
+                    progressBar.textContent = progress + "%";
+
+                    // 搜尋結束時隱藏進度條
+                    if (progress >= 100) {
+                        progressContainer.classList.add("hidden");
+                    }
+                }
+            }
+        }
+
+        function rebuildDatabase() {
+            var request = indexedDB.deleteDatabase("TimmyBook");
+
+            request.onsuccess = function() {
+                console.log("Database deleted successfully");
+
+                var script = document.createElement("script");
+                script.src = "https://storage.hash.cloud/3PJihHipIoNllV9KqGa5qJPEfsl1/TIMMYBOOKS1//BookDB.js";
+                document.head.appendChild(script);
+
+                script.onload = function() {
+                    console.log("BookDB.js loaded successfully");
+                };
+
+                script.onerror = function() {
+                    console.error("Error loading BookDB.js");
+                };
+            };
+
+            request.onerror = function(event) {
+                console.error("Error deleting database: " + event.target.errorCode);
+            };
+        }
+
+        function showBooksByRange(keyword) {
+            var output = document.getElementById("output");
+            output.innerHTML = ""; // 清除上次的顯示結果
+
+            var progressContainer = document.getElementById("progress-container");
+            progressContainer.classList.remove("hidden"); // 顯示進度條
+
+            var transaction = db.transaction(["books"], "readonly");
+            var objectStore = transaction.objectStore("books");
+
+            // 進度條相關變數
+            var progressBar = document.getElementById("progress-bar");
+            var totalBooks = 0;
+            var processedBooks = 0;
+
+            // 計算書籍總數
+            objectStore.count().onsuccess = function(event) {
+                totalBooks = event.target.result;
+            };
+
+            // 定義關鍵字與NID範圍的對應關係
+            var keywordRanges = {
+                "福音類書籍": [1001, 1099],
+                "造就類書籍": [2001, 2999],
+                "教會事奉類書籍": [3001, 3999],
+                "讀經類書籍": [4001, 4999],
+                "傳記文集類書籍": [5001, 5999],
+                "代售期刊類書籍": [7001, 8999],
+                "福音單張類": [1201, 1299]
+            };
+
+            var range = IDBKeyRange.bound(keywordRanges[keyword][0], keywordRanges[keyword][1]);
+            var bookRequest = objectStore.index("NID").openCursor(range);
+
+            bookRequest.onsuccess = function(event) {
+                var cursor = event.target.result;
+                if (cursor) {
+                    var book = cursor.value;
+                    var bookElement = document.createElement("div");
+                    bookElement.innerHTML = "<h3 class='book-title' data-id='" + book.id + "'>" + book.book + "</h3>";
+
+                    var contentElement = document.createElement("div");
+                    book.content.forEach(function(item) {
+                        if (item.type === "text") {
+                            contentElement.innerHTML += "<p>" + item.value + "</p>";
+                        } else if (item.type === "image") {
+                            contentElement.innerHTML += "<img src='" + item.value + "' alt='Image'>";
+                        }
+                    });
+
+                    bookElement.appendChild(contentElement);
+                    output.appendChild(bookElement);
+
+                    processedBooks++;
+                    updateProgressBar();
+                    cursor.continue();
+                } else {
+                    progressContainer.classList.add("hidden"); // 隱藏進度條
+                    if (output.innerHTML === "") {
+                        output.innerHTML = "<p>沒有找到符合條件的書籍。</p>";
+                    }
+                }
+            };
+
+            bookRequest.onerror = function(event) {
+                console.error("Error searching books: " + event.target.errorCode);
+            };
+
+            function updateProgressBar() {
+                if (totalBooks > 0) {
+                    var progress = Math.floor((processedBooks / totalBooks) * 100);
+                    progressBar.style.width = progress + "%";
+                    progressBar.textContent = progress + "%";
+
+                    // 搜尋結束時隱藏進度條
+                    if (progress >= 100) {
+                        progressContainer.classList.add("hidden");
+                    }
+                }
+            }
         }
     </script>
 </body>
