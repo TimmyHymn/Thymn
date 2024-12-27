@@ -1,100 +1,20 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>書籍內容搜尋與顯示</title>
-    <style>
-        .highlight {
-            background-color: yellow;
+{
+    "name": "Timmy的私房屬靈書櫃",
+    "short_name": "Timmy屬靈書櫃",
+    "start_url": "/Thymn/TimmyBook.html",
+    "display": "standalone",
+    "background_color": "#f7f7f7",
+    "theme_color": "#0066cc",
+    "icons": [
+        {
+            "src": "B192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "B512.png",
+            "sizes": "512x512",
+            "type": "image/png"
         }
-        #output img {
-            margin: 10px 0;
-        }
-    </style>
-</head>
-<body>
-    <h1>書籍內容檢索系統</h1>
-    <label for="search-input">搜尋關鍵字：</label>
-    <input type="text" id="search-input" placeholder="輸入關鍵字">
-    <button onclick="showBookContent(1)">顯示書本內容</button>
-
-    <div id="output"></div>
-
-    <script>
-        // 假設 IndexedDB 已經設置並包含書籍資料
-        let db;
-        const request = indexedDB.open("BookDatabase", 1);
-
-        request.onupgradeneeded = function(event) {
-            db = event.target.result;
-            const objectStore = db.createObjectStore("books", { keyPath: "id", autoIncrement: true });
-            objectStore.createIndex("book", "book", { unique: false });
-            objectStore.createIndex("content", "content", { unique: false });
-
-            // 預設添加一本書
-            objectStore.add({
-                id: 1,
-                book: "信仰的力量",
-                content: [
-                    { "type": "text", "value": "耶穌愛你，祂為你捨命，你當相信祂的愛。" },
-                    { "type": "text", "value": "神的愛長闊高深，祂永遠不改變。" },
-                    { "type": "image", "value": "example.jpg" }
-                ]
-            });
-        };
-
-        request.onsuccess = function(event) {
-            db = event.target.result;
-        };
-
-        request.onerror = function(event) {
-            console.error("Database error: " + event.target.errorCode);
-        };
-
-        function showBookContent(bookId) {
-            var transaction = db.transaction(["books"], "readonly");
-            var objectStore = transaction.objectStore("books");
-
-            var request = objectStore.get(Number(bookId));
-
-            request.onsuccess = function(event) {
-                var book = request.result;
-                if (book) {
-                    var output = document.getElementById("output");
-                    output.innerHTML = "<h3>" + book.book + "</h3>";
-
-                    // 獲取搜尋輸入的關鍵字
-                    var searchInput = document.getElementById("search-input").value.trim();
-                    var regex = new RegExp(searchInput, "gi"); // 正則表達式匹配，不區分大小寫
-
-                    book.content.forEach(function(item) {
-                        if (item.type === "text") {
-                            var contentElement = document.createElement("p");
-                            if (searchInput) {
-                                // 替換匹配的關鍵字並加上高亮標籤
-                                contentElement.innerHTML = item.value.replace(regex, match => `<span class="highlight">${match}</span>`);
-                            } else {
-                                // 若無搜尋關鍵字，顯示原始內容
-                                contentElement.textContent = item.value;
-                            }
-                            output.appendChild(contentElement);
-                        } else if (item.type === "image") {
-                            var contentElement = document.createElement("img");
-                            contentElement.src = item.value;
-                            contentElement.alt = "Image";
-                            contentElement.style.width = "100%"; // 確保圖像符合網頁寬度
-                            contentElement.style.height = "auto";
-                            output.appendChild(contentElement);
-                        }
-                    });
-                }
-            };
-
-            request.onerror = function(event) {
-                console.error("Error retrieving book content: " + event.target.errorCode);
-            };
-        }
-    </script>
-</body>
-</html>
+    ]
+}
