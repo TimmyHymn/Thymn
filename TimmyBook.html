@@ -423,6 +423,16 @@
                 console.error("Error retrieving book content: " + event.target.errorCode);
             };
         }
+//離線使用
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/Thymn/Bservice-worker.js')
+            .then(registration => {
+                console.log('Service Worker registered with scope:', registration.scope);
+            })
+            .catch(error => {
+                console.log('Service Worker registration failed:', error);
+            });
+    }
     </script>
 </body>
 </html>
