@@ -1,140 +1,58 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="manifest" href="/Thymn/bman.json">
-    <title>Timmy的私房屬靈書櫃</title>
+    <title>書籍內容搜尋與顯示</title>
     <style>
-        img {
-            width: 100%;
-            height: auto;
-        }
         .highlight {
             background-color: yellow;
         }
-        #progress-container {
-            margin-top: 20px;
-        }
-        #progress-bar {
-            width: 0;
-            height: 20px;
-            background-color: green;
-            text-align: center;
-            color: white;
-        }
-        #progress-container.hidden {
-            display: none;
-        }
-        #search-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-        }
-        .btn {
-            flex: 1 1 calc(50% - 10px);
-            margin: 5px;
-            font-size: 24px;
-            padding: 10px;
-            box-sizing: border-box;
-        }
-        #search-input-container {
-            display: flex;
-            align-items: center;
-            width: 100%;
-            margin-top: 10px;
-        }
-        #search-input {
-            flex: 1;
-            padding: 10px;
-            font-size: 16px;
-        }
-        #search-button {
-            margin-left: 5px;
-            padding: 10px 20px;
-            font-size: 16px;
+        #output img {
+            margin: 10px 0;
         }
     </style>
 </head>
 <body>
-    <div id="search-container">
-        <button class="btn" onclick="showBooksByRange('福音類書籍')">福音類</button>
-        <button class="btn" onclick="showBooksByRange('造就類書籍')">造就類</button>
-        <button class="btn" onclick="showBooksByRange('教會事奉類書籍')">事奉類</button>
-        <button class="btn" onclick="showBooksByRange('讀經類書籍')">讀經類</button>
-        <button class="btn" onclick="showBooksByRange('傳記文集類書籍')">傳記文集</button>
-        <button class="btn" onclick="showBooksByRange('代售期刊類書籍')">代售期刊</button>
-        <button class="btn" onclick="showBooksByRange('福音單張類')">福音單張</button>
-        <button class="btn" onclick="showAllBooks()">所有書</button>
-        <div id="search-input-container">
-            <input type="text" id="search-input" placeholder="輸入搜尋關鍵字...">
-            <button id="search-button" class="btn-blue" onclick="search()">搜尋</button>
-        </div>
-    </div>
+    <h1>書籍內容檢索系統</h1>
+    <label for="search-input">搜尋關鍵字：</label>
+    <input type="text" id="search-input" placeholder="輸入關鍵字">
+    <button onclick="showBookContent(1)">顯示書本內容</button>
 
-    <div id="progress-container" class="hidden">
-        <div id="progress-bar">0%</div>
-    </div>
     <div id="output"></div>
+
     <script>
-        var db;
-        var request = indexedDB.open("TimmyBook", 1);
+        // 假設 IndexedDB 已經設置並包含書籍資料
+        let db;
+        const request = indexedDB.open("BookDatabase", 1);
 
         request.onupgradeneeded = function(event) {
             db = event.target.result;
-            var objectStore = db.createObjectStore("books", { keyPath: "id", autoIncrement: true });
-            objectStore.createIndex("NID", "NID", { unique: false });
+            const objectStore = db.createObjectStore("books", { keyPath: "id", autoIncrement: true });
             objectStore.createIndex("book", "book", { unique: false });
             objectStore.createIndex("content", "content", { unique: false });
-            console.log("Object store and indexes created successfully");
+
+            // 預設添加一本書
+            objectStore.add({
+                id: 1,
+                book: "信仰的力量",
+                content: [
+                    { "type": "text", "value": "耶穌愛你，祂為你捨命，你當相信祂的愛。" },
+                    { "type": "text", "value": "神的愛長闊高深，祂永遠不改變。" },
+                    { "type": "image", "value": "example.jpg" }
+                ]
+            });
         };
 
         request.onsuccess = function(event) {
             db = event.target.result;
-            console.log("Database opened successfully");
-            checkAndLoadData(db);
         };
 
         request.onerror = function(event) {
             console.error("Database error: " + event.target.errorCode);
-            loadBookDB();
         };
 
-        function loadBookDB() {
-            console.log("Loading BookDB.js...");
-
-            var script = document.createElement("script");
-            script.src = "https://storage.hash.cloud/3PJihHipIoNllV9KqGa5qJPEfsl1/TIMMYBOOKS1//BookDB.js";
-            document.head.appendChild(script);
-
-            script.onload = function() {
-                console.log("BookDB.js loaded successfully");
-            };
-
-            script.onerror = function() {
-                console.error("Error loading BookDB.js");
-            };
-        }
-
-        function checkAndLoadData(db) {
-            var transaction = db.transaction(["books"], "readonly");
-            var objectStore = transaction.objectStore("books");
-            var countRequest = objectStore.count();
-
-            countRequest.onsuccess = function() {
-                if (countRequest.result === 0) {
-                    loadBookDB();
-                }
-            };
-
-            countRequest.onerror = function(event) {
-                console.error("Error checking books count: " + event.target.errorCode);
-            };
-        }
-
         function showBookContent(bookId) {
-            var searchKeyword = document.getElementById("search-input").value.trim().toLowerCase();
-
             var transaction = db.transaction(["books"], "readonly");
             var objectStore = transaction.objectStore("books");
 
@@ -146,29 +64,26 @@
                     var output = document.getElementById("output");
                     output.innerHTML = "<h3>" + book.book + "</h3>";
 
+                    // 獲取搜尋輸入的關鍵字
+                    var searchInput = document.getElementById("search-input").value.trim();
+                    var regex = new RegExp(searchInput, "gi"); // 正則表達式匹配，不區分大小寫
+
                     book.content.forEach(function(item) {
                         if (item.type === "text") {
                             var contentElement = document.createElement("p");
-
-                            // 高亮顯示搜尋的關鍵字
-                            if (searchKeyword) {
-                                contentElement.innerHTML = item.value.replace(
-                                    new RegExp(searchKeyword, 'gi'),
-                                    match => `<span class="highlight">${match}</span>`
-                                );
+                            if (searchInput) {
+                                // 替換匹配的關鍵字並加上高亮標籤
+                                contentElement.innerHTML = item.value.replace(regex, match => `<span class="highlight">${match}</span>`);
                             } else {
+                                // 若無搜尋關鍵字，顯示原始內容
                                 contentElement.textContent = item.value;
-                            }
-
-                            if (item.color) {
-                                contentElement.style.color = item.color;
                             }
                             output.appendChild(contentElement);
                         } else if (item.type === "image") {
                             var contentElement = document.createElement("img");
                             contentElement.src = item.value;
                             contentElement.alt = "Image";
-                            contentElement.style.width = "100%";
+                            contentElement.style.width = "100%"; // 確保圖像符合網頁寬度
                             contentElement.style.height = "auto";
                             output.appendChild(contentElement);
                         }
@@ -179,18 +94,6 @@
             request.onerror = function(event) {
                 console.error("Error retrieving book content: " + event.target.errorCode);
             };
-        }
-
-        function search() {
-            // 現有搜尋功能保持不變
-        }
-
-        function showBooksByRange(keyword) {
-            // 現有顯示功能保持不變
-        }
-
-        function showAllBooks() {
-            // 現有顯示功能保持不變
         }
     </script>
 </body>
