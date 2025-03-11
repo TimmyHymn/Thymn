@@ -93,7 +93,7 @@
   <tr>
     <td><input type="button" value="藍本" class="btn-blue btn-3d" onclick="showBookName(5, '藍本')"></td>
     <td><input type="button" value="兒童" class="btn-blue btn-3d" onclick="showBookName(6, '兒童')"></td>
-    <!-- 主頁面上的搜尋按鈕，初始功能為切換搜尋區塊 -->
+    <!-- 主頁面上的兩顆按鈕，分別預設為搜尋與說明 -->
     <td><input type="button" id="search-main-button" value="搜尋" class="btn-red btn-3d" onclick="toggleSearch()"></td>
     <td><input type="button" id="help-share-button" value="說明" class="btn-red btn-3d" onclick="HELPTEXT()"></td>
   </tr>
@@ -105,33 +105,29 @@
 <div id="SHOW"></div>
 
 <script>
-  // 全域變數，用來記錄目前選取的歌的 MSG key（格式：MSG_歌本_號碼）
+  // 全域變數：用來記錄目前選取歌的 MSG key（格式：MSG_歌本_號碼）
   var currentHymnMsgKey = "";
 
-  // 檢查版本與載入資料庫（hymns.js 或 replacedata.js）
+  // 檢查版本並載入資料庫（hymns.js 或 replacedata.js）
   const currentVersion = 20241220;
   const storedVersion = localStorage.getItem('hymnsVersion');
   if (storedVersion !== String(currentVersion)) {
     const script = document.createElement('script');
-    if (storedVersion === null) {
-      script.src = 'hymns.js';
-    } else {
-      script.src = 'replacedata.js';
-    }
+    script.src = (storedVersion === null) ? 'hymns.js' : 'replacedata.js';
     document.head.appendChild(script);
     localStorage.setItem('hymnsVersion', String(currentVersion));
   }
   
-  // 顯示選取的歌本名稱，並清除下方顯示區（包含舊的感覺訊息）
+  // 顯示選取的歌本名稱，並清除下方顯示區（包含前次的感覺訊息）
   function showBookName(bookCode, bookName) {
     document.getElementById('book-display').value = bookName;
     document.getElementById('SHOW').innerHTML = '';
     document.getElementById('SHOW').style.display = 'none';
-    // 同時清空前一首歌的 MSG 記錄
+    // 換歌時清空前一首歌的 MSG key
     currentHymnMsgKey = "";
   }
   
-  // 格式化歌詞：根據最長一行調整字體大小
+  // 根據歌詞中最長的一行調整字體大小
   function formatLyrics(lyrics) {
     const lines = lyrics.split('\n');
     let longestLine = '';
@@ -145,29 +141,22 @@
     const fontSize = (screenWidth / charCount) * 0.9;
     let formattedLyrics = '';
     for (let i = 0; i < lines.length; i++) {
-      if (i === 0) {
-        formattedLyrics += `<div style="font-size: ${fontSize}px; color: red;">${lines[i]}</div>`;
-      } else {
-        formattedLyrics += `<div style="font-size: ${fontSize}px;">${lines[i]}</div>`;
-      }
+      formattedLyrics += (i === 0)
+        ? `<div style="font-size: ${fontSize}px; color: red;">${lines[i]}</div>`
+        : `<div style="font-size: ${fontSize}px;">${lines[i]}</div>`;
     }
     return formattedLyrics;
   }
   
-  // 搜尋並顯示歌詞，並依據歌本及號碼設定獨立 MSG key
+  // 搜尋並顯示歌詞，並依據歌本與號碼設定獨立 MSG key
   function searchLyrics(book, code) {
-    // 先清除顯示區，避免載入新歌時仍殘留上次的感覺訊息
+    // 先清空顯示區，避免殘留前次訊息
     const showDiv = document.getElementById('SHOW');
     showDiv.innerHTML = "";
     
     const hymns = JSON.parse(localStorage.getItem('hymns')) || [];
     const bookCodeMap = {
-      '詩歌': 1,
-      '補充': 2,
-      '新頌': 3,
-      '紅本': 4,
-      '兒童': 5,
-      '藍本': 6
+      '詩歌': 1, '補充': 2, '新頌': 3, '紅本': 4, '兒童': 5, '藍本': 6
     };
     const hymn = hymns.find(hymn => hymn.book === bookCodeMap[book] && hymn.code === code);
     if (hymn) {
@@ -177,7 +166,7 @@
       if (favorite) {
         result += `<div style="font-size: 6vw; color: blue; background-color: #BDA589;">上次點歌日期: ${favorite}</div>`;
       }
-      // 使用獨立 key 取得該首歌的感覺訊息
+      // 依據歌本及號碼產生獨立 MSG key
       const msgKey = "MSG_" + book + "_" + code;
       currentHymnMsgKey = msgKey;
       const msg = localStorage.getItem(msgKey);
@@ -187,18 +176,25 @@
       showDiv.innerHTML = result;
       showDiv.style.display = 'block';
       showDiv.scrollIntoView();
-      // 修改主頁面上的【搜尋】按鈕成【感覺】並綁定 recordFeeling 功能
+      // 修改兩顆按鈕：
+      // 將原本的【搜尋】按鈕變成【感覺】並綁定 recordFeeling()
       const searchMainBtn = document.getElementById('search-main-button');
       if (searchMainBtn) {
         searchMainBtn.value = "感覺";
         searchMainBtn.onclick = recordFeeling;
+      }
+      // 將原本的【說明】按鈕變成【分享】並綁定 shareToLine()
+      const helpShareBtn = document.getElementById('help-share-button');
+      if (helpShareBtn) {
+        helpShareBtn.value = "分享";
+        helpShareBtn.onclick = shareToLine;
       }
     } else {
       alert('找不到對應的歌詞');
     }
   }
   
-  // 當網頁載入後，設定數字輸入與按鍵功能
+  // 設定數字輸入及按鍵功能
   document.addEventListener('DOMContentLoaded', function() {
     let numberValue = "";
     const numberDisplay = document.getElementById('book-number');
@@ -217,7 +213,7 @@
       numberValue = numberValue.slice(0, -1);
       updateNumberDisplay();
     });
-    // 清除按鈕：清除顯示內容，並將【搜尋】按鈕恢復原本功能，同時清空目前的 hymn key
+    // 清除按鈕：清除畫面內容、還原兩顆按鈕原本功能，並清空 MSG key
     const clearButton = document.querySelector('.btn-red');
     clearButton.addEventListener('click', function() {
       document.getElementById('book-display').value = '';
@@ -231,6 +227,11 @@
       if (searchMainBtn) {
         searchMainBtn.value = "搜尋";
         searchMainBtn.onclick = toggleSearch;
+      }
+      const helpShareBtn = document.getElementById('help-share-button');
+      if (helpShareBtn) {
+        helpShareBtn.value = "說明";
+        helpShareBtn.onclick = HELPTEXT;
       }
       currentHymnMsgKey = "";
     });
@@ -249,12 +250,7 @@
         const taiwanDate = `${taiwanYear}${month.toString().padStart(2, '0')}${day.toString().padStart(2, '0')}`;
         const hymns = JSON.parse(localStorage.getItem('hymns')) || [];
         const bookCodeMap = {
-          '詩歌': 1,
-          '補充': 2,
-          '新頌': 3,
-          '紅本': 4,
-          '兒童': 5,
-          '藍本': 6
+          '詩歌': 1, '補充': 2, '新頌': 3, '紅本': 4, '兒童': 5, '藍本': 6
         };
         const hymn = hymns.find(hymn => hymn.book === bookCodeMap[bookName] && hymn.code === bookNumber);
         if (hymn) {
@@ -269,7 +265,7 @@
     });
   });
   
-  // 說明功能（保留原來的 HELPTEXT）
+  // 說明功能（原 HELPTEXT），此處保留原始說明內容
   function HELPTEXT(){
     const TimmyMSG = formatLyrics(localStorage.getItem('TimmyMSG'));
     document.getElementById('SHOW').innerHTML = TimmyMSG;
@@ -277,25 +273,22 @@
     document.getElementById('SHOW').scrollIntoView();
   }
   
-  // 感覺功能：使用者輸入感覺，若已有則預設載入供修改，
-  // 並以目前的 hymn key 記錄於 localStorage，同時先移除舊的再追加新的訊息
+  // 感覺功能：使用者輸入感覺，若已有則預設載入供修改，並以目前的 MSG key 記錄於 localStorage，
+  // 同時先移除舊的感覺訊息再追加新的
   function recordFeeling() {
     if (!currentHymnMsgKey) {
       alert("請先選擇一首歌！");
       return;
     }
-    // 若已有感覺，作為預設值提供給使用者修改
     let currentFeeling = localStorage.getItem(currentHymnMsgKey) || "";
     const feeling = prompt("請輸入你唱此歌時的感覺:", currentFeeling);
     if (feeling !== null) {
       localStorage.setItem(currentHymnMsgKey, feeling);
       const showDiv = document.getElementById('SHOW');
-      // 先移除舊的感覺訊息（若有）
       const existingMsgDiv = document.getElementById('feeling-msg');
       if (existingMsgDiv) {
         existingMsgDiv.remove();
       }
-      // 若使用者有輸入感覺則新增訊息
       if (feeling.trim() !== "") {
         const msgDiv = document.createElement('div');
         msgDiv.id = "feeling-msg";
@@ -305,6 +298,18 @@
         showDiv.appendChild(msgDiv);
       }
     }
+  }
+  
+  // 分享功能：將下方顯示區中的內容以 Line 分享
+  function shareToLine() {
+    const content = document.getElementById('SHOW').innerText;
+    if (!content) {
+      alert("目前沒有可分享的內容！");
+      return;
+    }
+    const encodedText = encodeURIComponent(content);
+    const lineUrl = "https://line.me/R/msg/text/?" + encodedText;
+    window.open(lineUrl, '_blank');
   }
   
   // 切換搜尋輸入框的顯示與隱藏
@@ -361,12 +366,7 @@
     }
     const hymns = JSON.parse(localStorage.getItem('hymns')) || [];
     const bookCodeMap = {
-      1: '詩歌',
-      2: '補充',
-      3: '新頌',
-      4: '紅本',
-      5: '兒童',
-      6: '藍本'
+      1: '詩歌', 2: '補充', 3: '新頌', 4: '紅本', 5: '兒童', 6: '藍本'
     };
     const regex = new RegExp(keyword, 'gi');
     let results = '';
@@ -374,12 +374,8 @@
     hymns.forEach(hymn => {
       let displayTitle = false;
       let displayLyrics = '';
-      if (regex.test(hymn.title)) {
-        displayTitle = true;
-      }
-      if (regex.test(hymn.favorite)) {
-        displayTitle = true;
-      }
+      if (regex.test(hymn.title)) { displayTitle = true; }
+      if (regex.test(hymn.favorite)) { displayTitle = true; }
       let matchingLine = '';
       const lines = hymn.lyrics.split('\n');
       for (let line of lines) {
@@ -388,9 +384,7 @@
           break;
         }
       }
-      if (matchingLine) {
-        displayLyrics = matchingLine;
-      }
+      if (matchingLine) { displayLyrics = matchingLine; }
       if (displayTitle || displayLyrics) {
         if (lastCode && lastCode !== hymn.code) {
           results += '<br/><br/><br/>';
@@ -402,9 +396,7 @@
         lastCode = hymn.code;
       }
     });
-    if (!results) {
-      results = '找不到符合的結果';
-    }
+    if (!results) { results = '找不到符合的結果'; }
     document.getElementById('SHOW').innerHTML = results;
     document.getElementById('SHOW').style.display = 'block';
     document.getElementById('search-container').style.display = 'none';
@@ -429,12 +421,7 @@
     }
     const hymns = JSON.parse(localStorage.getItem('hymns')) || [];
     const bookCodeMap = {
-      '詩歌': 1,
-      '補充': 2,
-      '新頌': 3,
-      '紅本': 4,
-      '兒童': 5,
-      '藍本': 6
+      '詩歌': 1, '補充': 2, '新頌': 3, '紅本': 4, '兒童': 5, '藍本': 6
     };
     const bookCode = bookCodeMap[bookName];
     if (!bookCode) {
@@ -449,9 +436,7 @@
         currentColor = currentColor === 'MidnightBlue' ? 'DarkGreen' : 'MidnightBlue';
       }
     });
-    if (result === '') {
-      result = '找不到目錄。';
-    }
+    if (result === '') { result = '找不到目錄。'; }
     document.getElementById('SHOW').innerHTML = result;
     document.getElementById('SHOW').style.display = 'block';
     document.getElementById('search-container').style.display = 'none';
@@ -461,12 +446,8 @@
   // 註冊 Service Worker（離線使用）
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/Thymn/7service-worker.js')
-      .then(registration => {
-        console.log('Service Worker registered with scope:', registration.scope);
-      })
-      .catch(error => {
-        console.log('Service Worker registration failed:', error);
-      });
+      .then(registration => { console.log('Service Worker registered with scope:', registration.scope); })
+      .catch(error => { console.log('Service Worker registration failed:', error); });
   }
 </script>
 </body>
