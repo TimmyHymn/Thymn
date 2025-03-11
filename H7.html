@@ -105,8 +105,10 @@
 <div id="SHOW"></div>
 
 <script>
-  // 全域變數：記錄目前選取歌的 MSG key（格式：MSG_歌本_號碼）
+  // 宣告全域變數：數字輸入值與最近一次確認的歌資訊
+  var numberValue = "";
   var currentHymnMsgKey = "";
+  var lastConfirmedSong = null; // 物件格式：{bookName, songNumber, favorite, feeling}
 
   // 檢查版本並載入資料庫（hymns.js 或 replacedata.js）
   const currentVersion = 20241220;
@@ -118,7 +120,7 @@
     localStorage.setItem('hymnsVersion', String(currentVersion));
   }
   
-  // 顯示選取的歌本名稱，並清空下方顯示區（同時清除前次感覺訊息）
+  // 顯示選取的歌本，並清除下方顯示區（同時清空前次感覺記錄）
   function showBookName(bookCode, bookName) {
     document.getElementById('book-display').value = bookName;
     document.getElementById('SHOW').innerHTML = '';
@@ -126,37 +128,26 @@
     currentHymnMsgKey = "";
   }
   
-  // 保留原本的格式化歌詞函式（含動態字體、第一行紅字、點擊/雙擊朗讀特效等）
+  // 保留原有格式化歌詞函式（含動態字體調整、第一行紅字、點擊/雙擊朗讀等特效）
   function formatLyrics(lyrics) {
     const lines = lyrics.split('\n');
     let longestLine = '';
-    let currentColor = 'MidnightBlue'; // 初始顏色
-
+    let currentColor = 'MidnightBlue';
     for (let i = 0; i < lines.length; i++) {
       const digitCount = (lines[i].match(/\d/g) || []).length;
       if (lines[i].length > longestLine.length && digitCount <= 3) {
         longestLine = lines[i];
       }
     }
-
     const screenWidth = window.innerWidth;
     const charCount = longestLine.length;
     const fontSize = (screenWidth / charCount) * 0.93;
-
-    function isNumeric(line) {
-      return /^\d+$/.test(line);
-    }
-    function isOnlyPunctuation(line) {
-      return /^[.,\/#!$%\^&\*;:{}=\-_`~()]+$/.test(line);
-    }
-
+    function isNumeric(line) { return /^\d+$/.test(line); }
+    function isOnlyPunctuation(line) { return /^[.,\/#!$%\^&\*;:{}=\-_`~()]+$/.test(line); }
     let formattedLyrics = '';
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-      let backgroundColor = '';
-      if (i === 0) {
-        backgroundColor = '#BDA589';
-      }
+      let backgroundColor = (i === 0) ? '#BDA589' : '';
       if (isNumeric(line)) {
         currentColor = (currentColor === 'MidnightBlue') ? 'DarkGreen' : 'MidnightBlue';
       }
@@ -167,19 +158,15 @@
     }
     return formattedLyrics;
   }
-
-  // 點擊處理：累計點擊次數，300毫秒內連續點擊（雙擊）時朗讀此行
+  
+  // 點擊處理（累計點擊次數，300ms內雙擊則朗讀）
   let clickCount = 0;
   let clickTimeout;
   function onClick(event, text) {
     clickCount++;
-    if (clickTimeout) {
-      clearTimeout(clickTimeout);
-    }
+    if (clickTimeout) { clearTimeout(clickTimeout); }
     clickTimeout = setTimeout(function() {
-      if (clickCount >= 2) {
-        speakText(text);
-      }
+      if (clickCount >= 2) { speakText(text); }
       clickCount = 0;
     }, 300);
   }
@@ -194,9 +181,7 @@
     const showDiv = document.getElementById('SHOW');
     showDiv.innerHTML = "";
     const hymns = JSON.parse(localStorage.getItem('hymns')) || [];
-    const bookCodeMap = {
-      '詩歌': 1, '補充': 2, '新頌': 3, '紅本': 4, '兒童': 5, '藍本': 6
-    };
+    const bookCodeMap = { '詩歌': 1, '補充': 2, '新頌': 3, '紅本': 4, '兒童': 5, '藍本': 6 };
     const hymn = hymns.find(hymn => hymn.book === bookCodeMap[book] && hymn.code === code);
     if (hymn) {
       const formattedLyrics = formatLyrics(hymn.lyrics);
@@ -205,7 +190,7 @@
       if (favorite) {
         result += `<div style="font-size: 6vw; color: blue; background-color: #BDA589;">上次點歌日期: ${favorite}</div>`;
       }
-      // 產生獨立 MSG key，格式：MSG_歌本_號碼
+      // 依據歌本與號碼產生獨立 MSG key
       const msgKey = "MSG_" + book + "_" + code;
       currentHymnMsgKey = msgKey;
       const msg = localStorage.getItem(msgKey);
@@ -215,14 +200,12 @@
       showDiv.innerHTML = result;
       showDiv.style.display = 'block';
       showDiv.scrollIntoView();
-      // 修改右下角兩顆按鈕：
-      // 【搜尋】變成【感覺】並綁定 recordFeeling()
+      // 修改右下角兩顆按鈕：將【搜尋】變成【感覺】、【說明】變成【分享】
       const searchMainBtn = document.getElementById('search-main-button');
       if (searchMainBtn) {
         searchMainBtn.value = "感覺";
         searchMainBtn.onclick = recordFeeling;
       }
-      // 【說明】變成【分享】並綁定 shareToLine()
       const helpShareBtn = document.getElementById('help-share-button');
       if (helpShareBtn) {
         helpShareBtn.value = "分享";
@@ -233,9 +216,11 @@
     }
   }
   
+  // 全域：數字輸入值及最近一次確認的歌資訊
+  // numberValue 已在全域宣告，lastConfirmedSong 物件格式：{bookName, songNumber, favorite, feeling}
+  
   // 設定數字鍵及其他按鈕功能
   document.addEventListener('DOMContentLoaded', function() {
-    let numberValue = "";
     const numberDisplay = document.getElementById('book-number');
     function updateNumberDisplay() {
       numberDisplay.value = numberValue;
@@ -252,12 +237,12 @@
       numberValue = numberValue.slice(0, -1);
       updateNumberDisplay();
     });
-    // 清除按鈕：清除顯示內容、還原右下角按鈕功能，並清空 MSG key
+    // 清除按鈕：清除畫面內容、還原右下角按鈕，並清空 currentHymnMsgKey
     const clearButton = document.querySelector('.btn-red');
     clearButton.addEventListener('click', function() {
       document.getElementById('book-display').value = '';
       document.getElementById('book-number').value = '';
-      numberValue = '';
+      numberValue = "";
       updateNumberDisplay();
       document.getElementById('SHOW').innerHTML = '';
       document.getElementById('SHOW').style.display = 'none';
@@ -274,11 +259,33 @@
       }
       currentHymnMsgKey = "";
     });
-    // 確認按鈕：搜尋歌詞並更新上次點歌日期
+    // 確認按鈕：若數字為特殊號碼 9101229，則進入備份模式；否則，依常規處理
     const confirmButton = document.querySelector('.btn-green');
     confirmButton.addEventListener('click', function() {
       const bookName = document.getElementById('book-display').value;
       const bookNumber = parseInt(document.getElementById('book-number').value, 10);
+      // 若輸入特殊號碼 9101229，執行備份模式
+      if (bookNumber === 9101229) {
+        // 清空數字輸入
+        numberValue = "";
+        updateNumberDisplay();
+        // 若有最近一次確認的歌資訊，則顯示摘要並自動分享到 Line
+        if (lastConfirmedSong) {
+          let summary = "歌本: " + lastConfirmedSong.bookName + " 第 " + lastConfirmedSong.songNumber + " 首";
+          if (lastConfirmedSong.favorite) {
+            summary += "\n上次點歌日期: " + lastConfirmedSong.favorite;
+          }
+          if (lastConfirmedSong.feeling) {
+            summary += "\n感覺: " + lastConfirmedSong.feeling;
+          }
+          document.getElementById('SHOW').innerText = summary;
+          shareToLine(); // 自動分享備份訊息
+        } else {
+          alert("目前沒有備份資料。");
+        }
+        return;
+      }
+      // 正常情況：必須選取歌本與輸入號碼
       if (bookName && bookNumber) {
         searchLyrics(bookName, bookNumber);
         const today = new Date();
@@ -288,13 +295,18 @@
         const day = today.getDate();
         const taiwanDate = `${taiwanYear}${month.toString().padStart(2, '0')}${day.toString().padStart(2, '0')}`;
         const hymns = JSON.parse(localStorage.getItem('hymns')) || [];
-        const bookCodeMap = {
-          '詩歌': 1, '補充': 2, '新頌': 3, '紅本': 4, '兒童': 5, '藍本': 6
-        };
+        const bookCodeMap = { '詩歌': 1, '補充': 2, '新頌': 3, '紅本': 4, '兒童': 5, '藍本': 6 };
         const hymn = hymns.find(hymn => hymn.book === bookCodeMap[bookName] && hymn.code === bookNumber);
         if (hymn) {
           hymn.favorite = parseInt(taiwanDate, 10);
           localStorage.setItem('hymns', JSON.stringify(hymns));
+          // 更新最近一次確認的歌資訊
+          lastConfirmedSong = {
+            bookName: bookName,
+            songNumber: bookNumber,
+            favorite: taiwanDate,
+            feeling: localStorage.getItem("MSG_" + bookName + "_" + bookNumber) || ""
+          };
         } else {
           alert('找不到對應的歌詞');
         }
@@ -304,7 +316,7 @@
     });
   });
   
-  // 說明功能（原 HELPTEXT）：保留原始說明內容
+  // 說明功能（原 HELPTEXT）：顯示預設說明文字
   function HELPTEXT(){
     const TimmyMSG = formatLyrics(localStorage.getItem('TimmyMSG'));
     document.getElementById('SHOW').innerHTML = TimmyMSG;
@@ -312,8 +324,7 @@
     document.getElementById('SHOW').scrollIntoView();
   }
   
-  // 感覺功能：使用者輸入感覺，若有既存值則預設顯示供修改，
-  // 修改後先移除舊的感覺訊息再追加新的，並以目前 MSG key 記錄
+  // 感覺功能：使用者輸入感覺，若已有既存值則預設載入供修改，更新後先移除舊訊息再追加新訊息，同時記錄至 localStorage
   function recordFeeling() {
     if (!currentHymnMsgKey) {
       alert("請先選擇一首歌！");
@@ -325,9 +336,7 @@
       localStorage.setItem(currentHymnMsgKey, feeling);
       const showDiv = document.getElementById('SHOW');
       const existingMsgDiv = document.getElementById('feeling-msg');
-      if (existingMsgDiv) {
-        existingMsgDiv.remove();
-      }
+      if (existingMsgDiv) { existingMsgDiv.remove(); }
       if (feeling.trim() !== "") {
         const msgDiv = document.createElement('div');
         msgDiv.id = "feeling-msg";
@@ -336,10 +345,12 @@
         msgDiv.innerText = feeling;
         showDiv.appendChild(msgDiv);
       }
+      // 更新最近一次確認的歌資訊中的感覺欄位
+      if (lastConfirmedSong) { lastConfirmedSong.feeling = feeling; }
     }
   }
   
-  // 分享功能：將顯示區內容以 Line 分享
+  // 分享功能：將下方顯示區內容以 Line 分享
   function shareToLine() {
     const content = document.getElementById('SHOW').innerText;
     if (!content) {
@@ -388,10 +399,7 @@
   
   function search() {
     const keyword = document.getElementById('search-input').value.trim();
-    if (!keyword) {
-      alert('請輸入搜尋關鍵字');
-      return;
-    }
+    if (!keyword) { alert('請輸入搜尋關鍵字'); return; }
     const fontSizeMatch = keyword.match(/^縮小字體(\d+)$/);
     if (fontSizeMatch) {
       let mfontSize = parseInt(fontSizeMatch[1], 10);
