@@ -93,7 +93,7 @@
   <tr>
     <td><input type="button" value="藍本" class="btn-blue btn-3d" onclick="showBookName(5, '藍本')"></td>
     <td><input type="button" value="兒童" class="btn-blue btn-3d" onclick="showBookName(6, '兒童')"></td>
-    <!-- 主頁面上的兩顆按鈕，分別預設為搜尋與說明 -->
+    <!-- 右下角兩顆按鈕預設為【搜尋】與【說明】 -->
     <td><input type="button" id="search-main-button" value="搜尋" class="btn-red btn-3d" onclick="toggleSearch()"></td>
     <td><input type="button" id="help-share-button" value="說明" class="btn-red btn-3d" onclick="HELPTEXT()"></td>
   </tr>
@@ -105,7 +105,7 @@
 <div id="SHOW"></div>
 
 <script>
-  // 全域變數：用來記錄目前選取歌的 MSG key（格式：MSG_歌本_號碼）
+  // 全域變數：記錄目前選取歌的 MSG key（格式：MSG_歌本_號碼）
   var currentHymnMsgKey = "";
 
   // 檢查版本並載入資料庫（hymns.js 或 replacedata.js）
@@ -118,42 +118,81 @@
     localStorage.setItem('hymnsVersion', String(currentVersion));
   }
   
-  // 顯示選取的歌本名稱，並清除下方顯示區（包含前次的感覺訊息）
+  // 顯示選取的歌本名稱，並清空下方顯示區（同時清除前次感覺訊息）
   function showBookName(bookCode, bookName) {
     document.getElementById('book-display').value = bookName;
     document.getElementById('SHOW').innerHTML = '';
     document.getElementById('SHOW').style.display = 'none';
-    // 換歌時清空前一首歌的 MSG key
     currentHymnMsgKey = "";
   }
   
-  // 根據歌詞中最長的一行調整字體大小
+  // 保留原本的格式化歌詞函式（含動態字體、第一行紅字、點擊/雙擊朗讀特效等）
   function formatLyrics(lyrics) {
     const lines = lyrics.split('\n');
     let longestLine = '';
+    let currentColor = 'MidnightBlue'; // 初始顏色
+
     for (let i = 0; i < lines.length; i++) {
-      if (lines[i].length > longestLine.length) {
+      const digitCount = (lines[i].match(/\d/g) || []).length;
+      if (lines[i].length > longestLine.length && digitCount <= 3) {
         longestLine = lines[i];
       }
     }
+
     const screenWidth = window.innerWidth;
     const charCount = longestLine.length;
-    const fontSize = (screenWidth / charCount) * 0.9;
+    const fontSize = (screenWidth / charCount) * 0.93;
+
+    function isNumeric(line) {
+      return /^\d+$/.test(line);
+    }
+    function isOnlyPunctuation(line) {
+      return /^[.,\/#!$%\^&\*;:{}=\-_`~()]+$/.test(line);
+    }
+
     let formattedLyrics = '';
     for (let i = 0; i < lines.length; i++) {
-      formattedLyrics += (i === 0)
-        ? `<div style="font-size: ${fontSize}px; color: red;">${lines[i]}</div>`
-        : `<div style="font-size: ${fontSize}px;">${lines[i]}</div>`;
+      const line = lines[i];
+      let backgroundColor = '';
+      if (i === 0) {
+        backgroundColor = '#BDA589';
+      }
+      if (isNumeric(line)) {
+        currentColor = (currentColor === 'MidnightBlue') ? 'DarkGreen' : 'MidnightBlue';
+      }
+      formattedLyrics += `<div style="font-size: ${fontSize}px; color: ${currentColor}; background-color: ${backgroundColor};"
+        onclick="onClick(event, '${line}');"
+        onmouseover="this.style.backgroundColor='#FFD700';"
+        onmouseout="this.style.backgroundColor='${backgroundColor}';">${line}</div>`;
     }
     return formattedLyrics;
   }
+
+  // 點擊處理：累計點擊次數，300毫秒內連續點擊（雙擊）時朗讀此行
+  let clickCount = 0;
+  let clickTimeout;
+  function onClick(event, text) {
+    clickCount++;
+    if (clickTimeout) {
+      clearTimeout(clickTimeout);
+    }
+    clickTimeout = setTimeout(function() {
+      if (clickCount >= 2) {
+        speakText(text);
+      }
+      clickCount = 0;
+    }, 300);
+  }
+  function speakText(text) {
+    const speech = new SpeechSynthesisUtterance(text);
+    speech.rate = 0.85;
+    window.speechSynthesis.speak(speech);
+  }
   
-  // 搜尋並顯示歌詞，並依據歌本與號碼設定獨立 MSG key
+  // 搜尋並顯示歌詞，並依據歌本及號碼設定獨立 MSG key
   function searchLyrics(book, code) {
-    // 先清空顯示區，避免殘留前次訊息
     const showDiv = document.getElementById('SHOW');
     showDiv.innerHTML = "";
-    
     const hymns = JSON.parse(localStorage.getItem('hymns')) || [];
     const bookCodeMap = {
       '詩歌': 1, '補充': 2, '新頌': 3, '紅本': 4, '兒童': 5, '藍本': 6
@@ -166,7 +205,7 @@
       if (favorite) {
         result += `<div style="font-size: 6vw; color: blue; background-color: #BDA589;">上次點歌日期: ${favorite}</div>`;
       }
-      // 依據歌本及號碼產生獨立 MSG key
+      // 產生獨立 MSG key，格式：MSG_歌本_號碼
       const msgKey = "MSG_" + book + "_" + code;
       currentHymnMsgKey = msgKey;
       const msg = localStorage.getItem(msgKey);
@@ -176,14 +215,14 @@
       showDiv.innerHTML = result;
       showDiv.style.display = 'block';
       showDiv.scrollIntoView();
-      // 修改兩顆按鈕：
-      // 將原本的【搜尋】按鈕變成【感覺】並綁定 recordFeeling()
+      // 修改右下角兩顆按鈕：
+      // 【搜尋】變成【感覺】並綁定 recordFeeling()
       const searchMainBtn = document.getElementById('search-main-button');
       if (searchMainBtn) {
         searchMainBtn.value = "感覺";
         searchMainBtn.onclick = recordFeeling;
       }
-      // 將原本的【說明】按鈕變成【分享】並綁定 shareToLine()
+      // 【說明】變成【分享】並綁定 shareToLine()
       const helpShareBtn = document.getElementById('help-share-button');
       if (helpShareBtn) {
         helpShareBtn.value = "分享";
@@ -194,7 +233,7 @@
     }
   }
   
-  // 設定數字輸入及按鍵功能
+  // 設定數字鍵及其他按鈕功能
   document.addEventListener('DOMContentLoaded', function() {
     let numberValue = "";
     const numberDisplay = document.getElementById('book-number');
@@ -213,7 +252,7 @@
       numberValue = numberValue.slice(0, -1);
       updateNumberDisplay();
     });
-    // 清除按鈕：清除畫面內容、還原兩顆按鈕原本功能，並清空 MSG key
+    // 清除按鈕：清除顯示內容、還原右下角按鈕功能，並清空 MSG key
     const clearButton = document.querySelector('.btn-red');
     clearButton.addEventListener('click', function() {
       document.getElementById('book-display').value = '';
@@ -265,7 +304,7 @@
     });
   });
   
-  // 說明功能（原 HELPTEXT），此處保留原始說明內容
+  // 說明功能（原 HELPTEXT）：保留原始說明內容
   function HELPTEXT(){
     const TimmyMSG = formatLyrics(localStorage.getItem('TimmyMSG'));
     document.getElementById('SHOW').innerHTML = TimmyMSG;
@@ -273,8 +312,8 @@
     document.getElementById('SHOW').scrollIntoView();
   }
   
-  // 感覺功能：使用者輸入感覺，若已有則預設載入供修改，並以目前的 MSG key 記錄於 localStorage，
-  // 同時先移除舊的感覺訊息再追加新的
+  // 感覺功能：使用者輸入感覺，若有既存值則預設顯示供修改，
+  // 修改後先移除舊的感覺訊息再追加新的，並以目前 MSG key 記錄
   function recordFeeling() {
     if (!currentHymnMsgKey) {
       alert("請先選擇一首歌！");
@@ -300,7 +339,7 @@
     }
   }
   
-  // 分享功能：將下方顯示區中的內容以 Line 分享
+  // 分享功能：將顯示區內容以 Line 分享
   function shareToLine() {
     const content = document.getElementById('SHOW').innerText;
     if (!content) {
@@ -323,7 +362,7 @@
     }
   }
   
-  // 以下為搜尋及高亮相關函式（原有功能保留）
+  // 以下為搜尋及高亮函式（保留原有功能）
   function formatLyricsWithHighlight(lyrics, keyword) {
     const lines = lyrics.split('\n');
     let longestLine = '';
@@ -365,9 +404,7 @@
       }
     }
     const hymns = JSON.parse(localStorage.getItem('hymns')) || [];
-    const bookCodeMap = {
-      1: '詩歌', 2: '補充', 3: '新頌', 4: '紅本', 5: '兒童', 6: '藍本'
-    };
+    const bookCodeMap = { 1: '詩歌', 2: '補充', 3: '新頌', 4: '紅本', 5: '兒童', 6: '藍本' };
     const regex = new RegExp(keyword, 'gi');
     let results = '';
     let lastCode = null;
@@ -386,13 +423,9 @@
       }
       if (matchingLine) { displayLyrics = matchingLine; }
       if (displayTitle || displayLyrics) {
-        if (lastCode && lastCode !== hymn.code) {
-          results += '<br/><br/><br/>';
-        }
+        if (lastCode && lastCode !== hymn.code) { results += '<br/><br/><br/>'; }
         results += `<div style="font-size: 6vw; color: darkblue;">${bookCodeMap[hymn.book]} ${hymn.code}: ${formatTitleLine(hymn.title, keyword)}</div>`;
-        if (displayLyrics) {
-          results += `<div style="font-size: 6vw;">${displayLyrics}</div>`;
-        }
+        if (displayLyrics) { results += `<div style="font-size: 6vw;">${displayLyrics}</div>`; }
         lastCode = hymn.code;
       }
     });
@@ -420,20 +453,15 @@
       return;
     }
     const hymns = JSON.parse(localStorage.getItem('hymns')) || [];
-    const bookCodeMap = {
-      '詩歌': 1, '補充': 2, '新頌': 3, '紅本': 4, '兒童': 5, '藍本': 6
-    };
+    const bookCodeMap = { '詩歌': 1, '補充': 2, '新頌': 3, '紅本': 4, '兒童': 5, '藍本': 6 };
     const bookCode = bookCodeMap[bookName];
-    if (!bookCode) {
-      alert("無效的歌本名稱。");
-      return;
-    }
+    if (!bookCode) { alert("無效的歌本名稱。"); return; }
     let result = '';
     let currentColor = 'MidnightBlue';
     hymns.forEach(hymn => {
       if (hymn.book === bookCode) {
         result += `<div style="font-size: 5vw; color: ${currentColor};">${bookName} ${hymn.code}: ${hymn.title}</div><br/><br/><br/>`;
-        currentColor = currentColor === 'MidnightBlue' ? 'DarkGreen' : 'MidnightBlue';
+        currentColor = (currentColor === 'MidnightBlue') ? 'DarkGreen' : 'MidnightBlue';
       }
     });
     if (result === '') { result = '找不到目錄。'; }
