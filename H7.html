@@ -105,10 +105,10 @@
 <div id="SHOW"></div>
 
 <script>
-  // 宣告全域變數：數字輸入值與最近一次確認的歌資訊
+  // 全域變數：記錄數字輸入值、目前選取歌的 MSG key（格式：MSG_歌本_號碼）以及最近一次確認的歌資訊
   var numberValue = "";
   var currentHymnMsgKey = "";
-  var lastConfirmedSong = null; // 物件格式：{bookName, songNumber, favorite, feeling}
+  var lastConfirmedSong = null; // 格式：{bookName, songNumber, favorite, feeling}
 
   // 檢查版本並載入資料庫（hymns.js 或 replacedata.js）
   const currentVersion = 20241220;
@@ -128,7 +128,7 @@
     currentHymnMsgKey = "";
   }
   
-  // 保留原有格式化歌詞函式（含動態字體調整、第一行紅字、點擊/雙擊朗讀等特效）
+  // 保留原有格式化歌詞函式（含動態字體調整、第一行紅字、點擊/雙擊朗讀特效）
   function formatLyrics(lyrics) {
     const lines = lyrics.split('\n');
     let longestLine = '';
@@ -159,7 +159,7 @@
     return formattedLyrics;
   }
   
-  // 點擊處理（累計點擊次數，300ms內雙擊則朗讀）
+  // 點擊處理：300ms內雙擊則語音朗讀
   let clickCount = 0;
   let clickTimeout;
   function onClick(event, text) {
@@ -190,7 +190,7 @@
       if (favorite) {
         result += `<div style="font-size: 6vw; color: blue; background-color: #BDA589;">上次點歌日期: ${favorite}</div>`;
       }
-      // 依據歌本與號碼產生獨立 MSG key
+      // 產生獨立 MSG key
       const msgKey = "MSG_" + book + "_" + code;
       currentHymnMsgKey = msgKey;
       const msg = localStorage.getItem(msgKey);
@@ -200,7 +200,7 @@
       showDiv.innerHTML = result;
       showDiv.style.display = 'block';
       showDiv.scrollIntoView();
-      // 修改右下角兩顆按鈕：將【搜尋】變成【感覺】、【說明】變成【分享】
+      // 右下角按鈕更新：【搜尋】變【感覺】；【說明】變【分享】
       const searchMainBtn = document.getElementById('search-main-button');
       if (searchMainBtn) {
         searchMainBtn.value = "感覺";
@@ -216,10 +216,7 @@
     }
   }
   
-  // 全域：數字輸入值及最近一次確認的歌資訊
-  // numberValue 已在全域宣告，lastConfirmedSong 物件格式：{bookName, songNumber, favorite, feeling}
-  
-  // 設定數字鍵及其他按鈕功能
+  // 設定數字輸入及其他按鈕功能
   document.addEventListener('DOMContentLoaded', function() {
     const numberDisplay = document.getElementById('book-number');
     function updateNumberDisplay() {
@@ -237,7 +234,7 @@
       numberValue = numberValue.slice(0, -1);
       updateNumberDisplay();
     });
-    // 清除按鈕：清除畫面內容、還原右下角按鈕，並清空 currentHymnMsgKey
+    // 清除按鈕：清除所有顯示內容、還原右下角按鈕，並清空 currentHymnMsgKey
     const clearButton = document.querySelector('.btn-red');
     clearButton.addEventListener('click', function() {
       document.getElementById('book-display').value = '';
@@ -259,27 +256,21 @@
       }
       currentHymnMsgKey = "";
     });
-    // 確認按鈕：若數字為特殊號碼 9101229，則進入備份模式；否則，依常規處理
+    // 確認按鈕：若數字為特殊號碼 9101229，進入備份模式；否則正常處理
     const confirmButton = document.querySelector('.btn-green');
     confirmButton.addEventListener('click', function() {
       const bookName = document.getElementById('book-display').value;
       const bookNumber = parseInt(document.getElementById('book-number').value, 10);
-      // 若輸入特殊號碼 9101229，執行備份模式
+      // 特殊備份模式：若輸入號碼為 9101229，則清空數字欄，並從目前顯示區讀取完整摘要內容後分享到 LINE
       if (bookNumber === 9101229) {
-        // 清空數字輸入
         numberValue = "";
         updateNumberDisplay();
-        // 若有最近一次確認的歌資訊，則顯示摘要並自動分享到 Line
-        if (lastConfirmedSong) {
-          let summary = "歌本: " + lastConfirmedSong.bookName + " 第 " + lastConfirmedSong.songNumber + " 首";
-          if (lastConfirmedSong.favorite) {
-            summary += "\n上次點歌日期: " + lastConfirmedSong.favorite;
-          }
-          if (lastConfirmedSong.feeling) {
-            summary += "\n感覺: " + lastConfirmedSong.feeling;
-          }
-          document.getElementById('SHOW').innerText = summary;
-          shareToLine(); // 自動分享備份訊息
+        // 若下方顯示區有內容，將其視為備份摘要（包含歌本、歌號、上次點歌日期與感覺）
+        const backupContent = document.getElementById('SHOW').innerText.trim();
+        if (backupContent) {
+          // 顯示摘要於下方
+          document.getElementById('SHOW').innerText = backupContent;
+          shareToLine(); // 自動分享完整摘要
         } else {
           alert("目前沒有備份資料。");
         }
@@ -324,7 +315,7 @@
     document.getElementById('SHOW').scrollIntoView();
   }
   
-  // 感覺功能：使用者輸入感覺，若已有既存值則預設載入供修改，更新後先移除舊訊息再追加新訊息，同時記錄至 localStorage
+  // 感覺功能：若有既存值則預設載入供修改，更新後先移除舊訊息再追加新訊息，同時記錄至 localStorage
   function recordFeeling() {
     if (!currentHymnMsgKey) {
       alert("請先選擇一首歌！");
@@ -345,12 +336,11 @@
         msgDiv.innerText = feeling;
         showDiv.appendChild(msgDiv);
       }
-      // 更新最近一次確認的歌資訊中的感覺欄位
       if (lastConfirmedSong) { lastConfirmedSong.feeling = feeling; }
     }
   }
   
-  // 分享功能：將下方顯示區內容以 Line 分享
+  // 分享功能：將下方顯示區的全部內容以 LINE 分享
   function shareToLine() {
     const content = document.getElementById('SHOW').innerText;
     if (!content) {
@@ -378,9 +368,7 @@
     const lines = lyrics.split('\n');
     let longestLine = '';
     for (let i = 0; i < lines.length; i++) {
-      if (lines[i].length > longestLine.length) {
-        longestLine = lines[i];
-      }
+      if (lines[i].length > longestLine.length) { longestLine = lines[i]; }
     }
     const screenWidth = window.innerWidth;
     const charCount = longestLine.length;
@@ -424,10 +412,7 @@
       let matchingLine = '';
       const lines = hymn.lyrics.split('\n');
       for (let line of lines) {
-        if (regex.test(line)) {
-          matchingLine = formatLyricsLine(line, keyword);
-          break;
-        }
+        if (regex.test(line)) { matchingLine = formatLyricsLine(line, keyword); break; }
       }
       if (matchingLine) { displayLyrics = matchingLine; }
       if (displayTitle || displayLyrics) {
