@@ -361,16 +361,32 @@
   }
   
   // 分享功能：將下方顯示區全部內容透過 LINE 分享
-  function shareToLine() {
+// 確保頁面重新加載時恢復顯示窗內容
+window.onload = function() {
+    const savedContent = localStorage.getItem("showContent");
+    if (savedContent) {
+        document.getElementById("SHOW").innerHTML = savedContent;
+        document.getElementById("SHOW").style.display = "block";
+    }
+};
+
+// 分享功能：將顯示區內容存入 localStorage，然後分享到 LINE
+function shareToLine() {
     const content = document.getElementById('SHOW').innerText;
     if (!content) {
-      alert("目前沒有可分享的內容！");
-      return;
+        alert("目前沒有可分享的內容！");
+        return;
     }
+
+    // **存入 localStorage，以便返回時還能看到**
+    localStorage.setItem("showContent", document.getElementById('SHOW').innerHTML);
+
+    // **發送到 LINE**
     const encodedText = encodeURIComponent(content);
     const lineUrl = "https://line.me/R/msg/text/?" + encodedText;
     window.open(lineUrl, '_blank');
-  }
+}
+
   
   // 切換搜尋輸入框顯示與隱藏
   function toggleSearch() {
