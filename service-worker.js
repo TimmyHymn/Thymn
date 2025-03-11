@@ -1,4 +1,4 @@
-const CACHE_NAME = 'v3'; // 使用新版本號來強制更新緩存
+const CACHE_NAME = 'v2'; // 使用新版本號來強制更新緩存
 const CACHE_FILES = [
     '/Thymn/H1.html',
     '/Thymn/manifest.json',
