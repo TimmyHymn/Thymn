@@ -6,26 +6,10 @@
     <link rel="manifest" href="/Thymn/7manifest.json">
     <title>網頁版詩歌</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        html, body {
-            font-family: Verdana, sans-serif;
-            height: 100%;
-            width: 100%;
-            background-color: #f7f7f7;
-        }
-        table {
-            width: 100%;
-            height: 100%;
-            border-collapse: collapse;
-            table-layout: fixed;
-        }
-        td {
-            padding: 2px;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { font-family: Verdana, sans-serif; height: 100%; width: 100%; background-color: #f7f7f7; }
+        table { width: 100%; height: 100%; border-collapse: collapse; table-layout: fixed; }
+        td { padding: 2px; }
         input[type="button"] {
             width: 100%;
             height: 100%;
@@ -35,33 +19,18 @@
             cursor: pointer;
             transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
         }
-        input[type="button"]:hover {
-            background-color: #e0e0e0;
-        }
+        input[type="button"]:hover { background-color: #e0e0e0; }
         .btn-blue, .btn-yellow, .btn-red, .btn-green {
             color: white;
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
             box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
         }
-        .btn-blue {
-            background: linear-gradient(145deg, #0066cc, #003399);
-        }
-        .btn-yellow {
-            background: linear-gradient(145deg, #ffcc00, #cc9900);
-        }
-        .btn-red {
-            background: linear-gradient(145deg, #ff3333, #cc0000);
-        }
-        .btn-green {
-            background: linear-gradient(145deg, #33cc33, #009900);
-        }
-        .btn-3d {
-            box-shadow: 0 5px #666;
-        }
-        .btn-3d:active {
-            box-shadow: 0 2px #666;
-            transform: translateY(4px);
-        }
+        .btn-blue { background: linear-gradient(145deg, #0066cc, #003399); }
+        .btn-yellow { background: linear-gradient(145deg, #ffcc00, #cc9900); }
+        .btn-red { background: linear-gradient(145deg, #ff3333, #cc0000); }
+        .btn-green { background: linear-gradient(145deg, #33cc33, #009900); }
+        .btn-3d { box-shadow: 0 5px #666; }
+        .btn-3d:active { box-shadow: 0 2px #666; transform: translateY(4px); }
         /* SHOW 區域樣式 */
         #SHOW {
             margin-top: 20px;
@@ -80,11 +49,7 @@
             margin-top: 20px;
             text-align: center;
         }
-        #search-input {
-            width: 80%;
-            padding: 10px;
-            font-size: 6vw;
-        }
+        #search-input { width: 80%; padding: 10px; font-size: 6vw; }
         #search-button {
             padding: 10px 20px;
             font-size: 6vw;
@@ -140,6 +105,9 @@
 <div id="SHOW"></div>
 
 <script>
+    // 全域變數，用來記錄目前選取的歌的 MSG key（格式：MSG_歌本_號碼）
+    var currentHymnMsgKey = "";
+
     // 檢查版本與載入資料庫（hymns.js 或 replacedata.js）
     const currentVersion = 20241220;
     const storedVersion = localStorage.getItem('hymnsVersion');
@@ -203,8 +171,10 @@
             if (favorite) {
                 result += `<div style="font-size: 6vw; color: blue; background-color: #BDA589;">上次點歌日期: ${favorite}</div>`;
             }
-            // 若 localStorage 有 MSG，則在歌詞下方顯示
-            const msg = localStorage.getItem('MSG');
+            // 使用獨立 key 取得該首歌的感覺訊息
+            const msgKey = "MSG_" + book + "_" + code;
+            currentHymnMsgKey = msgKey;
+            const msg = localStorage.getItem(msgKey);
             if (msg) {
                 result += `<div style="font-size: 6vw; color: green;">${msg}</div>`;
             }
@@ -241,7 +211,7 @@
             numberValue = numberValue.slice(0, -1);
             updateNumberDisplay();
         });
-        // 清除按鈕：清除顯示內容，並將【搜尋】按鈕恢復原本功能
+        // 清除按鈕：清除顯示內容，並將【搜尋】按鈕恢復原本功能，同時清空目前的 hymn key
         const clearButton = document.querySelector('.btn-red');
         clearButton.addEventListener('click', function() {
             document.getElementById('book-display').value = '';
@@ -256,6 +226,7 @@
                 searchMainBtn.value = "搜尋";
                 searchMainBtn.onclick = toggleSearch;
             }
+            currentHymnMsgKey = "";
         });
         // 確認按鈕：搜尋歌詞並更新上次點歌日期
         const confirmButton = document.querySelector('.btn-green');
@@ -300,13 +271,27 @@
         document.getElementById('SHOW').scrollIntoView();
     }
     
-    // 感覺功能：使用者可輸入心情，並將該訊息存入 localStorage 及顯示在歌詞下方
+    // 感覺功能：使用者輸入感覺，並以目前的 hymn key 記錄於 localStorage，並追加顯示在歌詞下方
     function recordFeeling() {
+        if (!currentHymnMsgKey) {
+            alert("請先選擇一首歌！");
+            return;
+        }
         const feeling = prompt("請輸入你唱此歌時的感覺:");
         if (feeling !== null) {
-            localStorage.setItem('MSG', feeling);
+            localStorage.setItem(currentHymnMsgKey, feeling);
             const showDiv = document.getElementById('SHOW');
-            showDiv.innerHTML += `<div style="font-size: 6vw; color: green;">${feeling}</div>`;
+            // 若已有感覺訊息則先移除再追加（避免重複顯示）
+            const existingMsgDiv = document.getElementById('feeling-msg');
+            if (existingMsgDiv) {
+                existingMsgDiv.remove();
+            }
+            const msgDiv = document.createElement('div');
+            msgDiv.id = "feeling-msg";
+            msgDiv.style.fontSize = "6vw";
+            msgDiv.style.color = "green";
+            msgDiv.innerText = feeling;
+            showDiv.appendChild(msgDiv);
         }
     }
     
@@ -321,7 +306,7 @@
         }
     }
     
-    // 以下為搜尋及高亮相關函式
+    // 以下為搜尋及高亮相關函式（原有功能保留）
     function formatLyricsWithHighlight(lyrics, keyword) {
         const lines = lyrics.split('\n');
         let longestLine = '';
