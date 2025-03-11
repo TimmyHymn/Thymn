@@ -361,33 +361,17 @@
   }
   
   // 分享功能：將下方顯示區全部內容透過 LINE 分享
-function shareToLine() {
+  function shareToLine() {
     const content = document.getElementById('SHOW').innerText;
     if (!content) {
-        alert("目前沒有可分享的內容！");
-        return;
+      alert("目前沒有可分享的內容！");
+      return;
     }
-
-    // **存入 localStorage，以便回到 App 時還能顯示**
-    localStorage.setItem("showContent", document.getElementById('SHOW').innerHTML);
-
-    // **改用 window.location.href，避免新視窗導致刷新**
     const encodedText = encodeURIComponent(content);
     const lineUrl = "https://line.me/R/msg/text/?" + encodedText;
-    window.location.href = lineUrl;  // **確保 WebView / PWA 內開啟**
-}
-    // **發送到 LINE**
-    const encodedText = encodeURIComponent(content);
-    const lineUrl = "https://line.me/R/msg/text/?" + encodedText;
-    window.location.href = lineUrl;  // **此方式確保 WebView 內開啟**
-}
-
-// **清除功能：點選清除時，同時清除 localStorage**
-function clearContent() {
-    document.getElementById("SHOW").innerHTML = "";
-    localStorage.removeItem("showContent");  // **確保清除時不再恢復**
-}
-//***********Line
+    //window.open(lineUrl, '_blank');
+    window.location.href = lineUrl;
+  }
   
   // 切換搜尋輸入框顯示與隱藏
   function toggleSearch() {
