@@ -265,11 +265,10 @@
       if (bookNumber === 9101229) {
         numberValue = "";
         updateNumberDisplay();
-        exportHymnsWithData();
-        } else {
-          document.getElementById("SHOW").innerText = summary;
-          shareToLine();
+        return;
         }
+        document.getElementById("SHOW").innerText = summary;
+        shareToLine();
         return;
       }
       // 正常情況：必須選取歌本與輸入歌號
