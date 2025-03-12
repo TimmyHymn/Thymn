@@ -1,496 +1,358 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <link rel="manifest" href="/Thymn/manifest.json">
-  <title>網頁版詩歌</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { font-family: Verdana, sans-serif; height: 100%; width: 100%; background-color: #f7f7f7; }
-    table { width: 100%; height: 100%; border-collapse: collapse; table-layout: fixed; }
-    td { padding: 2px; }
-    input[type="button"] {
-      width: 100%;
-      height: 100%;
-      font-size: 6vw;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
-    }
-    input[type="button"]:hover { background-color: #e0e0e0; }
-    .btn-blue, .btn-yellow, .btn-red, .btn-green {
-      color: white;
-      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
-    }
-    .btn-blue { background: linear-gradient(145deg, #0066cc, #003399); }
-    .btn-yellow { background: linear-gradient(145deg, #ffcc00, #cc9900); }
-    .btn-red { background: linear-gradient(145deg, #ff3333, #cc0000); }
-    .btn-green { background: linear-gradient(145deg, #33cc33, #009900); }
-    .btn-3d { box-shadow: 0 5px #666; }
-    .btn-3d:active { box-shadow: 0 2px #666; transform: translateY(4px); }
-    /* SHOW 區域樣式 */
-    #SHOW {
-      margin-top: 20px;
-      padding: 10px;
-      background-color: #f0f0f0;
-      border-radius: 5px;
-      text-align: center;
-      word-wrap: break-word;
-      overflow-wrap: break-word;
-      min-height: 200px;
-      display: block;
-    }
-    /* 搜尋輸入框樣式 */
-    #search-container {
-      display: none;
-      margin-top: 20px;
-      text-align: center;
-    }
-    #search-input { width: 80%; padding: 10px; font-size: 6vw; }
-    #search-button {
-      padding: 10px 20px;
-      font-size: 6vw;
-      margin-left: 10px;
-      cursor: pointer;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>網頁版詩歌</title>
+    <style>
+        /* CSS 樣式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            font-family: Verdana, sans-serif;
+            height: 100%;
+            width: 100%;
+            background-color: #f7f7f7;
+        }
+
+        table {
+            width: 100%;
+            height: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        td {
+            padding: 2px;
+        }
+
+        input[type="button"] {
+            width: 100%;
+            height: 100%;
+            font-size: 6vw;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+        }
+
+        input[type="button"]:hover {
+            background-color: #e0e0e0;
+        }
+
+        .btn-blue, .btn-yellow, .btn-red, .btn-green {
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-blue {
+            background: linear-gradient(145deg, #0066cc, #003399);
+        }
+
+        .btn-yellow {
+            background: linear-gradient(145deg, #ffcc00, #cc9900);
+        }
+
+        .btn-red {
+            background: linear-gradient(145deg, #ff3333, #cc0000);
+        }
+
+        .btn-green {
+            background: linear-gradient(145deg, #33cc33, #009900);
+        }
+
+        .btn-3d {
+            box-shadow: 0 5px #666;
+        }
+
+        .btn-3d:active {
+            box-shadow: 0 2px #666;
+            transform: translateY(4px);
+        }
+
+        /* SHOW 區域樣式 */
+        #SHOW {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            text-align: center;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            min-height: 200px;
+            display: block;
+        }
+
+        /* 搜尋輸入框樣式 */
+        #search-container {
+            display: none;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        #search-input {
+            width: 80%;
+            padding: 10px;
+            font-size: 6vw;
+        }
+
+        #search-button {
+            padding: 10px 20px;
+            font-size: 6vw;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-<table>
-  <tr>
-    <td><input type="button" id="book-display" value="" class="btn-blue" style="color: yellow; border-radius: 50px;" disabled></td>
-    <td><input type="button" id="book-number" value="" class="btn-blue" style="color: yellow; border-radius: 50px;" disabled></td>
-    <td><input type="button" value=" ⌫ " class="D"></td>
-    <td><input type="button" value="目錄" class="btn-blue" onclick="showDirectory()"></td>
-  </tr>
-  <tr>
-    <td><input type="button" value="詩歌" class="btn-blue btn-3d" onclick="showBookName(1, '詩歌')"></td>
-    <td><input type="button" value="1" class="btn-yellow btn-3d"></td>
-    <td><input type="button" value="2" class="btn-yellow btn-3d"></td>
-    <td><input type="button" value="3" class="btn-yellow btn-3d"></td>
-  </tr>
-  <tr>
-    <td><input type="button" value="補充" class="btn-blue btn-3d" onclick="showBookName(2, '補充')"></td>
-    <td><input type="button" value="4" class="btn-yellow btn-3d"></td>
-    <td><input type="button" value="5" class="btn-yellow btn-3d"></td>
-    <td><input type="button" value="6" class="btn-yellow btn-3d"></td>
-  </tr>
-  <tr>
-    <td><input type="button" value="新頌" class="btn-blue btn-3d" onclick="showBookName(3, '新頌')"></td>
-    <td><input type="button" value="7" class="btn-yellow btn-3d"></td>
-    <td><input type="button" value="8" class="btn-yellow btn-3d"></td>
-    <td><input type="button" value="9" class="btn-yellow btn-3d"></td>
-  </tr>
-  <tr>
-    <td><input type="button" value="紅本" class="btn-blue btn-3d" onclick="showBookName(4, '紅本')"></td>
-    <td><input type="button" value="清除" class="btn-red btn-3d"></td>
-    <td><input type="button" value="0" class="btn-yellow btn-3d"></td>
-    <td><input type="button" value="確認" class="btn-green btn-3d"></td>
-  </tr>
-  <tr>
-    <td><input type="button" value="藍本" class="btn-blue btn-3d" onclick="showBookName(5, '藍本')"></td>
-    <td><input type="button" value="兒童" class="btn-blue btn-3d" onclick="showBookName(6, '兒童')"></td>
-    <!-- 右下角兩顆按鈕預設為【搜尋】與【說明】 -->
-    <td><input type="button" id="search-main-button" value="搜尋" class="btn-red btn-3d" onclick="toggleSearch()"></td>
-    <td><input type="button" id="help-share-button" value="說明" class="btn-red btn-3d" onclick="HELPTEXT()"></td>
-  </tr>
-</table>
-<div id="search-container">
-  <input type="text" id="search-input" placeholder="輸入搜尋關鍵字...">
-  <button id="search-button" class="btn-blue" onclick="search()">搜尋</button>
-</div>
-<div id="SHOW"></div>
+    <table>
+        <tr>
+            <td><input type="button" id="book-display" value="" class="btn-blue" style="color: yellow; border-radius: 50px;" disabled></td>
+            <td><input type="button" id="book-number" value="" class="btn-blue" style="color: yellow; border-radius: 50px;" disabled></td>
+            <td><input type="button" value="?" class="D"></td>
+            <td><input type="button" value="目錄" class="btn-blue" onclick="showDirectory()"></td>
+        </tr>
+        <tr>
+            <td><input type="button" value="詩歌" class="btn-blue btn-3d" onclick="showBookName(1, '詩歌')"></td>
+            <td><input type="button" value="1" class="btn-yellow btn-3d"></td>
+            <td><input type="button" value="2" class="btn-yellow btn-3d"></td>
+            <td><input type="button" value="3" class="btn-yellow btn-3d"></td>
+        </tr>
+        <tr>
+            <td><input type="button" value="補充" class="btn-blue btn-3d" onclick="showBookName(2, '補充')"></td>
+            <td><input type="button" value="4" class="btn-yellow btn-3d"></td>
+            <td><input type="button" value="5" class="btn-yellow btn-3d"></td>
+            <td><input type="button" value="6" class="btn-yellow btn-3d"></td>
+        </tr>
+        <tr>
+            <td><input type="button" value="新頌" class="btn-blue btn-3d" onclick="showBookName(3, '新頌')"></td>
+            <td><input type="button" value="7" class="btn-yellow btn-3d"></td>
+            <td><input type="button" value="8" class="btn-yellow btn-3d"></td>
+            <td><input type="button" value="9" class="btn-yellow btn-3d"></td>
+        </tr>
+        <tr>
+            <td><input type="button" value="紅本" class="btn-blue btn-3d" onclick="showBookName(4, '紅本')"></td>
+            <td><input type="button" value="清除" class="btn-red btn-3d"></td>
+            <td><input type="button" value="0" class="btn-yellow btn-3d"></td>
+            <td><input type="button" value="確認" class="btn-green btn-3d"></td>
+        </tr>
+        <tr>
+            <td><input type="button" value="藍本" class="btn-blue btn-3d" onclick="showBookName(5, '藍本')"></td>
+            <td><input type="button" value="兒童" class="btn-blue btn-3d" onclick="showBookName(6, '兒童')"></td>
+            <td><input type="button" value="搜尋" class="btn-red btn-3d" onclick="toggleSearch()"></td>
+            <td><input type="button" value="說明" class="btn-red btn-3d" onclick="HELPTEXT()"></td>
+        </tr>
+    </table>
+    <div id="search-container">
+        <input type="text" id="search-input" placeholder="輸入搜尋關鍵字...">
+        <button id="search-button" class="btn-blue" onclick="search()">搜尋</button>
+    </div>
+    <div id="SHOW"></div>
+    <script>
+        // 檢查 localStorage 版本
+        const currentVersion = 20241219;
+        const storedVersion = localStorage.getItem('hymnsVersion');
 
-<script>
-  // 全域變數：記錄數字輸入值、目前選取歌的 MSG key（格式：MSG_歌本_號碼）及最近一次確認的歌資訊
-  var numberValue = "";
-  var currentHymnMsgKey = "";
-  var lastConfirmedSong = null; // 格式：{bookName, songNumber, favorite, feeling}
+        // 如果版本不匹配或無資料，載入對應 JS 文件
+        if (storedVersion !== String(currentVersion)) {
+            const script = document.createElement('script');
+            script.src = storedVersion === null ? 'hymns.js' : 'replacedata.js';
+            document.head.appendChild(script);
+            localStorage.setItem('hymnsVersion', String(currentVersion));
+        }
 
-  // 檢查版本並載入資料庫（hymns.js 或 replacedata.js）
-  const currentVersion = 20250311;
-  const storedVersion = localStorage.getItem('hymnsVersion');
-  if (storedVersion !== String(currentVersion)) {
-    const script = document.createElement('script');
-    script.src = (storedVersion === null) ? 'hymns.js' : 'replacedata.js';
-    document.head.appendChild(script);
-    localStorage.setItem('hymnsVersion', String(currentVersion));
-  }
-  
-  // 顯示選取的歌本，並清空下方顯示區（同時清除前次感覺記錄）
-  function showBookName(bookCode, bookName) {
-    document.getElementById('book-display').value = bookName;
-    document.getElementById('SHOW').innerHTML = '';
-    document.getElementById('SHOW').style.display = 'none';
-    currentHymnMsgKey = "";
-  }
-  
-  // 原有格式化歌詞函式（含動態字體調整、第一行紅字、點擊/雙擊朗讀等特效）
-  function formatLyrics(lyrics) {
-    const lines = lyrics.split('\n');
-    let longestLine = '';
-    let currentColor = 'MidnightBlue';
-    for (let i = 0; i < lines.length; i++) {
-      const digitCount = (lines[i].match(/\d/g) || []).length;
-      if (lines[i].length > longestLine.length && digitCount <= 3) {
-        longestLine = lines[i];
-      }
-    }
-    const screenWidth = window.innerWidth;
-    const charCount = longestLine.length;
-    const fontSize = (screenWidth / charCount) * 0.93;
-    function isNumeric(line) { return /^\d+$/.test(line); }
-    function isOnlyPunctuation(line) { return /^[.,\/#!$%\^&\*;:{}=\-_`~()]+$/.test(line); }
-    let formattedLyrics = '';
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      let backgroundColor = (i === 0) ? '#BDA589' : '';
-      if (isNumeric(line)) {
-        currentColor = (currentColor === 'MidnightBlue') ? 'DarkGreen' : 'MidnightBlue';
-      }
-      formattedLyrics += `<div style="font-size: ${fontSize}px; color: ${currentColor}; background-color: ${backgroundColor};"
-        onclick="onClick(event, '${line}');"
-        onmouseover="this.style.backgroundColor='#FFD700';"
-        onmouseout="this.style.backgroundColor='${backgroundColor}';">${line}</div>`;
-    }
-    return formattedLyrics;
-  }
-  
-  // 點擊處理（300ms內雙擊則朗讀）
-  let clickCount = 0;
-  let clickTimeout;
-  function onClick(event, text) {
-    clickCount++;
-    if (clickTimeout) { clearTimeout(clickTimeout); }
-    clickTimeout = setTimeout(function() {
-      if (clickCount >= 2) { speakText(text); }
-      clickCount = 0;
-    }, 300);
-  }
-  function speakText(text) {
-    const speech = new SpeechSynthesisUtterance(text);
-    speech.rate = 0.85;
-    window.speechSynthesis.speak(speech);
-  }
-  
-  // 搜尋並顯示歌詞，並依據歌本及號碼設定獨立 MSG key
-  function searchLyrics(book, code) {
-    const showDiv = document.getElementById('SHOW');
-    showDiv.innerHTML = "";
-    const hymns = JSON.parse(localStorage.getItem('hymns')) || [];
-    const bookCodeMap = { '詩歌': 1, '補充': 2, '新頌': 3, '紅本': 4, '兒童': 5, '藍本': 6 };
-    const hymn = hymns.find(hymn => hymn.book === bookCodeMap[book] && hymn.code === code);
-    if (hymn) {
-      const formattedLyrics = formatLyrics(hymn.lyrics);
-      let result = formattedLyrics;
-      const favorite = hymn.favorite;
-      if (favorite) {
-        result += `<div style="font-size: 6vw; color: blue; background-color: #BDA589;">上次點歌日期: ${favorite}</div>`;
-      }
-      // 產生獨立 MSG key，格式：MSG_歌本_號碼
-      const msgKey = "MSG_" + book + "_" + code;
-      currentHymnMsgKey = msgKey;
-      const msg = localStorage.getItem(msgKey);
-      if (msg) {
-        result += `<div id="feeling-msg" style="font-size: 6vw; color: green;">${msg}</div>`;
-      }
-      showDiv.innerHTML = result;
-      showDiv.style.display = 'block';
-      showDiv.scrollIntoView();
-      // 更新右下角按鈕：將【搜尋】變成【感覺】，【說明】變成【分享】
-      const searchMainBtn = document.getElementById('search-main-button');
-      if (searchMainBtn) {
-        searchMainBtn.value = "感覺";
-        searchMainBtn.onclick = recordFeeling;
-      }
-      const helpShareBtn = document.getElementById('help-share-button');
-      if (helpShareBtn) {
-        helpShareBtn.value = "分享";
-        helpShareBtn.onclick = shareToLine;
-      }
-    } else {
-      alert('找不到對應的歌詞');
-    }
-  }
-  
-  // 設定數字鍵及其他按鈕功能
-  document.addEventListener('DOMContentLoaded', function() {
-    const numberDisplay = document.getElementById('book-number');
-    function updateNumberDisplay() {
-      numberDisplay.value = numberValue;
-    }
-    const numberButtons = document.querySelectorAll('.btn-yellow');
-    numberButtons.forEach(function(button) {
-      button.addEventListener('click', function() {
-        numberValue += this.value;
-        updateNumberDisplay();
-      });
-    });
-    const backButton = document.querySelector('.D');
-    backButton.addEventListener('click', function() {
-      numberValue = numberValue.slice(0, -1);
-      updateNumberDisplay();
-    });
-    // 清除按鈕：清除所有顯示內容、還原右下角按鈕，並清空 currentHymnMsgKey
-    const clearButton = document.querySelector('.btn-red');
-    clearButton.addEventListener('click', function() {
-      document.getElementById('book-display').value = '';
-      document.getElementById('book-number').value = '';
-      numberValue = "";
-      updateNumberDisplay();
-      document.getElementById('SHOW').innerHTML = '';
-      document.getElementById('SHOW').style.display = 'none';
-      document.getElementById('search-container').style.display = 'none';
-      const searchMainBtn = document.getElementById('search-main-button');
-      if (searchMainBtn) {
-        searchMainBtn.value = "搜尋";
-        searchMainBtn.onclick = toggleSearch;
-      }
-      const helpShareBtn = document.getElementById('help-share-button');
-      if (helpShareBtn) {
-        helpShareBtn.value = "說明";
-        helpShareBtn.onclick = HELPTEXT;
-      }
-      currentHymnMsgKey = "";
-    });
-    // 確認按鈕：如果輸入特殊號碼 9101229，則遍歷 localStorage 輸出所有備份資料；否則正常處理
-    const confirmButton = document.querySelector('.btn-green');
-    confirmButton.addEventListener('click', function() {
-      const bookName = document.getElementById('book-display').value;
-      const bookNumber = parseInt(document.getElementById('book-number').value, 10);
-      // 如果輸入號碼為 9101229，遍歷 localStorage 搜尋所有 "MSG_" 開頭的鍵
-      if (bookNumber === 9101229) {
-        numberValue = "";
-        updateNumberDisplay();
-        var summary = "";
-        // 遍歷 localStorage 鍵
-        for (var i = 0; i < localStorage.length; i++) {
-          var key = localStorage.key(i);
-          if (key.indexOf("MSG_") === 0) {
-            var parts = key.split("_"); // 格式：MSG_歌本_號碼
-            if (parts.length >= 3) {
-              var bk = parts[1];
-              var sn = parts.slice(2).join("_");
-              var hymns = JSON.parse(localStorage.getItem("hymns")) || [];
-              // 定義歌本對應表
-              var bookCodeMapping = { '詩歌': 1, '補充': 2, '新頌': 3, '紅本': 4, '兒童': 5, '藍本': 6 };
-              var found = hymns.find(function(h) {
-                return h.book === bookCodeMapping[bk] && h.code == sn;
-              });
-              var fav = found ? found.favorite : "";
-              var feeling = localStorage.getItem(key);
-              summary += "歌本: " + bk + ", 第 " + sn + " 首\n";
-              if (fav) { summary += "上次點歌日期: " + fav + "\n"; }
-              if (feeling) { summary += "感覺: " + feeling + "\n"; }
-              summary += "\n";
+        function showBookName(bookCode, bookName) {
+            document.getElementById('book-display').value = bookName;
+            document.getElementById('SHOW').innerHTML = '';
+            document.getElementById('SHOW').style.display = 'none';
+        }
+
+        function formatLyrics(lyrics) {
+            const lines = lyrics.split('\n');
+            let longestLine = '';
+            for (let i = 0; i < lines.length; i++) {
+                if (lines[i].length > longestLine.length) longestLine = lines[i];
             }
-          }
+            const screenWidth = window.innerWidth;
+            const charCount = longestLine.length;
+            const fontSize = (screenWidth / charCount) * 0.9;
+            let formattedLyrics = '';
+            for (let i = 0; i < lines.length; i++) {
+                formattedLyrics += i === 0 
+                    ? `<div style="font-size: ${fontSize}px; color: red;">${lines[i]}</div>`
+                    : `<div style="font-size: ${fontSize}px;">${lines[i]}</div>`;
+            }
+            return formattedLyrics;
         }
-        if (!summary) {
-          alert("目前沒有備份資料。");
-        } else {
-          document.getElementById("SHOW").innerText = summary;
-          shareToLine();
+
+        function searchLyrics(book, code) {
+            const hymns = JSON.parse(localStorage.getItem('hymns')) || [];
+            const bookCodeMap = { '詩歌': 1, '補充': 2, '新頌': 3, '紅本': 4, '兒童': 5, '藍本': 6 };
+            const hymn = hymns.find(h => h.book === bookCodeMap[book] && h.code === code);
+            if (hymn) {
+                const formattedLyrics = formatLyrics(hymn.lyrics);
+                let result = formattedLyrics;
+                if (hymn.favorite) {
+                    result += `<div style="font-size: 6vw; color: blue; background-color: #BDA589;">上次點歌日期: ${hymn.favorite}</div>`;
+                }
+                document.getElementById('SHOW').innerHTML = result;
+                document.getElementById('SHOW').style.display = 'block';
+                document.getElementById('SHOW').scrollIntoView();
+            } else {
+                alert('找不到對應的歌詞');
+            }
         }
-        return;
-      }
-      // 正常情況：必須選取歌本與輸入歌號
-      if (bookName && bookNumber) {
-        searchLyrics(bookName, bookNumber);
-        const today = new Date();
-        const gregorianYear = today.getFullYear();
-        const taiwanYear = gregorianYear - 1911;
-        const month = today.getMonth() + 1;
-        const day = today.getDate();
-        const taiwanDate = `${taiwanYear}${month.toString().padStart(2, '0')}${day.toString().padStart(2, '0')}`;
-        const hymns = JSON.parse(localStorage.getItem('hymns')) || [];
-        const bookCodeMap = { '詩歌': 1, '補充': 2, '新頌': 3, '紅本': 4, '兒童': 5, '藍本': 6 };
-        const hymn = hymns.find(hymn => hymn.book === bookCodeMap[bookName] && hymn.code === bookNumber);
-        if (hymn) {
-          hymn.favorite = parseInt(taiwanDate, 10);
-          localStorage.setItem('hymns', JSON.stringify(hymns));
-          lastConfirmedSong = {
-            bookName: bookName,
-            songNumber: bookNumber,
-            favorite: taiwanDate,
-            feeling: localStorage.getItem("MSG_" + bookName + "_" + bookNumber) || ""
-          };
-        } else {
-          alert('找不到對應的歌詞');
+
+        document.addEventListener('DOMContentLoaded', function() {
+            let numberValue = "";
+            const numberDisplay = document.getElementById('book-number');
+
+            function updateNumberDisplay() {
+                numberDisplay.value = numberValue;
+            }
+
+            document.querySelectorAll('.btn-yellow').forEach(button => {
+                button.addEventListener('click', function() {
+                    numberValue += this.value;
+                    updateNumberDisplay();
+                });
+            });
+
+            document.querySelector('.D').addEventListener('click', function() {
+                numberValue = numberValue.slice(0, -1);
+                updateNumberDisplay();
+            });
+
+            document.querySelector('.btn-red').addEventListener('click', function() {
+                document.getElementById('book-display').value = '';
+                document.getElementById('book-number').value = '';
+                numberValue = '';
+                updateNumberDisplay();
+                document.getElementById('SHOW').innerHTML = '';
+                document.getElementById('SHOW').style.display = 'none';
+                document.getElementById('search-container').style.display = 'none';
+            });
+
+            document.querySelector('.btn-green').addEventListener('click', function() {
+                const bookName = document.getElementById('book-display').value;
+                const bookNumber = parseInt(document.getElementById('book-number').value, 10);
+                if (bookName && bookNumber) {
+                    searchLyrics(bookName, bookNumber);
+                    const today = new Date();
+                    const taiwanYear = today.getFullYear() - 1911;
+                    const taiwanDate = `${taiwanYear}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
+                    const hymns = JSON.parse(localStorage.getItem('hymns')) || [];
+                    const bookCodeMap = { '詩歌': 1, '補充': 2, '新頌': 3, '紅本': 4, '兒童': 5, '藍本': 6 };
+                    const hymn = hymns.find(h => h.book === bookCodeMap[bookName] && h.code === bookNumber);
+                    if (hymn) {
+                        hymn.favorite = parseInt(taiwanDate, 10);
+                        localStorage.setItem('hymns', JSON.stringify(hymns));
+                    } else {
+                        alert('找不到對應的歌詞');
+                    }
+                } else {
+                    alert("請選擇歌本名稱並輸入歌本號碼。");
+                }
+            });
+        });
+
+        function HELPTEXT() {
+            const TimmyMSG = formatLyrics(localStorage.getItem('TimmyMSG'));
+            document.getElementById('SHOW').innerHTML = TimmyMSG;
+            document.getElementById('SHOW').style.display = 'block';
+            document.getElementById('SHOW').scrollIntoView();
         }
-      } else {
-        alert("請選擇歌本名稱並輸入歌本號碼。");
-      }
-    });
-  });
-  
-  // 說明功能（原 HELPTEXT）：顯示預設說明內容
-  function HELPTEXT(){
-    const TimmyMSG = formatLyrics(localStorage.getItem('TimmyMSG'));
-    document.getElementById('SHOW').innerHTML = TimmyMSG;
-    document.getElementById('SHOW').style.display = 'block';
-    document.getElementById('SHOW').scrollIntoView();
-  }
-  
-  // 感覺功能：若已有既存值則預設載入供修改，更新後先移除舊訊息再追加新訊息，同時記錄至 localStorage
-  function recordFeeling() {
-    if (!currentHymnMsgKey) {
-      alert("請先選擇一首歌！");
-      return;
-    }
-    let currentFeeling = localStorage.getItem(currentHymnMsgKey) || "";
-    const feeling = prompt("請輸入你唱此歌時的感覺:", currentFeeling);
-    if (feeling !== null) {
-      localStorage.setItem(currentHymnMsgKey, feeling);
-      const showDiv = document.getElementById('SHOW');
-      const existingMsgDiv = document.getElementById('feeling-msg');
-      if (existingMsgDiv) { existingMsgDiv.remove(); }
-      if (feeling.trim() !== "") {
-        const msgDiv = document.createElement('div');
-        msgDiv.id = "feeling-msg";
-        msgDiv.style.fontSize = "6vw";
-        msgDiv.style.color = "green";
-        msgDiv.innerText = feeling;
-        showDiv.appendChild(msgDiv);
-      }
-      if (lastConfirmedSong) { lastConfirmedSong.feeling = feeling; }
-    }
-  }
-  
-  // 分享功能：將下方顯示區全部內容透過 LINE 分享
-  function shareToLine() {
-    const content = document.getElementById('SHOW').innerText;
-    if (!content) {
-      alert("目前沒有可分享的內容！");
-      return;
-    }
-    const encodedText = encodeURIComponent(content);
-    const lineUrl = "https://line.me/R/msg/text/?" + encodedText;
-    //window.open(lineUrl, '_blank');
-    window.location.href = lineUrl;
-  }
-  
-  // 切換搜尋輸入框顯示與隱藏
-  function toggleSearch() {
-    const searchContainer = document.getElementById('search-container');
-    if (searchContainer.style.display === 'none' || searchContainer.style.display === '') {
-      searchContainer.style.display = 'block';
-      document.getElementById('search-container').scrollIntoView();
-    } else {
-      searchContainer.style.display = 'none';
-    }
-  }
-  
-  // 以下為搜尋及高亮函式（保留原有功能）
-  function formatLyricsWithHighlight(lyrics, keyword) {
-    const lines = lyrics.split('\n');
-    let longestLine = '';
-    for (let i = 0; i < lines.length; i++) {
-      if (lines[i].length > longestLine.length) { longestLine = lines[i]; }
-    }
-    const screenWidth = window.innerWidth;
-    const charCount = longestLine.length;
-    const fontSize = (screenWidth / charCount) * 0.92;
-    let formattedLyrics = '';
-    for (let i = 0; i < lines.length; i++) {
-      let line = lines[i];
-      if (keyword) {
-        const regex = new RegExp(keyword, 'gi');
-        line = line.replace(regex, match => `<span style="color: red;">${match}</span>`);
-      }
-      formattedLyrics += `<div style="font-size: ${fontSize}px;">${line}</div>`;
-    }
-    return formattedLyrics;
-  }
-  
-  function search() {
-    const keyword = document.getElementById('search-input').value.trim();
-    if (!keyword) { alert('請輸入搜尋關鍵字'); return; }
-    const fontSizeMatch = keyword.match(/^縮小字體(\d+)$/);
-    if (fontSizeMatch) {
-      let mfontSize = parseInt(fontSizeMatch[1], 10);
-      if (!isNaN(mfontSize)) {
-        if (mfontSize > 10) { mfontSize = 10; }
-        localStorage.setItem('FS', mfontSize);
-        alert(`字體大小已縮小幾個 ${mfontSize}`);
-        document.getElementById('search-container').style.display = 'none';
-        return;
-      }
-    }
-    const hymns = JSON.parse(localStorage.getItem('hymns')) || [];
-    const bookCodeMap = { 1: '詩歌', 2: '補充', 3: '新頌', 4: '紅本', 5: '兒童', 6: '藍本' };
-    const regex = new RegExp(keyword, 'gi');
-    let results = '';
-    let lastCode = null;
-    hymns.forEach(hymn => {
-      let displayTitle = false;
-      let displayLyrics = '';
-      if (regex.test(hymn.title)) { displayTitle = true; }
-      if (regex.test(hymn.favorite)) { displayTitle = true; }
-      let matchingLine = '';
-      const lines = hymn.lyrics.split('\n');
-      for (let line of lines) {
-        if (regex.test(line)) { matchingLine = formatLyricsLine(line, keyword); break; }
-      }
-      if (matchingLine) { displayLyrics = matchingLine; }
-      if (displayTitle || displayLyrics) {
-        if (lastCode && lastCode !== hymn.code) { results += '<br/><br/><br/>'; }
-        results += `<div style="font-size: 6vw; color: darkblue;">${bookCodeMap[hymn.book]} ${hymn.code}: ${formatTitleLine(hymn.title, keyword)}</div>`;
-        if (displayLyrics) { results += `<div style="font-size: 6vw;">${displayLyrics}</div>`; }
-        lastCode = hymn.code;
-      }
-    });
-    if (!results) { results = '找不到符合的結果'; }
-    document.getElementById('SHOW').innerHTML = results;
-    document.getElementById('SHOW').style.display = 'block';
-    document.getElementById('search-container').style.display = 'none';
-  }
-  
-  function formatLyricsLine(line, keyword) {
-    const regex = new RegExp(keyword, 'gi');
-    return line.replace(regex, match => `<span style="color: red;">${match}</span>`);
-  }
-  
-  function formatTitleLine(title, keyword) {
-    const regex = new RegExp(keyword, 'gi');
-    return title.replace(regex, match => `<span style="color: red;">${match}</span>`);
-  }
-  
-  // 顯示目錄功能
-  function showDirectory() {
-    const bookName = document.getElementById('book-display').value;
-    if (!bookName) {
-      alert("請選擇歌本名稱，然後再按目錄。");
-      return;
-    }
-    const hymns = JSON.parse(localStorage.getItem('hymns')) || [];
-    const bookCodeMap = { '詩歌': 1, '補充': 2, '新頌': 3, '紅本': 4, '兒童': 5, '藍本': 6 };
-    const bookCode = bookCodeMap[bookName];
-    if (!bookCode) { alert("無效的歌本名稱。"); return; }
-    let result = '';
-    let currentColor = 'MidnightBlue';
-    hymns.forEach(hymn => {
-      if (hymn.book === bookCode) {
-        result += `<div style="font-size: 5vw; color: ${currentColor};">${bookName} ${hymn.code}: ${hymn.title}</div><br/><br/><br/>`;
-        currentColor = (currentColor === 'MidnightBlue') ? 'DarkGreen' : 'MidnightBlue';
-      }
-    });
-    if (result === '') { result = '找不到目錄。'; }
-    document.getElementById('SHOW').innerHTML = result;
-    document.getElementById('SHOW').style.display = 'block';
-    document.getElementById('search-container').style.display = 'none';
-    document.getElementById('SHOW').scrollIntoView();
-  }
-  
-  // 註冊 Service Worker（離線使用）
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/Thymn/service-worker.js')
-      .then(registration => { console.log('Service Worker registered with scope:', registration.scope); })
-      .catch(error => { console.log('Service Worker registration failed:', error); });
-  }
-</script>
+
+        function toggleSearch() {
+            const searchContainer = document.getElementById('search-container');
+            searchContainer.style.display = (searchContainer.style.display === 'none' || searchContainer.style.display === '') ? 'block' : 'none';
+            if (searchContainer.style.display === 'block') document.getElementById('search-container').scrollIntoView();
+        }
+
+        function search() {
+            const keyword = document.getElementById('search-input').value.trim();
+            if (!keyword) {
+                alert('請輸入搜尋關鍵字');
+                return;
+            }
+            if (keyword === '9101229') {
+                exportHymnsWithData();
+                return;
+            }
+            const fontSizeMatch = keyword.match(/^縮小字體(\d+)$/);
+            if (fontSizeMatch) {
+                const mfontSize = parseInt(fontSizeMatch[1], 10);
+                if (!isNaN(mfontSize)) {
+                    localStorage.setItem('FS', mfontSize);
+                    alert(`字體大小已縮小幾個 ${mfontSize}`);
+                    return;
+                }
+            }
+            const hymns = JSON.parse(localStorage.getItem('hymns')) || [];
+            const bookCodeMap = { 1: '詩歌', 2: '補充', 3: '新頌', 4: '紅本', 5: '兒童', 6: '藍本' };
+            const regex = new RegExp(keyword, 'gi');
+            let results = '';
+            let lastCode = null;
+            hymns.forEach(hymn => {
+                let displayTitle = regex.test(hymn.title) || regex.test(hymn.favorite);
+                let matchingLine = '';
+                const lines = hymn.lyrics.split('\n');
+                for (let line of lines) {
+                    if (regex.test(line)) {
+                        matchingLine = line.replace(regex, match => `<span style="color: red;">${match}</span>`);
+                        break;
+                    }
+                }
+                if (displayTitle || matchingLine) {
+                    if (lastCode && lastCode !== hymn.code) results += '<br/><br/><br/>';
+                    results += `<div style="font-size: 6vw; color: darkblue;">${bookCodeMap[hymn.book]} ${hymn.code}: ${hymn.title.replace(regex, match => `<span style="color: red;">${match}</span>`)}</div>`;
+                    if (matchingLine) results += `<div style="font-size: 6vw;">${matchingLine}</div>`;
+                    lastCode = hymn.code;
+                }
+            });
+            document.getElementById('SHOW').innerHTML = results || '找不到符合的結果';
+            document.getElementById('SHOW').style.display = 'block';
+            document.getElementById('search-container').style.display = 'none';
+        }
+
+        function showDirectory() {
+            const bookName = document.getElementById('book-display').value;
+            if (!bookName) {
+                alert("請選擇歌本名稱，然後再按目錄。");
+                return;
+            }
+            const hymns = JSON.parse(localStorage.getItem('hymns')) || [];
+            const bookCodeMap = { '詩歌': 1, '補充': 2, '新頌': 3, '紅本': 4, '兒童': 5, '藍本': 6 };
+            const bookCode = bookCodeMap[bookName];
+            let result = '';
+            let currentColor = 'MidnightBlue';
+            hymns.forEach(hymn => {
+                if (hymn.book === bookCode) {
+                    result += `<div style="font-size: 5vw; color: ${currentColor};">${bookName} ${hymn.code}: ${hymn.title}</div><br/><br/><br/>`;
+                    currentColor = currentColor === 'MidnightBlue' ? 'DarkGreen' : 'MidnightBlue';
+                }
+            });
+            document.getElementById('SHOW').innerHTML = result || '找不到目錄。';
+            document.getElementById('SHOW').style.display = 'block';
+            document.getElementById('search-container').style.display = 'none';
+            document.getElementById('SHOW').scrollIntoView();
+        }
+
+        function exportHymnsWithData() {
+            const hymns = JSON.parse(localStorage.getItem('hymns')) || [];
+            const filteredHymns = hymns.filter(h => (h.favorite && h.favorite !== 0) || (h.feeling && h.feeling.trim() !== ''));
+            const exportString = `const newHymns = ${JSON.stringify(filteredHymns, null, 2)};`;
+            const blob = new Blob([exportString], { type: 'application/javascript' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'replacedata.js';
+            link.click();
+        }
+    </script>
 </body>
 </html>
