@@ -111,7 +111,7 @@
   var lastConfirmedSong = null; // 格式：{bookName, songNumber, favorite, feeling}
 
   // 檢查版本並載入資料庫（hymns.js 或 replacedata.js）
-  const currentVersion = 20241229;
+  const currentVersion = 20250311;
   const storedVersion = localStorage.getItem('hymnsVersion');
   if (storedVersion !== String(currentVersion)) {
     const script = document.createElement('script');
@@ -265,10 +265,36 @@
       if (bookNumber === 9101229) {
         numberValue = "";
         updateNumberDisplay();
-        return;
+        var summary = "";
+        // 遍歷 localStorage 鍵
+        for (var i = 0; i < localStorage.length; i++) {
+          var key = localStorage.key(i);
+          if (key.indexOf("MSG_") === 0) {
+            var parts = key.split("_"); // 格式：MSG_歌本_號碼
+            if (parts.length >= 3) {
+              var bk = parts[1];
+              var sn = parts.slice(2).join("_");
+              var hymns = JSON.parse(localStorage.getItem("hymns")) || [];
+              // 定義歌本對應表
+              var bookCodeMapping = { '詩歌': 1, '補充': 2, '新頌': 3, '紅本': 4, '兒童': 5, '藍本': 6 };
+              var found = hymns.find(function(h) {
+                return h.book === bookCodeMapping[bk] && h.code == sn;
+              });
+              var fav = found ? found.favorite : "";
+              var feeling = localStorage.getItem(key);
+              summary += "歌本: " + bk + ", 第 " + sn + " 首\n";
+              if (fav) { summary += "上次點歌日期: " + fav + "\n"; }
+              if (feeling) { summary += "感覺: " + feeling + "\n"; }
+              summary += "\n";
+            }
+          }
         }
-        document.getElementById("SHOW").innerText = summary;
-        shareToLine();
+        if (!summary) {
+          alert("目前沒有備份資料。");
+        } else {
+          document.getElementById("SHOW").innerText = summary;
+          shareToLine();
+        }
         return;
       }
       // 正常情況：必須選取歌本與輸入歌號
@@ -300,18 +326,6 @@
       }
     });
   });
-
-//匯出
-  function exportHymnsWithData() {
-            const hymns = JSON.parse(localStorage.getItem('hymns')) || [];
-            const filteredHymns = hymns.filter(h => (h.favorite && h.favorite !== 0) || (h.feeling && h.feeling.trim() !== ''));
-            const exportString = `const newHymns = ${JSON.stringify(filteredHymns, null, 2)};`;
-            const blob = new Blob([exportString], { type: 'application/javascript' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'replacedata.js';
-            link.click();
-  }
   
   // 說明功能（原 HELPTEXT）：顯示預設說明內容
   function HELPTEXT(){
