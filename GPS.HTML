@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GPS ¦@¨É¦ì¸m</title>
+    <title>GPS å…±äº«ä½ç½®</title>
     <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY"></script>
 </head>
 <body>
-    <h2>GPS §Y®É¦ì¸m</h2>
+    <h2>GPS å³æ™‚ä½ç½®</h2>
     <div id="map" style="width: 100%; height: 500px;"></div>
 
     <script>
-        const GAS_URL = "https://script.google.com/macros/s/XXXX/exec"; // ´À´«¦¨§Aªº GAS ºô§}
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbzq7zD5Z79T3e5-T4_vTozbq7em85CyxNNGnfbHXkPvoMIfjqx2I3b14Ex4MT9ONlCkdg/exec"; // æ›¿æ›æˆä½ çš„ GAS ç¶²å€
         let map, userMarker, userId = "User-" + Math.floor(Math.random() * 10000);
 
         function initMap() {
             map = new google.maps.Map(document.getElementById("map"), {
-                center: { lat: 25.0330, lng: 121.5654 }, // ¹w³]¥x¥_101
+                center: { lat: 25.0330, lng: 121.5654 }, // é è¨­å°åŒ—101
                 zoom: 15
             });
 
@@ -25,29 +25,29 @@
                     const latitude = position.coords.latitude;
                     const longitude = position.coords.longitude;
                     
-                    // ¤W¶Ç¦ì¸m¨ì Google Sheets
+                    // ä¸Šå‚³ä½ç½®åˆ° Google Sheets
                     fetch(GAS_URL, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ id: userId, latitude, longitude })
                     });
 
-                    // §ó·s¦a¹Ï¼Ğ°O
+                    // æ›´æ–°åœ°åœ–æ¨™è¨˜
                     if (userMarker) {
                         userMarker.setPosition({ lat: latitude, lng: longitude });
                     } else {
                         userMarker = new google.maps.Marker({
                             position: { lat: latitude, lng: longitude },
                             map,
-                            title: "§Úªº¦ì¸m",
+                            title: "æˆ‘çš„ä½ç½®",
                             icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
                         });
                     }
                 }, error => {
-                    console.error("GPS ¨ú±o¥¢±Ñ", error);
+                    console.error("GPS å–å¾—å¤±æ•—", error);
                 }, { enableHighAccuracy: true });
             } else {
-                alert("±zªº³]³Æ¤£¤ä´© GPS ©w¦ì");
+                alert("æ‚¨çš„è¨­å‚™ä¸æ”¯æ´ GPS å®šä½");
             }
         }
 
@@ -68,7 +68,7 @@
 
         window.onload = () => {
             initMap();
-            setInterval(fetchUsers, 10000); // ¨C 10 ¬í§ó·s¤@¦¸¦a¹Ï
+            setInterval(fetchUsers, 10000); // æ¯ 10 ç§’æ›´æ–°ä¸€æ¬¡åœ°åœ–
         };
     </script>
 </body>
