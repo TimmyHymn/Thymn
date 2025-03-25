@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPS 共享位置</title>
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY"></script>
+</head>
+<body>
+    <h2>GPS 即時位置</h2>
+    <div id="map" style="width: 100%; height: 500px;"></div>
+
+    <script>
+        const GAS_URL = "https://script.google.com/macros/s/XXXX/exec"; // 替換成你的 GAS 網址
+        let map, userMarker, userId = "User-" + Math.floor(Math.random() * 10000);
+
+        function initMap() {
+            map = new google.maps.Map(document.getElementById("map"), {
+                center: { lat: 25.0330, lng: 121.5654 }, // 預設台北101
+                zoom: 15
+            });
+
+            if (navigator.geolocation) {
+                navigator.geolocation.watchPosition(position => {
+                    const latitude = position.coords.latitude;
+                    const longitude = position.coords.longitude;
+                    
+                    // 上傳位置到 Google Sheets
+                    fetch(GAS_URL, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ id: userId, latitude, longitude })
+                    });
+
+                    // 更新地圖標記
+                    if (userMarker) {
+                        userMarker.setPosition({ lat: latitude, lng: longitude });
+                    } else {
+                        userMarker = new google.maps.Marker({
+                            position: { lat: latitude, lng: longitude },
+                            map,
+                            title: "我的位置",
+                            icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+                        });
+                    }
+                }, error => {
+                    console.error("GPS 取得失敗", error);
+                }, { enableHighAccuracy: true });
+            } else {
+                alert("您的設備不支援 GPS 定位");
+            }
+        }
+
+        function fetchUsers() {
+            fetch(GAS_URL)
+                .then(response => response.json())
+                .then(users => {
+                    users.forEach(user => {
+                        new google.maps.Marker({
+                            position: { lat: parseFloat(user.latitude), lng: parseFloat(user.longitude) },
+                            map,
+                            title: user.id,
+                            icon: "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
+                        });
+                    });
+                });
+        }
+
+        window.onload = () => {
+            initMap();
+            setInterval(fetchUsers, 10000); // 每 10 秒更新一次地圖
+        };
+    </script>
+</body>
+</html>
