@@ -3,73 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GPS 共享位置</title>
-    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY"></script>
+    <title>免費多人 GPS 位置共享</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database.js"></script>
 </head>
 <body>
-    <h2>GPS 即時位置</h2>
+    <h2>多人 GPS 即時位置共享</h2>
     <div id="map" style="width: 100%; height: 500px;"></div>
 
     <script>
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbzq7zD5Z79T3e5-T4_vTozbq7em85CyxNNGnfbHXkPvoMIfjqx2I3b14Ex4MT9ONlCkdg/exec"; // 替換成你的 GAS 網址
-        let map, userMarker, userId = "User-" + Math.floor(Math.random() * 10000);
+        // Firebase 設定（請將這些設定換成你自己的 Firebase 專案設定）
+        const firebaseConfig = {
+            apiKey: "YOUR_FIREBASE_API_KEY",    // 在 Firebase Console 取得
+            authDomain: "YOUR_FIREBASE_AUTH_DOMAIN",
+            databaseURL: "YOUR_FIREBASE_DATABASE_URL",
+            projectId: "YOUR_FIREBASE_PROJECT_ID",
+            storageBucket: "YOUR_FIREBASE_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_FIREBASE_MESSAGING_SENDER_ID",
+            appId: "YOUR_FIREBASE_APP_ID",
+            measurementId: "YOUR_FIREBASE_MEASUREMENT_ID"
+        };
 
-        function initMap() {
-            map = new google.maps.Map(document.getElementById("map"), {
-                center: { lat: 25.0330, lng: 121.5654 }, // 預設台北101
-                zoom: 15
+        // 初始化 Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let map = L.map('map').setView([25.0330, 121.5654], 15); // 預設台北101
+
+        // 使用 OpenStreetMap 當作地圖來源
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        let userMarkers = {};  // 存儲所有用戶的標記
+
+        // 更新 GPS 位置並上傳到 Firebase
+        function updateLocation(position) {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+
+            // 生成唯一的用戶 ID（這裡使用時間戳）
+            const userId = Date.now().toString();
+
+            // 更新 Firebase 資料庫中的位置
+            db.ref('users/' + userId).set({
+                latitude: latitude,
+                longitude: longitude
             });
 
-            if (navigator.geolocation) {
-                navigator.geolocation.watchPosition(position => {
-                    const latitude = position.coords.latitude;
-                    const longitude = position.coords.longitude;
-                    
-                    // 上傳位置到 Google Sheets
-                    fetch(GAS_URL, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ id: userId, latitude, longitude })
-                    });
-
-                    // 更新地圖標記
-                    if (userMarker) {
-                        userMarker.setPosition({ lat: latitude, lng: longitude });
-                    } else {
-                        userMarker = new google.maps.Marker({
-                            position: { lat: latitude, lng: longitude },
-                            map,
-                            title: "我的位置",
-                            icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
-                        });
-                    }
-                }, error => {
-                    console.error("GPS 取得失敗", error);
-                }, { enableHighAccuracy: true });
+            // 更新地圖上的標記
+            if (userMarkers[userId]) {
+                userMarkers[userId].setLatLng([latitude, longitude]);
             } else {
-                alert("您的設備不支援 GPS 定位");
+                userMarkers[userId] = L.marker([latitude, longitude]).addTo(map)
+                    .bindPopup("用戶位置 " + userId).openPopup();
             }
+
+            // 讓地圖跟隨使用者
+            map.setView([latitude, longitude], 15);
         }
 
-        function fetchUsers() {
-            fetch(GAS_URL)
-                .then(response => response.json())
-                .then(users => {
-                    users.forEach(user => {
-                        new google.maps.Marker({
-                            position: { lat: parseFloat(user.latitude), lng: parseFloat(user.longitude) },
-                            map,
-                            title: user.id,
-                            icon: "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
-                        });
-                    });
-                });
-        }
+        // 監聽 Firebase 中用戶的位置變化
+        db.ref('users').on('child_added', (snapshot) => {
+            const user = snapshot.val();
+            const userId = snapshot.key;
+            if (!userMarkers[userId]) {
+                userMarkers[userId] = L.marker([user.latitude, user.longitude]).addTo(map)
+                    .bindPopup("用戶位置 " + userId).openPopup();
+            }
+        });
 
-        window.onload = () => {
-            initMap();
-            setInterval(fetchUsers, 10000); // 每 10 秒更新一次地圖
-        };
+        db.ref('users').on('child_changed', (snapshot) => {
+            const user = snapshot.val();
+            const userId = snapshot.key;
+            if (userMarkers[userId]) {
+                userMarkers[userId].setLatLng([user.latitude, user.longitude]);
+            }
+        });
+
+        db.ref('users').on('child_removed', (snapshot) => {
+            const userId = snapshot.key;
+            if (userMarkers[userId]) {
+                map.removeLayer(userMarkers[userId]);
+                delete userMarkers[userId];
+            }
+        });
+
+        // 當前用戶位置更新
+        if (navigator.geolocation) {
+            navigator.geolocation.watchPosition(updateLocation, (error) => {
+                console.error("GPS 取得失敗", error);
+            }, { enableHighAccuracy: true });
+        } else {
+            alert("您的設備不支援 GPS 定位");
+        }
     </script>
 </body>
 </html>
