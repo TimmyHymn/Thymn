@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<a href="http://so.twgbr.org/subs/basic_main_an.php" target="_blank">第一書房</a>
+<P><a href="http://ipad.twgbr.org/androidmon2.php" target="_blank">第二-1書房</a>
+<P><a href="http://ipad.twgbr.org/androidmon3.php" target="_blank">第二-2書房</a>
+
+<head>
+    <meta charset="UTF-8">
+    <title>解壓縮書房</title>
+    <script>
+        const MaskS = [
+            "ZYXWVUTSRQPO",
+            "YXWVUTSRQPOZ",
+            "XWVUTSRQPOZY",
+            "WVUTSRQPOZYX",
+            "VUTSRQPOZYXW",
+            "UTSRQPOZYXWV",
+            "TSRQPOZYXWVU",
+            "SRQPOZYXWVUT",
+            "RQPOZYXWVUTS",
+            "POZYXWVUTSRQ"
+        ];
+
+        function 編碼B(B) {
+            switch (B) {
+                case '0': return 81;
+                case '1': return 83;
+                case '2': return 85;
+                case '3': return 87;
+                case '4': return 89;
+                case '5': return 90;
+                case '6': return 88;
+                case '7': return 86;
+                case '8': return 84;
+                case '9': return 82;
+                case 'A': return 48;
+                case 'B': return 50;
+                case 'C': return 52;
+                case 'D': return 54;
+                case 'E': return 56;
+                case 'F': return 65;
+                case 'G': return 67;
+                case 'H': return 69;
+                case 'I': return 71;
+                case 'J': return 73;
+                case 'K': return 75;
+                case 'L': return 77;
+                case 'M': return 79;
+                case 'N': return 80;
+                case 'O': return 78;
+                case 'P': return 76;
+                case 'Q': return 74;
+                case 'R': return 72;
+                case 'S': return 70;
+                case 'T': return 68;
+                case 'U': return 66;
+                case 'V': return 57;
+                case 'W': return 55;
+                case 'X': return 53;
+                case 'Y': return 51;
+                case 'Z': return 49;
+                case '-': return 45;
+                case '_': return 65;
+                case '!': return 73;
+                case '%': return 77;
+                case '(': return 79;
+                case ')': return 89;
+                default: return B.charCodeAt(0);
+            }
+        }
+        function 下載檔案1() {
+            const 檔名Text = document.getElementById('inputText').value.replace(/\s/g, '');
+            const url = "http://so.twgbr.org/subs_product_file/" + 檔名Text + ".zip";
+            window.location.href = url; // 開始下載
+        }
+        function 下載檔案2() {
+            const 檔名Text = document.getElementById('inputText').value.replace(/\s/g, '');
+            const url = "http://ipad.twgbr.org/product_file/" + 檔名Text + ".zip";
+            window.location.href = url; // 開始下載
+        }
+
+        function 編碼() {
+            const input = document.getElementById('inputText').value.replace(/ /g, '');
+            const Buff = new Array(12).fill(0); // 初始化 Buff 陣列
+            
+            // 填充 Buff 陣列的前12個字節，根據 MaskS 的最後一個字符
+            const maskIndex = parseInt(input[input.length - 1], 10);
+            for (let i = 0; i < 12; i++) {
+                Buff[i] = 編碼B(MaskS[maskIndex][i]);
+            }
+
+            // 將用戶輸入的字符覆蓋 Buff
+            for (let i = 0; i < input.length; i++) {
+                Buff[i] = 編碼B(input[i]);
+            }
+
+            const 編碼Buff = new Array(24).fill(0);
+            編碼Buff[0] = Buff[6];
+            編碼Buff[1] = Buff[0];
+            編碼Buff[2] = Buff[3];
+            編碼Buff[3] = Buff[8];
+            編碼Buff[4] = 45; // '-'
+            編碼Buff[5] = Buff[2];
+            編碼Buff[6] = Buff[4];
+            編碼Buff[7] = Buff[11];
+            編碼Buff[8] = Buff[4];
+            編碼Buff[9] = 45; // '-'
+            編碼Buff[10] = Buff[7];
+            編碼Buff[11] = Buff[10];
+            編碼Buff[12] = Buff[6];
+            編碼Buff[13] = Buff[2];
+            編碼Buff[14] = 45; // '-'
+            編碼Buff[15] = Buff[0];
+            編碼Buff[16] = Buff[8];
+            編碼Buff[17] = Buff[9];
+            編碼Buff[18] = Buff[6];
+            編碼Buff[19] = 45; // '-'
+            編碼Buff[20] = Buff[10];
+            編碼Buff[21] = Buff[5];
+            編碼Buff[22] = Buff[1];
+            編碼Buff[23] = Buff[11];
+
+            const output = 編碼Buff.map(c => String.fromCharCode(c)).join('');
+            document.getElementById('outputText').value = output;
+        }
+    </script>
+</head>
+<body>
+    <h1>書房解壓縮</h1>
+    <input type="text" id="inputText" placeholder="請輸入文字" />
+    <button onclick="編碼()">編碼</button>
+    <P><input type="text" size="28" id="outputText" placeholder="編碼結果" readonly />
+    <P><button onclick="下載檔案1()">書房1下載檔案</button>
+    <P><button onclick="下載檔案2()">書房2下載檔案</button>
+</body>
+</html>
