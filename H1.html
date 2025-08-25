@@ -121,8 +121,12 @@
   }
   
   // 顯示選取的歌本，並清空下方顯示區（同時清除前次感覺記錄）
-  function showBookName(bookCode, bookName) {
-    document.getElementById('book-display').value = bookName;
+  function showBookName(bookCode, bookName) { 
+  
+    document.getElementById('book-display').value = bookName; 
+numberValue = "";    
+     document.getElementById('book-number').value = '';
+
     document.getElementById('SHOW').innerHTML = '';
     document.getElementById('SHOW').style.display = 'none';
     currentHymnMsgKey = "";
@@ -178,6 +182,7 @@
   
   // 搜尋並顯示歌詞，並依據歌本及號碼設定獨立 MSG key
   function searchLyrics(book, code) {
+
     const showDiv = document.getElementById('SHOW');
     showDiv.innerHTML = "";
     const hymns = JSON.parse(localStorage.getItem('hymns')) || [];
@@ -438,7 +443,13 @@
       if (matchingLine) { displayLyrics = matchingLine; }
       if (displayTitle || displayLyrics) {
         if (lastCode && lastCode !== hymn.code) { results += '<br/><br/><br/>'; }
-        results += `<div style="font-size: 6vw; color: darkblue;">${bookCodeMap[hymn.book]} ${hymn.code}: ${formatTitleLine(hymn.title, keyword)}</div>`;
+//        results += `<div style="font-size: 6vw; color: darkblue;">${bookCodeMap[hymn.book]} ${hymn.code}: ${formatTitleLine(hymn.title, keyword)}</div>`;
+results += `<div style="font-size: 6vw;">
+  <a href="#" style="color: darkblue; text-decoration: underline;"
+     onclick="searchLyrics('${bookCodeMap[hymn.book]}', ${hymn.code}); return false;">
+     ${bookCodeMap[hymn.book]} ${hymn.code} ：${formatTitleLine(hymn.title, keyword)}
+  </a>
+</div>`;                  
         if (displayLyrics) { results += `<div style="font-size: 6vw;">${displayLyrics}</div>`; }
         lastCode = hymn.code;
       }
