@@ -4,14 +4,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <link rel="manifest" href="/Thymn/manifest.json">
   <title>網頁版詩歌</title>
-  <style>  
- }
-}}
-  
+  <style>
+    /* 定義字型 */
+    @font-face {
+      font-family: 'ㄅ源石注音黑體H';
+      src: url('https://timmyhymn.github.io/Thymn/Bpm.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+    }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { font-family: Verdana, sans-serif; height: 100%; width: 100%; background-color: #f7f7f7; }
     table { width: 100%; height: 100%; border-collapse: collapse; table-layout: fixed; }
     td { padding: 2px; }
+
     input[type="button"] {
       width: 100%;
       height: 100%;
@@ -22,6 +28,7 @@
       transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
     }
     input[type="button"]:hover { background-color: #e0e0e0; }
+
     .btn-blue, .btn-yellow, .btn-red, .btn-green {
       color: white;
       text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
@@ -33,12 +40,10 @@
     .btn-green { background: linear-gradient(145deg, #33cc33, #009900); }
     .btn-3d { box-shadow: 0 5px #666; }
     .btn-3d:active { box-shadow: 0 2px #666; transform: translateY(4px); }
+
     /* SHOW 區域樣式 */
     #SHOW {
-   //注音
-    font-face {
-      font-family: 'ㄅ源石注音黑體H'; 
-      src: url('https://https://timmyhymn.github.io/Thymn/Bpm.ttf') format('truetype');
+      font-family: 'ㄅ源石注音黑體H', sans-serif; /* 套用字型 */
       margin-top: 20px;
       padding: 10px;
       background-color: #f0f0f0;
@@ -49,6 +54,7 @@
       min-height: 200px;
       display: block;
     }
+
     /* 搜尋輸入框樣式 */
     #search-container {
       display: none;
@@ -517,6 +523,7 @@ results += `<div style="font-size: 6vw;">
 </script>
 </body>
 </html>
+
 
 
 
