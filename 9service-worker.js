@@ -3,6 +3,7 @@ const CACHE_FILES = [
     '/Thymn/H9.html',
     '/Thymn/9manifest.json',
     '/Thymn/icon-192x192.png',
+    '/Thymn/Bpm.ttf',
     '/Thymn/icon-512x512.png'
 ];
 
@@ -72,3 +73,4 @@ self.addEventListener('fetch', event => {
     );
     console.log('Fetching:', event.request.url);
 });
+
