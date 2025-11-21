@@ -2,7 +2,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <link rel="manifest" href="/Thymn/manifest.json">
+  <link rel="manifest" href="/Thymn/9manifest.json">
   <title>網頁版詩歌</title>
   <style>
     /* 定義字型 */
@@ -516,13 +516,14 @@ results += `<div style="font-size: 6vw;">
   
   // 註冊 Service Worker（離線使用）
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/Thymn/service-worker.js')
+    navigator.serviceWorker.register('/Thymn/9service-worker.js')
       .then(registration => { console.log('Service Worker registered with scope:', registration.scope); })
       .catch(error => { console.log('Service Worker registration failed:', error); });
   }
 </script>
 </body>
 </html>
+
 
 
 
