@@ -5,12 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <link rel="manifest" href="/Thymn/manifest.json">
   <title>網頁版詩歌</title>
-  <style> 
+  <style>
+ 
    //注音
-    @font-face {
+    font-face {
       font-family: 'ㄅ源石注音黑體H'; 
       src: url('https://https://timmyhymn.github.io/Thymn/Bpm.ttf') format('truetype');
-   }
+  
+ }
 //  .SHOW{      font-family: 'ㄅ源石注音黑體H';
 }}
   
@@ -129,9 +131,11 @@
   }
   
   // 顯示選取的歌本，並清空下方顯示區（同時清除前次感覺記錄）
-  function showBookName(bookCode, bookName) { 
+  function showBookName(bookCode, bookName) {
+ 
   
-    document.getElementById('book-display').value = bookName; 
+    document.getElementById('book-display').value = bookName;
+ 
 numberValue = "";    
      document.getElementById('book-number').value = '';
 
@@ -517,3 +521,4 @@ results += `<div style="font-size: 6vw;">
 </script>
 </body>
 </html>
+
