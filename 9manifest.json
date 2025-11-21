@@ -1,6 +1,6 @@
 {
     "name": "Timmy的詩歌系統",
-    "short_name": "召會詩歌本",
+    "short_name": "注音詩歌本",
     "start_url": "/Thymn/H9.html",
     "display": "standalone",
     "background_color": "#f7f7f7",
@@ -18,3 +18,4 @@
         }
     ]
 }
+
