@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>多場站剩餘車位查詢</title>
+  <style>
+    table {
+      border-collapse: collapse;
+      margin: 20px 0;
+      width: 100%;
+    }
+    th, td {
+      border: 1px solid #999;
+      padding: 8px 12px;
+      text-align: center;
+    }
+    th {
+      background-color: #eee;
+    }
+    h2 {
+      margin-top: 30px;
+    }
+    .status-normal {
+      color: green;
+      font-weight: bold;
+    }
+    .status-abnormal {
+      color: red;
+      font-weight: bold;
+    }
+    #progress {
+      margin: 20px 0;
+    }
+    #countdown {
+      font-size: 16px;
+      color: blue;
+      margin-left: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>
+    多場站剩餘車位查詢結果
+    <span id="countdown">更新倒數：60 秒</span>
+  </h1>
+
+  <!-- 進度條 -->
+  <div id="progress">
+    <progress id="progressBar" value="0" max="100" style="width:100%;"></progress>
+    <p id="progressText">等待查詢中...</p>
+  </div>
+
+  <!-- 無剩餘車位清單 -->
+  <div id="abnormal"></div>
+  <!-- 完整總表 -->
+  <div id="all"></div>
+
+  <script>
+    const token = "ilbnrfsjr6a0fnq20wyz50dtrqp3jah5zohmw8cxmquyubek4cc2wmsqaj0hi41hy5yru50eo4";
+
+    const lotCodes = [
+      "188600343","188600416","188600417","188600418","188600419",
+      "188600420","188600421","188600422","188600423","188600424",
+      "188600425","188600426","188600427","188600428","188600429",
+      "188600431","188600432","188600433","188600434","188600435",
+      "188600436","188600437","188600438","188600439","188600440",
+      "188600442","188600443","188600444","188600446","188600447",
+      "188600448","188600449","188600451","188600452","188600453",
+      "188600454","188600455","188600456","188600458","188600460",
+      "188600461","188600462","188600463","188600464","188600465",
+      "188600466","188600467","188600468","188600469","188600471",
+      "188600472","188600473","188600474","188600475","188600476",
+      "188600477","188600478","188600479","188600480","188600481",
+      "188600483","188600484","188600485","188600486","188600487",
+      "188600488","188600489","188600490","188600491","188600492",
+      "188600493","188600494","188600495","188600496","188600504",
+      "188600505","188600516","188600536","188600539","188600540"
+    ];
+
+
+    const refreshInterval = 60; // 每幾秒更新一次
+    let countdown = refreshInterval;
+
+    async function fetchParkInfo(lotCode) {
+      try {
+        const res = await fetch("https://gpark.keytop.cn/nkc/index/getParkInfo", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "kt-token": token,
+            "kt-appId": "16bbf366b49a48fab362b7f163d96c63",
+            "kt-lotcodes": lotCode,
+            "authCode": "index/getParkInfo",
+            "client-flag": "PC",
+          },
+          body: JSON.stringify({ lotCode })
+        });
+        const data = await res.json();
+        if (data.resultCode === 200 && data.data) {
+          return {
+            場站: lotCode,
+            剩餘車位: data.data.freeSpace,
+            總車位: data.data.totalSpace,
+            狀態: data.data.freeSpace > 0 
+              ? `<span class="status-normal">可停</span>` 
+              : `<span class="status-abnormal">已滿</span>`
+          };
+        } else {
+          return null;
+        }
+      } catch {
+        return null;
+      }
+    }
+
+    function renderTable(list) {
+      if (list.length === 0) return "<p>無資料</p>";
+      const headers = Object.keys(list[0]);
+      const rows = list.map(item =>
+        `<tr>${headers.map(h => `<td>${item[h]}</td>`).join("")}</tr>`
+      ).join("");
+      return `
+        <table>
+          <thead><tr>${headers.map(h => `<th>${h}</th>`).join("")}</tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+    }
+
+    async function updateAll() {
+      const abnormalDiv = document.getElementById("abnormal");
+      const allDiv = document.getElementById("all");
+      const progressBar = document.getElementById("progressBar");
+      const progressText = document.getElementById("progressText");
+
+      let allLots = [];
+      let fullLots = [];
+
+      progressBar.value = 0;
+      progressText.textContent = "開始查詢...";
+
+      for (let i = 0; i < lotCodes.length; i++) {
+        const info = await fetchParkInfo(lotCodes[i]);
+        if (info) {
+          allLots.push(info);
+          if (info.剩餘車位 === 0) {
+            fullLots.push(info);
+          }
+        }
+        progressBar.value = Math.round(((i + 1) / lotCodes.length) * 100);
+        progressText.textContent = `已完成 ${i + 1}/${lotCodes.length} 場站查詢`;
+      }
+
+      progressText.textContent = "查詢完成 ✅";
+
+      abnormalDiv.innerHTML = `
+        <h2 style="color:red">⚠️ 已滿場站清單 (共 ${fullLots.length} 個)</h2>
+        ${renderTable(fullLots)}
+      `;
+
+      allDiv.innerHTML = `
+        <h2>📋 全場站剩餘車位總表 (共 ${allLots.length} 個)</h2>
+        ${renderTable(allLots)}
+      `;
+
+      countdown = refreshInterval;
+    }
+
+    // 倒數計時顯示
+    setInterval(() => {
+      const countdownSpan = document.getElementById("countdown");
+      countdown--;
+      if (countdown <= 0) {
+        updateAll();
+      }
+      countdownSpan.textContent = `更新倒數：${countdown} 秒`;
+    }, 1000);
+
+    // 初次執行
+    updateAll();
+  </script>
+</body>
+</html>
