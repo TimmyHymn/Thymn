@@ -1,0 +1,2782 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>車輛操作記錄查詢系統 - 裝置節點錯誤率分析</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft JhengHei', 'Segoe UI', sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+            min-width: 100%;
+            overflow-x: auto;
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 25px 30px;
+            border-bottom: 4px solid #4a90e2;
+        }
+        
+        header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+        
+        header h1 i {
+            margin-right: 12px;
+            font-size: 32px;
+        }
+        
+        .subtitle {
+            opacity: 0.85;
+            font-size: 16px;
+        }
+        
+        .content {
+            padding: 30px;
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+            width: 100%;
+        }
+        
+        @media (max-width: 1400px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                max-width: 100%;
+                border-radius: 8px;
+            }
+            
+            .content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 20px;
+            }
+        }
+        
+        .form-section, .results-section {
+            background-color: #f9fafc;
+            border-radius: 10px;
+            padding: 25px;
+            border: 1px solid #eaeef5;
+            width: 100%;
+        }
+        
+        .section-title {
+            font-size: 20px;
+            color: #1e3c72;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eaeef5;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title i {
+            margin-right: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #444;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #d0d7e6;
+            border-radius: 6px;
+            font-size: 15px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        
+        input:focus, select:focus {
+            border-color: #4a90e2;
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+            outline: none;
+        }
+        
+        .date-range {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .date-sync-notice {
+            background-color: #e3f2fd;
+            border: 1px solid #bbdefb;
+            border-radius: 6px;
+            padding: 10px 15px;
+            margin-top: 10px;
+            font-size: 13px;
+            color: #1565c0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .date-sync-notice i {
+            margin-right: 8px;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        button {
+            padding: 14px 25px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+        }
+        
+        button i {
+            margin-right: 8px;
+        }
+        
+        .primary-btn {
+            background: linear-gradient(to right, #1e3c72, #2a5298);
+            color: white;
+        }
+        
+        .primary-btn:hover {
+            background: linear-gradient(to right, #2a5298, #3a6bc7);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(42, 82, 152, 0.3);
+        }
+        
+        .secondary-btn {
+            background-color: #f0f4f8;
+            color: #2a5298;
+            border: 1px solid #d0d7e6;
+        }
+        
+        .secondary-btn:hover {
+            background-color: #e4eaf3;
+        }
+        
+        .no-results {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 400px;
+            color: #888;
+            text-align: center;
+        }
+        
+        .no-results i {
+            font-size: 60px;
+            margin-bottom: 20px;
+            color: #d0d7e6;
+        }
+        
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1200px; /* 確保表格有最小寬度 */
+        }
+        
+        .results-table th {
+            background-color: #f0f4f8;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #1e3c72;
+            border-bottom: 1px solid #eaeef5;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .results-table th:hover {
+            background-color: #e4eaf3;
+        }
+        
+        .results-table th.sorted-asc::after {
+            content: " ▲";
+            font-size: 12px;
+            color: #2a5298;
+        }
+        
+        .results-table th.sorted-desc::after {
+            content: " ▼";
+            font-size: 12px;
+            color: #2a5298;
+        }
+        
+        .results-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 13px;
+            word-wrap: break-word;
+        }
+        
+        .results-table tr:hover {
+            background-color: #f9fafc;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+        
+        .loading-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 300px;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid #2a5298;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .status-message {
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-weight: 500;
+            display: none;
+        }
+        
+        .success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border-left: 4px solid #4caf50;
+        }
+        
+        .error {
+            background-color: #ffebee;
+            color: #c62828;
+            border-left: 4px solid #f44336;
+        }
+        
+        .info {
+            background-color: #e3f2fd;
+            color: #1565c0;
+            border-left: 4px solid #2196f3;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #777;
+            font-size: 14px;
+            border-top: 1px solid #eaeef5;
+            margin-top: 30px;
+        }
+        
+        .field-note {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+        }
+        
+        /* 進度條樣式 */
+        .progress-container {
+            width: 100%;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            margin: 20px 0;
+            overflow: hidden;
+            display: none;
+            height: 20px;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #4a90e2, #2a5298);
+            width: 0%;
+            border-radius: 5px;
+            transition: width 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background-image: linear-gradient(
+                -45deg, 
+                rgba(255, 255, 255, 0.2) 25%, 
+                transparent 25%, 
+                transparent 50%, 
+                rgba(255, 255, 255, 0.2) 50%, 
+                rgba(255, 255, 255, 0.2) 75%, 
+                transparent 75%, 
+                transparent
+            );
+            z-index: 1;
+            background-size: 50px 50px;
+            animation: move 2s linear infinite;
+            overflow: hidden;
+        }
+        
+        @keyframes move {
+            0% {
+                background-position: 0 0;
+            }
+            100% {
+                background-position: 50px 50px;
+            }
+        }
+        
+        .progress-text {
+            text-align: center;
+            margin-top: 5px;
+            font-size: 14px;
+            color: #555;
+            display: none;
+        }
+        
+        .export-btn {
+            background: linear-gradient(to right, #27ae60, #2ecc71);
+            color: white;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .export-btn:hover {
+            background: linear-gradient(to right, #229954, #27ae60);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
+        }
+        
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .results-count {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e3c72;
+        }
+        
+        .node-type-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .node-type-1 {
+            background-color: #e3f2fd;
+            color: #1565c0;
+        }
+        
+        .node-type-2 {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        /* 主要修改：表格容器樣式 */
+        .table-responsive {
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: 600px;
+            border: 1px solid #eaeef5;
+            border-radius: 8px;
+            background-color: white;
+            width: 100%;
+        }
+        
+        /* 水平滾動條樣式 */
+        .table-responsive::-webkit-scrollbar {
+            height: 10px;
+            width: 10px;
+        }
+        
+        .table-responsive::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 6px;
+        }
+        
+        .table-responsive::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 6px;
+        }
+        
+        .table-responsive::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+        
+        .image-link {
+            color: #1e3c72;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        
+        .image-link:hover {
+            text-decoration: underline;
+            color: #2a5298;
+        }
+        
+        .error-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            background-color: #ffebee;
+            color: #c62828;
+            border-radius: 3px;
+            font-size: 11px;
+            margin-left: 5px;
+        }
+        
+        .filter-options {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .filter-option-btn {
+            padding: 8px 15px;
+            border: 1px solid #d0d7e6;
+            background-color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .filter-option-btn.active {
+            background-color: #1e3c72;
+            color: white;
+            border-color: #1e3c72;
+        }
+        
+        .has-error {
+            background-color: #fff8e1;
+        }
+        
+        .has-error:hover {
+            background-color: #fff4d8;
+        }
+        
+        /* 表格滾動時固定表頭 */
+        .results-table thead {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        /* 錯誤率分析面板 */
+        .error-rate-panel {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #4a90e2;
+            width: 100%;
+        }
+        
+        .error-rate-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .error-rate-title {
+            font-size: 18px;
+            color: #1e3c72;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+        }
+        
+        .error-rate-title i {
+            margin-right: 10px;
+        }
+        
+        .analysis-period {
+            font-size: 14px;
+            color: #666;
+            background: #e3f2fd;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+        
+        /* 裝置錯誤率表格 */
+        .device-error-rate-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1000px; /* 確保表格有最小寬度 */
+        }
+        
+        .device-error-rate-table th {
+            background-color: #e3f2fd;
+            padding: 12px 15px;
+            text-align: center;
+            font-weight: 600;
+            color: #1565c0;
+            border-bottom: 1px solid #bbdefb;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        
+        .device-error-rate-table td {
+            padding: 12px 15px;
+            text-align: center;
+            border-bottom: 1px solid #f0f0f0;
+            white-space: nowrap;
+        }
+        
+        .device-error-rate-table tr:hover {
+            background-color: #f0f7ff;
+        }
+        
+        .rate-low {
+            color: #27ae60;
+            font-weight: 600;
+        }
+        
+        .rate-medium {
+            color: #f39c12;
+            font-weight: 600;
+        }
+        
+        .rate-high {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+        
+        .rate-cell {
+            font-size: 16px;
+        }
+        
+        .summary-row {
+            background-color: #f0f7ff !important;
+            font-weight: 600;
+        }
+        
+        .warning-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            background-color: #fff3cd;
+            color: #856404;
+            border-radius: 3px;
+            font-size: 12px;
+            margin-left: 8px;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .alert-high {
+            background-color: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #f5c6cb;
+        }
+        
+        /* 匯出選項樣式 */
+        .export-options {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #eaeef5;
+        }
+        
+        .export-option {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .export-option input[type="checkbox"] {
+            width: auto;
+            margin-right: 10px;
+        }
+        
+        .export-option label {
+            margin-bottom: 0;
+            font-weight: normal;
+        }
+        
+        /* 響應式調整 */
+        @media (max-width: 768px) {
+            .content {
+                padding: 15px;
+                gap: 15px;
+            }
+            
+            .form-section, .results-section {
+                padding: 15px;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            .error-rate-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .analysis-period {
+                align-self: flex-start;
+            }
+        }
+        
+        /* 裝置IP標籤 */
+        .device-ip-tag {
+            display: inline-block;
+            padding: 2px 6px;
+            background-color: #e3f2fd;
+            color: #1565c0;
+            border-radius: 3px;
+            font-size: 11px;
+            font-family: monospace;
+            margin-right: 5px;
+        }
+        
+        /* 匯出按鈕組 */
+        .export-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .export-device-btn {
+            background: linear-gradient(to right, #3498db, #2980b9);
+            color: white;
+        }
+        
+        .export-device-btn:hover {
+            background: linear-gradient(to right, #2980b9, #21618c);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(41, 128, 185, 0.3);
+        }
+        
+        .export-daily-btn {
+            background: linear-gradient(to right, #9b59b6, #8e44ad);
+            color: white;
+        }
+        
+        .export-daily-btn:hover {
+            background: linear-gradient(to right, #8e44ad, #7d3c98);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(142, 68, 173, 0.3);
+        }
+        
+        .export-error-btn {
+            background: linear-gradient(to right, #e74c3c, #c0392b);
+            color: white;
+        }
+        
+        .export-error-btn:hover {
+            background: linear-gradient(to right, #c0392b, #a93226);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(192, 57, 43, 0.3);
+        }
+        
+        /* 確保裝置表格欄位不會換行 */
+        .device-error-rate-table th,
+        .device-error-rate-table td {
+            white-space: nowrap;
+            min-width: 80px;
+        }
+        
+        /* 調整欄位寬度 */
+        .device-error-rate-table th:nth-child(1),
+        .device-error-rate-table td:nth-child(1) {
+            width: 10%;
+            min-width: 80px;
+        }
+        
+        .device-error-rate-table th:nth-child(2),
+        .device-error-rate-table td:nth-child(2) {
+            width: 15%;
+            min-width: 120px;
+        }
+        
+        .device-error-rate-table th:nth-child(3),
+        .device-error-rate-table td:nth-child(3) {
+            width: 20%;
+            min-width: 150px;
+        }
+        
+        .device-error-rate-table th:nth-child(4),
+        .device-error-rate-table td:nth-child(4) {
+            width: 10%;
+            min-width: 80px;
+        }
+        
+        .device-error-rate-table th:nth-child(5),
+        .device-error-rate-table td:nth-child(5) {
+            width: 15%;
+            min-width: 120px;
+        }
+        
+        .device-error-rate-table th:nth-child(6),
+        .device-error-rate-table td:nth-child(6) {
+            width: 10%;
+            min-width: 100px;
+        }
+        
+        .device-error-rate-table th:nth-child(7),
+        .device-error-rate-table td:nth-child(7) {
+            width: 10%;
+            min-width: 100px;
+        }
+        
+        .device-error-rate-table th:nth-child(8),
+        .device-error-rate-table td:nth-child(8) {
+            width: 10%;
+            min-width: 100px;
+        }
+        
+        /* 操作記錄表格欄位寬度調整 */
+        .results-table th:nth-child(1),
+        .results-table td:nth-child(1) {
+            width: 50px;
+        }
+        
+        .results-table th:nth-child(2),
+        .results-table td:nth-child(2) {
+            width: 100px;
+        }
+        
+        .results-table th:nth-child(3),
+        .results-table td:nth-child(3) {
+            width: 150px;
+        }
+        
+        .results-table th:nth-child(4),
+        .results-table td:nth-child(4) {
+            width: 140px;
+        }
+        
+        .results-table th:nth-child(5),
+        .results-table td:nth-child(5) {
+            width: 100px;
+        }
+        
+        .results-table th:nth-child(6),
+        .results-table td:nth-child(6) {
+            width: 100px;
+        }
+        
+        .results-table th:nth-child(7),
+        .results-table td:nth-child(7) {
+            width: 80px;
+        }
+        
+        .results-table th:nth-child(8),
+        .results-table td:nth-child(8) {
+            width: 120px;
+        }
+        
+        .results-table th:nth-child(9),
+        .results-table td:nth-child(9) {
+            width: 120px;
+        }
+        
+        .results-table th:nth-child(10),
+        .results-table td:nth-child(10) {
+            width: 100px;
+        }
+        
+        .results-table th:nth-child(11),
+        .results-table td:nth-child(11) {
+            width: 150px;
+        }
+        
+        .results-table th:nth-child(12),
+        .results-table td:nth-child(12) {
+            width: 150px;
+        }
+        
+        .results-table th:nth-child(13),
+        .results-table td:nth-child(13) {
+            width: 120px;
+        }
+        
+        .results-table th:nth-child(14),
+        .results-table td:nth-child(14) {
+            width: 100px;
+        }
+        
+        .results-table th:nth-child(15),
+        .results-table td:nth-child(15) {
+            width: 150px;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-search"></i> 車輛操作記錄查詢系統 - 裝置節點錯誤率分析</h1>
+            <p class="subtitle">基於車廠代號查詢車輛編輯操作記錄，分析各裝置節點辨識錯誤率</p>
+        </header>
+        
+        <div class="content">
+            <div class="form-section">
+                <h2 class="section-title"><i class="fas fa-filter"></i> 查詢條件</h2>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-building"></i> 車廠選擇</label>
+                    <div class="filter-options">
+                        <div class="filter-option-btn active" id="singleLotBtn">單一車廠</div>
+                        <div class="filter-option-btn" id="allLotsBtn">全部車廠</div>
+                    </div>
+                    
+                    <div id="singleLotSection">
+                        <select id="lotCode">
+                            <!-- 車廠選項將由JavaScript動態生成 -->
+                        </select>
+                        <div class="field-note">選擇要查詢的單一車廠</div>
+                    </div>
+                    
+                    <div id="allLotsSection" style="display: none;">
+                        <div class="status-message info">
+                            <i class="fas fa-info-circle"></i> 將查詢所有車廠的記錄，並提供各車廠裝置錯誤率分析
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-calendar-alt"></i> 查詢時間範圍</label>
+                    <div class="date-range">
+                        <div>
+                            <input type="date" id="operaDateFrom">
+                            <div class="field-note">起始日期 (自動設為00:00:00)</div>
+                        </div>
+                        <div>
+                            <input type="date" id="operaDateTo">
+                            <div class="field-note">結束日期 (自動設為23:59:59，預設為今天)</div>
+                        </div>
+                    </div>
+                    <div class="date-sync-notice">
+                        <i class="fas fa-sync-alt"></i> 
+                        此時間範圍將同時用於「操作記錄查詢」和「進出台賬查詢」，確保錯誤率計算準確
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-info-circle"></i> 資料擷取設定</label>
+                    <div class="filter-options">
+                        <div class="filter-option-btn active" id="dataFetchModeNormal">標準模式</div>
+                        <div class="filter-option-btn" id="dataFetchModeFast">快速模式</div>
+                    </div>
+                    <div class="field-note">
+                        <div><strong>標準模式</strong>: 完整抓取所有分頁資料，確保資料完整性</div>
+                        <div><strong>快速模式</strong>: 僅抓取第一頁資料，適合快速檢視</div>
+                    </div>
+                </div>
+                
+                <div class="status-message" id="statusMessage"></div>
+                
+                <!-- 進度條 -->
+                <div class="progress-container" id="progressContainer">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                <div class="progress-text" id="progressText">正在查詢資料...</div>
+                
+                <div class="button-group">
+                    <button class="primary-btn" id="queryBtn">
+                        <i class="fas fa-search"></i> 查詢記錄與分析
+                    </button>
+                    <button class="secondary-btn" id="resetBtn">
+                        <i class="fas fa-redo"></i> 重設條件
+                    </button>
+                </div>
+                
+                <!-- 匯出選項 -->
+                <div class="export-options" id="exportOptions" style="display: none;">
+                    <div class="section-title"><i class="fas fa-download"></i> CSV匯出選項</div>
+                    
+                    <div class="export-buttons">
+                        <button class="export-device-btn" id="exportDeviceBtn">
+                            <i class="fas fa-microchip"></i> 匯出裝置節點辨識錯誤率分析
+                        </button>
+                        <button class="export-daily-btn" id="exportDailyBtn">
+                            <i class="fas fa-calendar-alt"></i> 匯出每日加總分析
+                        </button>
+                        <button class="export-error-btn" id="exportErrorBtn">
+                            <i class="fas fa-exclamation-triangle"></i> 匯出錯誤輸入記錄
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="results-section">
+                <h2 class="section-title"><i class="fas fa-list-alt"></i> 查詢結果與分析</h2>
+                
+                <div class="results-header">
+                    <div class="results-count" id="resultsCount">未查詢資料</div>
+                    <div class="node-type-info">
+                        <span class="node-type-badge node-type-1">入口</span>
+                        <span class="node-type-badge node-type-2">出口</span>
+                    </div>
+                </div>
+                
+                <!-- 裝置節點辨識錯誤率分析面板 -->
+                <div class="error-rate-panel" id="errorRatePanel" style="display: none;">
+                    <div class="error-rate-header">
+                        <div class="error-rate-title">
+                            <i class="fas fa-chart-line"></i> 裝置節點辨識錯誤率分析
+                        </div>
+                        <div class="analysis-period" id="analysisPeriod">
+                            <!-- 分析時間範圍將由JavaScript動態填充 -->
+                        </div>
+                    </div>
+                    
+                    <div id="highErrorAlert" style="display: none; margin-top: 15px; margin-bottom: 15px;">
+                        <div class="status-message alert-high">
+                            <i class="fas fa-exclamation-triangle"></i> 
+                            檢測到高錯誤率裝置！建議檢查相關設備是否老化或需要維護。
+                        </div>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="device-error-rate-table" id="deviceErrorRateTable">
+                            <thead>
+                                <tr>
+                                    <th data-sort="lotCode">車場ID</th>
+                                    <th data-sort="lotName">車場名稱</th>
+                                    <th data-sort="deviceName">裝置名稱</th>
+                                    <th data-sort="deviceType">節點類型</th>
+                                    <th data-sort="deviceIP">裝置IP</th>
+                                    <th data-sort="totalInOut">總進出次數</th>
+                                    <th data-sort="totalErrors">錯誤次數</th>
+                                    <th data-sort="errorRate">錯誤率</th>
+                                </tr>
+                            </thead>
+                            <tbody id="deviceErrorRateBody">
+                                <!-- 裝置錯誤率數據將由JavaScript動態填充 -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="field-note" style="margin-top: 10px;">
+                        點擊欄位標題可進行排序，錯誤率≥10%標記為高錯誤率，≥5%標記為中錯誤率。表格可左右滾動查看完整內容。
+                    </div>
+                </div>
+                
+                <div class="loading" id="loading">
+                    <div class="loading-content">
+                        <div class="spinner"></div>
+                        <p>正在查詢資料，請稍候...</p>
+                        <p id="loadingDetail">同時查詢操作記錄、進出台賬與裝置節點資料</p>
+                    </div>
+                </div>
+                
+                <div class="table-responsive" id="tableContainer">
+                    <div class="no-results" id="noResults">
+                        <i class="fas fa-database"></i>
+                        <p>暫無查詢資料</p>
+                        <p>請填寫查詢條件並點擊"查詢記錄與分析"按鈕</p>
+                    </div>
+                    
+                    <table class="results-table" id="resultsTable" style="display: none;">
+                        <thead>
+                            <tr>
+                                <th data-sort="index">序號</th>
+                                <th data-sort="lotCode">車廠代號</th>
+                                <th data-sort="lotName">車廠名稱</th>
+                                <th data-sort="modifyTime">操作時間</th>
+                                <th data-sort="carNo">原車牌</th>
+                                <th data-sort="carNo2">新車牌</th>
+                                <th data-sort="nodeType">節點類型</th>
+                                <th data-sort="userName">操作人員</th>
+                                <th data-sort="userId">用戶ID</th>
+                                <th data-sort="carStyle">車輛類型</th>
+                                <th data-sort="resource">操作資源</th>
+                                <th data-sort="imgName">圖片名稱</th>
+                                <th data-sort="carTime">車輛時間</th>
+                                <th data-sort="isError">辨識錯誤</th>
+                                <th data-sort="deviceInfo">裝置資訊</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsBody">
+                            <!-- 資料將透過JavaScript動態填充 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>© 2025 車輛操作記錄查詢系統 - 裝置錯誤率分析 | 僅供內部使用</p>
+        </footer>
+    </div>
+
+    <script>
+        // DOM元素
+        const queryBtn = document.getElementById('queryBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const exportDeviceBtn = document.getElementById('exportDeviceBtn');
+        const exportDailyBtn = document.getElementById('exportDailyBtn');
+        const exportErrorBtn = document.getElementById('exportErrorBtn');
+        const exportOptions = document.getElementById('exportOptions');
+        const tableContainer = document.getElementById('tableContainer');
+        const noResults = document.getElementById('noResults');
+        const resultsTable = document.getElementById('resultsTable');
+        const resultsBody = document.getElementById('resultsBody');
+        const loading = document.getElementById('loading');
+        const loadingDetail = document.getElementById('loadingDetail');
+        const statusMessage = document.getElementById('statusMessage');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const resultsCount = document.getElementById('resultsCount');
+        const singleLotBtn = document.getElementById('singleLotBtn');
+        const allLotsBtn = document.getElementById('allLotsBtn');
+        const singleLotSection = document.getElementById('singleLotSection');
+        const allLotsSection = document.getElementById('allLotsSection');
+        const errorRatePanel = document.getElementById('errorRatePanel');
+        const deviceErrorRateBody = document.getElementById('deviceErrorRateBody');
+        const analysisPeriod = document.getElementById('analysisPeriod');
+        const highErrorAlert = document.getElementById('highErrorAlert');
+        const dataFetchModeNormal = document.getElementById('dataFetchModeNormal');
+        const dataFetchModeFast = document.getElementById('dataFetchModeFast');
+        
+        // 全域變數
+        let currentSortColumn = null;
+        let currentSortDirection = 'asc';
+        let allApiData = [];
+        let filteredData = [];
+        let currentLotCodes = [];
+        let nodeErrorStats = null;
+        let deviceDailyTrendData = null;
+        let lotErrorRates = [];
+        let allLotsInOutData = {};
+        let allLotsModifyData = {};
+        let allLotsNodeData = {};
+        let trendStartDate = '';
+        let trendEndDate = '';
+        let trendDateArray = [];
+        let fetchMode = 'normal';
+        let deviceTableSortColumn = null;
+        let deviceTableSortDirection = 'asc';
+        
+        // 節點類型映射
+        const nodeTypeMap = {
+            "1": "入口",
+            "2": "出口",
+            "3": "同口出入"
+        };
+        
+        // 顏色映射
+        const nodeColorMap = {
+            "1": "#1565c0",
+            "2": "#2e7d32", 
+            "3": "#8e24aa"
+        };
+        
+        // 頁面載入完成後設定
+        document.addEventListener('DOMContentLoaded', function() {
+            // 設定預設時間範圍
+            const toDate = new Date();
+            const fromDate = new Date();
+            fromDate.setDate(fromDate.getDate() - 30);
+            
+            document.getElementById('operaDateFrom').value = formatDate(fromDate);
+            document.getElementById('operaDateTo').value = formatDate(toDate);
+            
+            showStatus('系統已就緒，請填寫查詢條件後點擊"查詢記錄與分析"按鈕', 'info');
+            
+            initializeLotSelect();
+            setupTableSorting();
+            setupDeviceTableSorting();
+            setupFetchModeButtons();
+            
+            // 匯出按鈕事件
+            exportDeviceBtn.addEventListener('click', exportDeviceErrorRateCSV);
+            exportDailyBtn.addEventListener('click', exportDailySummaryCSV);
+            exportErrorBtn.addEventListener('click', exportErrorInputCSV);
+            
+            // 車廠選擇切換
+            singleLotBtn.addEventListener('click', function() {
+                singleLotBtn.classList.add('active');
+                allLotsBtn.classList.remove('active');
+                singleLotSection.style.display = 'block';
+                allLotsSection.style.display = 'none';
+            });
+            
+            allLotsBtn.addEventListener('click', function() {
+                allLotsBtn.classList.add('active');
+                singleLotBtn.classList.remove('active');
+                singleLotSection.style.display = 'none';
+                allLotsSection.style.display = 'block';
+            });
+            
+            // 日期範圍驗證與警告
+            setupDateRangeValidation();
+        });
+        
+        // 設置裝置表格排序功能
+        function setupDeviceTableSorting() {
+            const tableHeaders = document.querySelectorAll('#deviceErrorRateTable th[data-sort]');
+            
+            tableHeaders.forEach(header => {
+                header.addEventListener('click', function() {
+                    const sortColumn = this.getAttribute('data-sort');
+                    
+                    if (deviceTableSortColumn === sortColumn) {
+                        deviceTableSortDirection = deviceTableSortDirection === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        deviceTableSortColumn = sortColumn;
+                        deviceTableSortDirection = 'asc';
+                    }
+                    
+                    tableHeaders.forEach(h => {
+                        h.classList.remove('sorted-asc', 'sorted-desc');
+                    });
+                    
+                    this.classList.add(`sorted-${deviceTableSortDirection}`);
+                    sortDeviceTable();
+                });
+            });
+        }
+        
+        // 裝置表格排序
+        function sortDeviceTable() {
+            if (!nodeErrorStats || nodeErrorStats.length === 0) return;
+            
+            const sortKey = deviceTableSortColumn;
+            const direction = deviceTableSortDirection === 'asc' ? 1 : -1;
+            
+            nodeErrorStats.sort((a, b) => {
+                let aValue, bValue;
+                
+                switch (sortKey) {
+                    case 'lotCode':
+                        aValue = a.lotCode || '';
+                        bValue = b.lotCode || '';
+                        break;
+                    case 'lotName':
+                        aValue = a.lotName || '';
+                        bValue = b.lotName || '';
+                        break;
+                    case 'deviceName':
+                        aValue = a.nodeName || '';
+                        bValue = b.nodeName || '';
+                        break;
+                    case 'deviceType':
+                        aValue = a.nodeType || '';
+                        bValue = b.nodeType || '';
+                        break;
+                    case 'deviceIP':
+                        aValue = a.deviceIP || '';
+                        bValue = b.deviceIP || '';
+                        break;
+                    case 'totalInOut':
+                        aValue = a.totalInOut || 0;
+                        bValue = b.totalInOut || 0;
+                        break;
+                    case 'totalErrors':
+                        aValue = a.totalErrors || 0;
+                        bValue = b.totalErrors || 0;
+                        break;
+                    case 'errorRate':
+                        aValue = parseFloat(a.errorRate) || 0;
+                        bValue = parseFloat(b.errorRate) || 0;
+                        break;
+                    default:
+                        aValue = a[sortKey] || '';
+                        bValue = b[sortKey] || '';
+                }
+                
+                if (aValue < bValue) return -1 * direction;
+                if (aValue > bValue) return 1 * direction;
+                return 0;
+            });
+            
+            displayDeviceErrorRateTable(nodeErrorStats);
+        }
+        
+        // 設置資料擷取模式按鈕
+        function setupFetchModeButtons() {
+            dataFetchModeNormal.addEventListener('click', function() {
+                dataFetchModeNormal.classList.add('active');
+                dataFetchModeFast.classList.remove('active');
+                fetchMode = 'normal';
+                showStatus('已切換至標準模式：將完整抓取所有分頁資料', 'info');
+            });
+            
+            dataFetchModeFast.addEventListener('click', function() {
+                dataFetchModeFast.classList.add('active');
+                dataFetchModeNormal.classList.remove('active');
+                fetchMode = 'fast';
+                showStatus('已切換至快速模式：僅抓取第一頁資料', 'info');
+            });
+        }
+        
+        // 設置日期範圍驗證與警告
+        function setupDateRangeValidation() {
+            document.getElementById('operaDateFrom').addEventListener('change', function() {
+                const fromDate = this.value;
+                const toDate = document.getElementById('operaDateTo').value;
+                
+                if (fromDate && toDate) {
+                    const from = new Date(fromDate);
+                    const to = new Date(toDate);
+                    const diffTime = Math.abs(to - from);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays > 90) {
+                        showStatus(`查詢時間範圍較大（${diffDays} 天），可能會需要較長時間載入資料，建議使用「標準模式」以確保資料完整性`, 'info');
+                    }
+                }
+            });
+            
+            document.getElementById('operaDateTo').addEventListener('change', function() {
+                const toDate = this.value;
+                const fromDate = document.getElementById('operaDateFrom').value;
+                
+                if (fromDate && toDate) {
+                    const from = new Date(fromDate);
+                    const to = new Date(toDate);
+                    const diffTime = Math.abs(to - from);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays > 90) {
+                        showStatus(`查詢時間範圍較大（${diffDays} 天），可能會需要較長時間載入資料，建議使用「標準模式」以確保資料完整性`, 'info');
+                    }
+                }
+            });
+        }
+        
+        // 初始化車廠選擇
+        function initializeLotSelect() {
+            const lotCodes = [
+                "188600343","188600416","188600417","188600418","188600419",
+                "188600420","188600421","188600422","188600423","188600424",
+                "188600425","188600426","188600427","188600428","188600429",
+                "188600431","188600432","188600433","188600434","188600435",
+                "188600436","188600437","188600438","188600439","188600440",
+                "188600442","188600443","188600444","188600446","188600447",
+                "188600448","188600449","188600451","188600452","188600453",
+                "188600454","188600455","188600456","188600458","188600460",
+                "188600461","188600462","188600463","188600464","188600465",
+                "188600466","188600467","188600468","188600469","188600471",
+                "188600472","188600473","188600474","188600475","188600476",
+                "188600477","188600478","188600479","188600480","188600481",
+                "188600483","188600484","188600485","188600486","188600487",
+                "188600488","188600489","188600490","188600491","188600492",
+                "188600493","188600494","188600495","188600496","188600504",
+                "188600505","188600516","188600536","188600539","188600540"
+            ];
+            
+            const lotNames = getLotNames();
+            
+            const lotCodeSelect = document.getElementById('lotCode');
+            lotCodeSelect.innerHTML = '';
+            
+            lotCodes.forEach(lotCode => {
+                const option = document.createElement('option');
+                option.value = lotCode;
+                option.textContent = `${lotCode} - ${lotNames[lotCode] || '未知車廠'}`;
+                if (lotCode === "188600343") {
+                    option.selected = true;
+                }
+                lotCodeSelect.appendChild(option);
+            });
+        }
+        
+        // 設置表格排序功能
+        function setupTableSorting() {
+            const tableHeaders = document.querySelectorAll('.results-table th[data-sort]');
+            
+            tableHeaders.forEach(header => {
+                header.addEventListener('click', function() {
+                    const sortColumn = this.getAttribute('data-sort');
+                    
+                    if (currentSortColumn === sortColumn) {
+                        currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        currentSortColumn = sortColumn;
+                        currentSortDirection = 'asc';
+                    }
+                    
+                    tableHeaders.forEach(h => {
+                        h.classList.remove('sorted-asc', 'sorted-desc');
+                    });
+                    
+                    this.classList.add(`sorted-${currentSortDirection}`);
+                    sortResults();
+                });
+            });
+        }
+        
+        // 獲取節點資料
+        async function fetchNodeData(lotCode) {
+            try {
+                const params = {
+                    lotCode: lotCode,
+                    nodeName: "",
+                    nodeType: "",
+                    currentPage: 1,
+                    pageSize: 100
+                };
+                
+                const response = await fetch('https://gpark.keytop.cn/nkc/node/findNodePage', {
+                    method: 'POST',
+                    headers: getRequestHeaders(lotCode),
+                    credentials: 'include',
+                    body: JSON.stringify(params)
+                });
+                
+                if (!response.ok) throw new Error(`HTTP錯誤! 狀態: ${response.status}`);
+                
+                const result = await response.json();
+                
+                if (result.resultCode === 200 || result.code === 200) {
+                    const data = result.data?.vos || result.data?.list || result.data?.records || [];
+                    console.log(`車廠 ${lotCode} - 取得 ${data.length} 個節點資料`);
+                    return data;
+                } else {
+                    console.warn(`車廠 ${lotCode} 節點資料請求失敗:`, result);
+                    return [];
+                }
+                
+            } catch (error) {
+                console.error(`車廠 ${lotCode} 節點資料請求失敗:`, error);
+                return [];
+            }
+        }
+        
+        // 獲取車輛操作記錄（帶分頁處理）
+        async function fetchAllCarModifyData(lotCode, modifyParams) {
+            const pageSize = 1000;
+            let currentPage = 1;
+            let allData = [];
+            let totalPages = 1;
+            
+            try {
+                do {
+                    const pageParams = {
+                        ...modifyParams,
+                        currentPage: currentPage,
+                        pageSize: pageSize
+                    };
+                    
+                    const response = await fetch('https://gpark.keytop.cn/nkc/carCome/listCarNoModifyPage', {
+                        method: 'POST',
+                        headers: getRequestHeaders(lotCode),
+                        credentials: 'include',
+                        body: JSON.stringify(pageParams)
+                    });
+                    
+                    if (!response.ok) throw new Error(`HTTP錯誤! 狀態: ${response.status}`);
+                    
+                    const result = await response.json();
+                    
+                    if (result.resultCode === 200 || result.code === 200) {
+                        const data = result.data?.vos || result.data?.list || result.data?.records || [];
+                        allData = allData.concat(data);
+                        
+                        // 計算總頁數
+                        const totalCount = result.data?.total || result.data?.totalCount || 0;
+                        totalPages = Math.ceil(totalCount / pageSize);
+                        
+                        console.log(`車廠 ${lotCode} - 操作記錄 第 ${currentPage}/${totalPages} 頁，取得 ${data.length} 筆記錄`);
+                        
+                        currentPage++;
+                        
+                        // 避免請求過快，添加短暫延遲
+                        if (currentPage <= totalPages) {
+                            await new Promise(resolve => setTimeout(resolve, 100));
+                        }
+                    } else {
+                        console.warn(`車廠 ${lotCode} 操作記錄第 ${currentPage} 頁請求失敗:`, result);
+                        break;
+                    }
+                } while (currentPage <= totalPages);
+                
+            } catch (error) {
+                console.error(`車廠 ${lotCode} 操作記錄請求失敗:`, error);
+            }
+            
+            return allData;
+        }
+        
+        // 獲取車輛進出台賬（帶分頁處理）
+        async function fetchAllCarInOutData(lotCode, inOutParams) {
+            const pageSize = 1000;
+            let currentPage = 1;
+            let allData = [];
+            let totalPages = 1;
+            
+            try {
+                do {
+                    const pageParams = {
+                        ...inOutParams,
+                        currentPage: currentPage,
+                        pageSize: pageSize
+                    };
+                    
+                    const response = await fetch('https://gpark.keytop.cn/nkc/carInOut/findCarInOutPage', {
+                        method: 'POST',
+                        headers: getRequestHeaders(lotCode),
+                        credentials: 'include',
+                        body: JSON.stringify(pageParams)
+                    });
+                    
+                    if (!response.ok) throw new Error(`HTTP錯誤! 狀態: ${response.status}`);
+                    
+                    const result = await response.json();
+                    
+                    if (result.resultCode === 200 || result.code === 200) {
+                        const data = result.data?.vos || result.data?.list || result.data?.records || [];
+                        allData = allData.concat(data);
+                        
+                        // 計算總頁數
+                        const totalCount = result.data?.total || result.data?.totalCount || 0;
+                        totalPages = Math.ceil(totalCount / pageSize);
+                        
+                        console.log(`車廠 ${lotCode} - 進出台賬 第 ${currentPage}/${totalPages} 頁，取得 ${data.length} 筆記錄`);
+                        
+                        currentPage++;
+                        
+                        // 避免請求過快，添加短暫延遲
+                        if (currentPage <= totalPages) {
+                            await new Promise(resolve => setTimeout(resolve, 100));
+                        }
+                    } else {
+                        console.warn(`車廠 ${lotCode} 進出台賬第 ${currentPage} 頁請求失敗:`, result);
+                        break;
+                    }
+                } while (currentPage <= totalPages);
+                
+            } catch (error) {
+                console.error(`車廠 ${lotCode} 進出台賬請求失敗:`, error);
+            }
+            
+            return allData;
+        }
+        
+        // 快速模式：只抓取第一頁資料
+        async function fetchFirstPageCarModifyData(lotCode, modifyParams) {
+            try {
+                const pageParams = {
+                    ...modifyParams,
+                    currentPage: 1,
+                    pageSize: 500
+                };
+                
+                const response = await fetch('https://gpark.keytop.cn/nkc/carCome/listCarNoModifyPage', {
+                    method: 'POST',
+                    headers: getRequestHeaders(lotCode),
+                    credentials: 'include',
+                    body: JSON.stringify(pageParams)
+                });
+                
+                if (!response.ok) throw new Error(`HTTP錯誤! 狀態: ${response.status}`);
+                
+                const result = await response.json();
+                
+                if (result.resultCode === 200 || result.code === 200) {
+                    const data = result.data?.vos || result.data?.list || result.data?.records || [];
+                    console.log(`車廠 ${lotCode} - 操作記錄 取得 ${data.length} 筆記錄（快速模式）`);
+                    return data;
+                } else {
+                    console.warn(`車廠 ${lotCode} 操作記錄請求失敗:`, result);
+                    return [];
+                }
+                
+            } catch (error) {
+                console.error(`車廠 ${lotCode} 操作記錄請求失敗:`, error);
+                return [];
+            }
+        }
+        
+        // 快速模式：只抓取第一頁進出台賬資料
+        async function fetchFirstPageCarInOutData(lotCode, inOutParams) {
+            try {
+                const pageParams = {
+                    ...inOutParams,
+                    currentPage: 1,
+                    pageSize: 500
+                };
+                
+                const response = await fetch('https://gpark.keytop.cn/nkc/carInOut/findCarInOutPage', {
+                    method: 'POST',
+                    headers: getRequestHeaders(lotCode),
+                    credentials: 'include',
+                    body: JSON.stringify(pageParams)
+                });
+                
+                if (!response.ok) throw new Error(`HTTP錯誤! 狀態: ${response.status}`);
+                
+                const result = await response.json();
+                
+                if (result.resultCode === 200 || result.code === 200) {
+                    const data = result.data?.vos || result.data?.list || result.data?.records || [];
+                    console.log(`車廠 ${lotCode} - 進出台賬 取得 ${data.length} 筆記錄（快速模式）`);
+                    return data;
+                } else {
+                    console.warn(`車廠 ${lotCode} 進出台賬請求失敗:`, result);
+                    return [];
+                }
+                
+            } catch (error) {
+                console.error(`車廠 ${lotCode} 進出台賬請求失敗:`, error);
+                return [];
+            }
+        }
+        
+        // 查詢按鈕點擊事件
+        queryBtn.addEventListener('click', async function() {
+            const lotCode = document.getElementById('lotCode').value;
+            const operaDateFrom = document.getElementById('operaDateFrom').value;
+            const operaDateTo = document.getElementById('operaDateTo').value;
+            
+            if (singleLotBtn.classList.contains('active')) {
+                if (!lotCode) {
+                    showStatus('請選擇車廠', 'error');
+                    return;
+                }
+                currentLotCodes = [lotCode];
+            } else {
+                currentLotCodes = [];
+                const lotCodeSelect = document.getElementById('lotCode');
+                for (let option of lotCodeSelect.options) {
+                    currentLotCodes.push(option.value);
+                }
+            }
+            
+            if (operaDateFrom && operaDateTo && new Date(operaDateFrom) > new Date(operaDateTo)) {
+                showStatus('起始日期不能晚於結束日期', 'error');
+                return;
+            }
+            
+            // 保存趨勢日期範圍
+            trendStartDate = operaDateFrom;
+            trendEndDate = operaDateTo;
+            
+            loading.style.display = 'block';
+            progressContainer.style.display = 'block';
+            progressText.style.display = 'block';
+            
+            // 根據模式顯示不同的提示
+            if (fetchMode === 'fast') {
+                loadingDetail.textContent = '快速模式：查詢第一頁操作記錄、進出台賬與裝置節點資料...';
+            } else {
+                loadingDetail.textContent = '標準模式：完整查詢操作記錄、進出台賬與裝置節點資料...';
+            }
+            
+            noResults.style.display = 'none';
+            resultsTable.style.display = 'none';
+            exportOptions.style.display = 'none';
+            errorRatePanel.style.display = 'none';
+            
+            progressBar.style.width = '0%';
+            
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += 1;
+                if (progress <= 90) {
+                    progressBar.style.width = progress + '%';
+                }
+            }, 50);
+            
+            try {
+                // 重置全域數據
+                allApiData = [];
+                allLotsInOutData = {};
+                allLotsModifyData = {};
+                allLotsNodeData = {};
+                
+                // 為每個車廠查詢數據
+                for (let i = 0; i < currentLotCodes.length; i++) {
+                    const currentLotCode = currentLotCodes[i];
+                    
+                    // 更新進度條文字
+                    const lotProgress = Math.min(90, (i / currentLotCodes.length) * 90);
+                    progressBar.style.width = lotProgress + '%';
+                    progressText.textContent = `正在查詢車廠 ${i+1}/${currentLotCodes.length}: ${getLotName(currentLotCode)}`;
+                    
+                    try {
+                        // 首先獲取節點資料
+                        loadingDetail.textContent = `查詢車廠 ${i+1}/${currentLotCodes.length} 的裝置節點資料...`;
+                        const nodeData = await fetchNodeData(currentLotCode);
+                        allLotsNodeData[currentLotCode] = nodeData;
+                        
+                        // 根據模式選擇不同的查詢方法
+                        let modifyData = [];
+                        let inOutData = [];
+                        
+                        if (fetchMode === 'normal') {
+                            // 標準模式：完整抓取所有分頁資料
+                            
+                            // 查詢車輛操作記錄
+                            loadingDetail.textContent = `查詢車廠 ${i+1}/${currentLotCodes.length} 的操作記錄...`;
+                            const modifyParams = {
+                                lotCode: currentLotCode,
+                                newCarNo: "",
+                                oldCarNo: "",
+                                nodeType: "",
+                                operaDateFrom: operaDateFrom ? formatDateForApi(operaDateFrom, false) : "",
+                                operaDateTo: operaDateTo ? formatDateForApi(operaDateTo, true) : "",
+                                operaPosition: "",
+                                currentPage: 1,
+                                pageSize: 1000
+                            };
+                            
+                            modifyData = await fetchAllCarModifyData(currentLotCode, modifyParams);
+                            
+                            // 查詢車輛進出台賬
+                            loadingDetail.textContent = `查詢車廠 ${i+1}/${currentLotCodes.length} 的進出台賬...`;
+                            const inOutParams = {
+                                lotCode: currentLotCode,
+                                carTimeStart: operaDateFrom ? formatDateForApi(operaDateFrom, false) : "",
+                                carTimeEnd: operaDateTo ? formatDateForApi(operaDateTo, true) : "",
+                                plateType: "",
+                                fullCarNo: "",
+                                carNo: "",
+                                node: "",
+                                nodeType: "",
+                                carType: "",
+                                releaseChannel: "",
+                                releaseTypes: null,
+                                ioProof: "",
+                                proofNo: "",
+                                carOwnerName: "",
+                                emptyPlate: "0",
+                                carNoType: "0",
+                                totalCount: 0,
+                                currentPage: 1,
+                                pageSize: 1000
+                            };
+                            
+                            inOutData = await fetchAllCarInOutData(currentLotCode, inOutParams);
+                            
+                        } else {
+                            // 快速模式：只抓取第一頁資料
+                            
+                            // 查詢車輛操作記錄
+                            loadingDetail.textContent = `查詢車廠 ${i+1}/${currentLotCodes.length} 的操作記錄（快速模式）...`;
+                            const modifyParams = {
+                                lotCode: currentLotCode,
+                                newCarNo: "",
+                                oldCarNo: "",
+                                nodeType: "",
+                                operaDateFrom: operaDateFrom ? formatDateForApi(operaDateFrom, false) : "",
+                                operaDateTo: operaDateTo ? formatDateForApi(operaDateTo, true) : "",
+                                operaPosition: "",
+                                currentPage: 1,
+                                pageSize: 500
+                            };
+                            
+                            modifyData = await fetchFirstPageCarModifyData(currentLotCode, modifyParams);
+                            
+                            // 查詢車輛進出台賬
+                            loadingDetail.textContent = `查詢車廠 ${i+1}/${currentLotCodes.length} 的進出台賬（快速模式）...`;
+                            const inOutParams = {
+                                lotCode: currentLotCode,
+                                carTimeStart: operaDateFrom ? formatDateForApi(operaDateFrom, false) : "",
+                                carTimeEnd: operaDateTo ? formatDateForApi(operaDateTo, true) : "",
+                                plateType: "",
+                                fullCarNo: "",
+                                carNo: "",
+                                node: "",
+                                nodeType: "",
+                                carType: "",
+                                releaseChannel: "",
+                                releaseTypes: null,
+                                ioProof: "",
+                                proofNo: "",
+                                carOwnerName: "",
+                                emptyPlate: "0",
+                                carNoType: "0",
+                                totalCount: 0,
+                                currentPage: 1,
+                                pageSize: 500
+                            };
+                            
+                            inOutData = await fetchFirstPageCarInOutData(currentLotCode, inOutParams);
+                        }
+                        
+                        // 為操作記錄添加裝置資訊
+                        const enrichedData = modifyData.map(item => {
+                            // 嘗試從節點資料中匹配裝置資訊
+                            const nodeInfo = findNodeInfoForRecord(item, nodeData, currentLotCode);
+                            return {
+                                ...item,
+                                lotCodeAssist: item.lotCodeAssist || currentLotCode,
+                                deviceInfo: nodeInfo ? `${nodeInfo.name} (${extractIPFromDevice(nodeInfo.device)})` : '',
+                                nodeId: nodeInfo ? nodeInfo.id : null,
+                                nodeName: nodeInfo ? nodeInfo.name : ''
+                            };
+                        });
+                        
+                        allApiData = allApiData.concat(enrichedData);
+                        allLotsModifyData[currentLotCode] = enrichedData;
+                        allLotsInOutData[currentLotCode] = inOutData;
+                        
+                        console.log(`車廠 ${currentLotCode} 取得 ${nodeData.length} 個節點，${enrichedData.length} 筆操作記錄，${inOutData.length} 筆進出台賬`);
+                        
+                    } catch (error) {
+                        console.error(`車廠 ${currentLotCode} 請求失敗:`, error);
+                        showStatus(`車廠 ${currentLotCode} 查詢部分失敗，將繼續處理其他車廠`, 'error');
+                    }
+                    
+                    // 更新進度條
+                    const currentProgress = Math.min(90, ((i + 1) / currentLotCodes.length) * 90);
+                    progressBar.style.width = currentProgress + '%';
+                }
+                
+                clearInterval(progressInterval);
+                progressBar.style.width = '100%';
+                
+                // 檢查是否有取得資料
+                if (allApiData.length === 0) {
+                    showStatus('未取得任何操作記錄資料', 'error');
+                    loading.style.display = 'none';
+                    progressContainer.style.display = 'none';
+                    progressText.style.display = 'none';
+                    return;
+                }
+                
+                // 檢查資料完整性
+                const warnings = checkDataIntegrity(allLotsModifyData, allLotsInOutData);
+                if (warnings.length > 0) {
+                    console.warn('資料完整性警告:', warnings);
+                    if (fetchMode === 'fast') {
+                        warnings.forEach(warning => {
+                            console.warn(warning);
+                        });
+                        showStatus('快速模式下可能資料不完整，建議切換至標準模式以取得完整資料', 'info');
+                    }
+                }
+                
+                // 計算錯誤率（基於節點）
+                loadingDetail.textContent = '資料查詢完成，正在計算裝置錯誤率...';
+                const analysisResult = calculateNodeErrorRateWithDailyTrend(
+                    allLotsModifyData, 
+                    allLotsInOutData, 
+                    allLotsNodeData, 
+                    operaDateFrom, 
+                    operaDateTo
+                );
+                nodeErrorStats = analysisResult.nodeStats;
+                deviceDailyTrendData = analysisResult.dailyTrends;
+                lotErrorRates = analysisResult.lotErrorRates;
+                trendDateArray = analysisResult.dateArray;
+                
+                // 顯示結果
+                displayNodeErrorRateAnalysis(analysisResult, operaDateFrom, operaDateTo);
+                
+                // 顯示所有數據
+                applyDataFilters();
+                
+                // 顯示匯出選項
+                exportOptions.style.display = 'block';
+                
+                showStatus(`查詢完成！總計取得 ${allApiData.length} 筆操作記錄${fetchMode === 'fast' ? '（快速模式）' : ''}`, 'success');
+                
+            } catch (error) {
+                clearInterval(progressInterval);
+                showStatus(`請求失敗: ${error.message}`, 'error');
+                console.error('查詢錯誤:', error);
+                displayNoResults();
+            } finally {
+                loading.style.display = 'none';
+                
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';
+                    progressText.style.display = 'none';
+                    progressBar.style.width = '0%';
+                }, 500);
+            }
+        });
+        
+        // 從裝置字串中提取IP地址
+        function extractIPFromDevice(deviceString) {
+            if (!deviceString) return '未知IP';
+            
+            // 尋找IP地址模式
+            const ipRegex = /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/;
+            const match = deviceString.match(ipRegex);
+            
+            if (match) {
+                return match[0];
+            }
+            
+            // 如果沒有找到標準IP，嘗試其他模式
+            const ipPatterns = [
+                /主相機\[([^\]]+)\]/,
+                /相機\[([^\]]+)\]/,
+                /IP:([^\s,]+)/,
+                /地址:([^\s,]+)/
+            ];
+            
+            for (const pattern of ipPatterns) {
+                const patternMatch = deviceString.match(pattern);
+                if (patternMatch && patternMatch[1]) {
+                    return patternMatch[1];
+                }
+            }
+            
+            return deviceString.substring(0, 20) + (deviceString.length > 20 ? '...' : '');
+        }
+        
+        // 為操作記錄尋找對應的節點資訊
+        function findNodeInfoForRecord(record, nodeData, lotCode) {
+            if (!nodeData || nodeData.length === 0) return null;
+            
+            // 方法1：嘗試通過節點ID匹配
+            if (record.nodeId) {
+                const nodeById = nodeData.find(node => node.id == record.nodeId);
+                if (nodeById) return nodeById;
+            }
+            
+            // 方法2：嘗試通過節點名稱匹配（從resource欄位）
+            if (record.resource) {
+                // 清理resource字串
+                const resourceLower = record.resource.toLowerCase();
+                const nodeByName = nodeData.find(node => {
+                    const nodeNameLower = (node.name || '').toLowerCase();
+                    return nodeNameLower.includes(resourceLower) || resourceLower.includes(nodeNameLower);
+                });
+                if (nodeByName) return nodeByName;
+            }
+            
+            // 方法3：嘗試通過車牌和時間匹配進出台賬
+            if (record.carNo && record.carTime) {
+                const inOutRecords = allLotsInOutData[lotCode] || [];
+                const matchingInOut = inOutRecords.find(inOut => 
+                    (inOut.carNo === record.carNo || inOut.fullCarNo === record.carNo) &&
+                    inOut.carTime &&
+                    record.carTime &&
+                    Math.abs(new Date(inOut.carTime) - new Date(record.carTime)) < 5 * 60 * 1000 // 5分鐘內
+                );
+                
+                if (matchingInOut && matchingInOut.nodeId) {
+                    const nodeByInOut = nodeData.find(node => node.id == matchingInOut.nodeId);
+                    if (nodeByInOut) return nodeByInOut;
+                }
+            }
+            
+            // 方法4：返回第一個節點作為預設
+            return nodeData.length > 0 ? nodeData[0] : null;
+        }
+        
+        // 計算節點錯誤率（基於節點ID）
+        function calculateNodeErrorRateWithDailyTrend(modifyData, inOutData, nodeData, startDate, endDate) {
+            const nodeStats = [];
+            const lotErrorRates = [];
+            
+            // 生成完整的日期範圍
+            const dateArray = generateDateRange(startDate, endDate);
+            
+            // 初始化每日趨勢數據結構
+            const dailyTrends = {};
+            const nodeDailyTrends = {}; // 每個節點的每日趨勢
+            
+            dateArray.forEach(date => {
+                dailyTrends[date] = {};
+            });
+            
+            // 處理每個車廠的數據
+            Object.keys(nodeData).forEach(lotCode => {
+                const nodes = nodeData[lotCode] || [];
+                const modifyRecords = modifyData[lotCode] || [];
+                const inOutRecords = inOutData[lotCode] || [];
+                
+                // 初始化車廠統計
+                const lotStats = {
+                    lotCode: lotCode,
+                    lotName: getLotName(lotCode),
+                    nodeCount: nodes.length,
+                    totalInOut: 0,
+                    totalErrors: 0,
+                    avgErrorRate: 0,
+                    maxErrorRate: 0,
+                    minErrorRate: 100
+                };
+                
+                // 處理每個節點
+                nodes.forEach(node => {
+                    const nodeId = node.id;
+                    
+                    // 初始化節點統計
+                    const stats = {
+                        lotCode: lotCode,
+                        lotName: getLotName(lotCode),
+                        nodeId: nodeId,
+                        nodeName: node.name || `節點${nodeId}`,
+                        nodeType: nodeTypeMap[node.nodeType] || '未知',
+                        device: node.device || '',
+                        deviceIP: extractIPFromDevice(node.device || ''),
+                        totalInOut: 0,
+                        totalErrors: 0,
+                        errorRate: 0
+                    };
+                    
+                    // 初始化該節點的每日趨勢
+                    dateArray.forEach(date => {
+                        dailyTrends[date][`${lotCode}-${nodeId}`] = {
+                            inOut: 0,
+                            errors: 0,
+                            rate: 0
+                        };
+                    });
+                    
+                    // 統計該節點的進出台賬（進出次數）
+                    const nodeInOutRecords = inOutRecords.filter(record => 
+                        record.nodeId == nodeId
+                    );
+                    
+                    stats.totalInOut = nodeInOutRecords.length;
+                    lotStats.totalInOut += stats.totalInOut;
+                    
+                    // 統計該節點的錯誤記錄
+                    const nodeModifyRecords = modifyRecords.filter(record => {
+                        // 判斷是否為錯誤記錄且屬於該節點
+                        const isError = isErrorRecord(record);
+                        return isError && record.nodeId == nodeId;
+                    });
+                    
+                    stats.totalErrors = nodeModifyRecords.length;
+                    lotStats.totalErrors += stats.totalErrors;
+                    
+                    // 計算錯誤率
+                    if (stats.totalInOut > 0) {
+                        stats.errorRate = (stats.totalErrors / stats.totalInOut * 100).toFixed(2);
+                    } else {
+                        stats.errorRate = "0.00";
+                    }
+                    
+                    // 更新車廠錯誤率範圍
+                    const errorRateNum = parseFloat(stats.errorRate) || 0;
+                    if (errorRateNum > lotStats.maxErrorRate) {
+                        lotStats.maxErrorRate = errorRateNum;
+                    }
+                    if (errorRateNum < lotStats.minErrorRate) {
+                        lotStats.minErrorRate = errorRateNum;
+                    }
+                    
+                    // 計算每日趨勢
+                    dateArray.forEach(date => {
+                        // 該日期該節點的進出台賬
+                        const dailyInOut = nodeInOutRecords.filter(record => {
+                            const carTime = record.carTime ? record.carTime.split(' ')[0] : null;
+                            return carTime === date;
+                        }).length;
+                        
+                        // 該日期該節點的錯誤記錄
+                        const dailyErrors = nodeModifyRecords.filter(record => {
+                            const carTime = record.carTime ? record.carTime.split(' ')[0] : null;
+                            return carTime === date;
+                        }).length;
+                        
+                        dailyTrends[date][`${lotCode}-${nodeId}`].inOut = dailyInOut;
+                        dailyTrends[date][`${lotCode}-${nodeId}`].errors = dailyErrors;
+                        dailyTrends[date][`${lotCode}-${nodeId}`].rate = dailyInOut > 0 ? (dailyErrors / dailyInOut * 100).toFixed(2) : "0.00";
+                    });
+                    
+                    // 添加到節點統計列表
+                    nodeStats.push(stats);
+                });
+                
+                // 計算車廠平均錯誤率
+                if (lotStats.totalInOut > 0) {
+                    lotStats.avgErrorRate = (lotStats.totalErrors / lotStats.totalInOut * 100).toFixed(2);
+                } else {
+                    lotStats.avgErrorRate = "0.00";
+                }
+                
+                // 添加到車廠列表
+                lotErrorRates.push(lotStats);
+            });
+            
+            // 按錯誤率排序節點列表（從高到低）
+            nodeStats.sort((a, b) => {
+                const rateA = parseFloat(a.errorRate) || 0;
+                const rateB = parseFloat(b.errorRate) || 0;
+                return rateB - rateA;
+            });
+            
+            // 按平均錯誤率排序車廠列表（從高到低）
+            lotErrorRates.sort((a, b) => {
+                const rateA = parseFloat(a.avgErrorRate) || 0;
+                const rateB = parseFloat(b.avgErrorRate) || 0;
+                return rateB - rateA;
+            });
+            
+            return {
+                nodeStats,
+                dailyTrends,
+                nodeDailyTrends,
+                lotErrorRates,
+                dateArray
+            };
+        }
+        
+        // 資料完整性檢查
+        function checkDataIntegrity(modifyData, inOutData) {
+            const warnings = [];
+            
+            // 檢查每個車廠是否有資料
+            Object.keys(modifyData).forEach(lotCode => {
+                if (modifyData[lotCode].length === 0) {
+                    warnings.push(`車廠 ${lotCode} 無操作記錄資料`);
+                }
+            });
+            
+            Object.keys(inOutData).forEach(lotCode => {
+                if (inOutData[lotCode].length === 0) {
+                    warnings.push(`車廠 ${lotCode} 無進出台賬資料`);
+                }
+            });
+            
+            return warnings;
+        }
+        
+        // 生成日期範圍
+        function generateDateRange(startDate, endDate) {
+            const dateArray = [];
+            let currentDate = new Date(startDate);
+            const end = new Date(endDate);
+            
+            while (currentDate <= end) {
+                dateArray.push(formatDate(currentDate));
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+            
+            return dateArray;
+        }
+        
+        // 顯示節點錯誤率分析結果
+        function displayNodeErrorRateAnalysis(analysisResult, startDate, endDate) {
+            const { nodeStats } = analysisResult;
+            
+            // 更新分析時間範圍
+            analysisPeriod.textContent = `分析期間: ${startDate} 至 ${endDate}`;
+            
+            // 顯示裝置錯誤率表格
+            displayDeviceErrorRateTable(nodeStats);
+            
+            // 顯示錯誤率分析面板
+            errorRatePanel.style.display = 'block';
+            
+            // 檢查高錯誤率警報
+            const highErrorNodes = nodeStats.filter(node => parseFloat(node.errorRate) >= 10);
+            if (highErrorNodes.length > 0) {
+                highErrorAlert.style.display = 'block';
+                highErrorAlert.innerHTML = `
+                    <div class="status-message alert-high">
+                        <i class="fas fa-exclamation-triangle"></i> 
+                        檢測到 ${highErrorNodes.length} 個高錯誤率裝置（錯誤率 ≥ 10%）！建議檢查相關設備是否老化或需要維護。
+                    </div>
+                `;
+            } else {
+                highErrorAlert.style.display = 'none';
+            }
+        }
+        
+        // 顯示裝置錯誤率表格
+        function displayDeviceErrorRateTable(nodeStats) {
+            deviceErrorRateBody.innerHTML = '';
+            
+            if (nodeStats.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td colspan="8" style="text-align: center; padding: 30px; color: #888;">
+                        <i class="fas fa-info-circle"></i> 無裝置節點資料
+                    </td>
+                `;
+                deviceErrorRateBody.appendChild(row);
+                return;
+            }
+            
+            nodeStats.forEach((node, index) => {
+                const row = document.createElement('tr');
+                
+                const errorRate = parseFloat(node.errorRate) || 0;
+                const rateClass = getRateClass(errorRate);
+                
+                row.innerHTML = `
+                    <td>${node.lotCode}</td>
+                    <td>${node.lotName}</td>
+                    <td>${node.nodeName}</td>
+                    <td><span class="node-type-badge ${node.nodeType === '入口' ? 'node-type-1' : 'node-type-2'}">${node.nodeType}</span></td>
+                    <td><span class="device-ip-tag">${node.deviceIP}</span></td>
+                    <td>${node.totalInOut.toLocaleString()}</td>
+                    <td>${node.totalErrors.toLocaleString()}</td>
+                    <td class="rate-cell ${rateClass}">${node.errorRate}%</td>
+                `;
+                
+                deviceErrorRateBody.appendChild(row);
+            });
+        }
+        
+        // 獲取錯誤率CSS類別
+        function getRateClass(rate) {
+            const rateValue = parseFloat(rate) || 0;
+            if (rateValue >= 10) return 'rate-high';
+            if (rateValue >= 5) return 'rate-medium';
+            return 'rate-low';
+        }
+        
+        // 應用資料篩選
+        function applyDataFilters() {
+            if (allApiData.length === 0) {
+                displayNoResults();
+                return;
+            }
+            
+            // 直接顯示所有數據，不再進行篩選
+            filteredData = [...allApiData];
+            
+            if (filteredData.length > 0) {
+                showStatus(`找到 ${filteredData.length} 條記錄`, 'success');
+                displayResults(filteredData);
+                updateResultsCount(filteredData.length);
+            } else {
+                showStatus(`未找到任何記錄`, 'info');
+                displayNoResults();
+            }
+        }
+        
+        // 表格排序
+        function sortResults() {
+            if (filteredData.length === 0) return;
+            
+            const sortKey = currentSortColumn;
+            const direction = currentSortDirection === 'asc' ? 1 : -1;
+            
+            filteredData.sort((a, b) => {
+                let aValue, bValue;
+                
+                switch (sortKey) {
+                    case 'index':
+                        return 0; // 索引不排序
+                    case 'lotCode':
+                        aValue = a.lotCodeAssist || '';
+                        bValue = b.lotCodeAssist || '';
+                        break;
+                    case 'lotName':
+                        aValue = getLotName(a.lotCodeAssist || '');
+                        bValue = getLotName(b.lotCodeAssist || '');
+                        break;
+                    case 'nodeType':
+                        aValue = nodeTypeMap[a.nodeType] || a.nodeType || '';
+                        bValue = nodeTypeMap[b.nodeType] || b.nodeType || '';
+                        break;
+                    case 'isError':
+                        aValue = isErrorRecord(a) ? 1 : 0;
+                        bValue = isErrorRecord(b) ? 1 : 0;
+                        break;
+                    case 'deviceInfo':
+                        aValue = a.deviceInfo || '';
+                        bValue = b.deviceInfo || '';
+                        break;
+                    default:
+                        aValue = a[sortKey] || '';
+                        bValue = b[sortKey] || '';
+                }
+                
+                if (aValue < bValue) return -1 * direction;
+                if (aValue > bValue) return 1 * direction;
+                return 0;
+            });
+            
+            displayResults(filteredData);
+        }
+        
+        // 判斷是否為辨識錯誤記錄
+        function isErrorRecord(item) {
+            return item.carNo && item.carNo2 && item.carNo !== item.carNo2;
+        }
+        
+        // 顯示查詢結果
+        function displayResults(data) {
+            if (!data || data.length === 0) {
+                displayNoResults();
+                return;
+            }
+            
+            resultsBody.innerHTML = '';
+            
+            data.forEach((item, index) => {
+                const row = document.createElement('tr');
+                const isError = isErrorRecord(item);
+                
+                if (isError) {
+                    row.className = 'has-error';
+                }
+                
+                const lotCode = item.lotCodeAssist || '未知';
+                
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${lotCode}</td>
+                    <td>${getLotName(lotCode)}</td>
+                    <td>${item.modifyTime || ''}</td>
+                    <td>${item.carNo || ''}</td>
+                    <td>${item.carNo2 || ''}</td>
+                    <td style="color: ${nodeColorMap[item.nodeType] || '#333'}; font-weight: 600;">${nodeTypeMap[item.nodeType] || item.nodeType || ''}</td>
+                    <td>${item.userName || ''}</td>
+                    <td>${item.userId || ''}</td>
+                    <td>${item.carStyle || ''}</td>
+                    <td>${item.resource || ''}</td>
+                    <td>${item.imgName && item.imgName !== '000000.jpg' ? `<a class="image-link" onclick="viewImage('${lotCode}', '${item.imgName}')" title="點擊查看圖片">${item.imgName}</a>` : (item.imgName || '')}</td>
+                    <td>${item.carTime || ''}</td>
+                    <td>${isError ? '<span class="error-badge">有錯誤</span>' : '無'}</td>
+                    <td>${item.deviceInfo || ''}</td>
+                `;
+                
+                resultsBody.appendChild(row);
+            });
+            
+            noResults.style.display = 'none';
+            resultsTable.style.display = 'table';
+        }
+        
+        // 顯示無結果
+        function displayNoResults() {
+            noResults.style.display = 'flex';
+            resultsTable.style.display = 'none';
+            resultsCount.textContent = '未查詢資料';
+        }
+        
+        // 更新結果計數
+        function updateResultsCount(total) {
+            resultsCount.textContent = `共 ${total} 條記錄`;
+        }
+        
+        // 獲取車廠名稱
+        function getLotName(lotCode) {
+            const lotNames = getLotNames();
+            return lotNames[lotCode] || '未知車廠';
+        }
+        
+        // 獲取車廠名稱映射
+        function getLotNames() {
+            return {
+                "188600343": "家福敦北",
+                "188600416": "新店加氣站",
+                "188600417": "家福新店安康",
+                "188600418": "寶雅樂華",
+                "188600419": "土城金城",
+                "188600420": "土城峰廷",
+                "188600421": "汐止明峰家福",
+                "188600422": "格致家福",
+                "188600423": "華齡家福",
+                "188600424": "北投公館家福",
+                "188600425": "寶雅楠梓藍田",
+                "188600426": "燦坤海佃",
+                "188600427": "寶雅德華",
+                "188600428": "土銀敦和(航港局)",
+                "188600429": "林口文化北全聯",
+                "188600431": "燦坤經國",
+                "188600432": "新埔燦坤",
+                "188600433": "藏壽司思源",
+                "188600434": "藏壽司捷運路",
+                "188600435": "藏壽司集賢路",
+                "188600436": "藏壽司竹北",
+                "188600437": "竹北三民",
+                "188600438": "楊梅農會",
+                "188600439": "藏壽司青埔",
+                "188600440": "寶雅健康2",
+                "188600442": "寶雅美妝文心南",
+                "188600443": "博愛大樓",
+                "188600444": "家福岡山",
+                "188600446": "台灣大道",
+                "188600447": "花蓮民權",
+                "188600448": "台北南海",
+                "188600449": "台南轉運站 汽車",
+                "188600451": "藏壽司員林",
+                "188600452": "台北內湖",
+                "188600453": "台中美村南",
+                "188600454": "燦坤內埔",
+                "188600455": "寶家潮州",
+                "188600456": "家福豐南",
+                "188600458": "燦坤永華",
+                "188600460": "喜互惠羅莊",
+                "188600461": "喜互惠文化",
+                "188600462": "喜互惠慈安",
+                "188600463": "寶雅內壢",
+                "188600464": "雀客花蓮",
+                "188600465": "寶雅鳳山五福",
+                "188600466": "嘉義新民2",
+                "188600467": "迪卡儂",
+                "188600468": "喜互惠頭城",
+                "188600469": "喜互惠和平",
+                "188600471": "藏壽司中清",
+                "188600472": "藏壽司福科",
+                "188600473": "藏壽司惠文",
+                "188600474": "藏壽司沙鹿",
+                "188600475": "藏壽司嘉義",
+                "188600476": "藏壽司頭份",
+                "188600477": "藏壽司開元",
+                "188600478": "藏壽司楠梓藍田",
+                "188600479": "淡水新民",
+                "188600480": "林口仁愛二場",
+                "188600481": "燦坤彰化",
+                "188600483": "北斗中山場",
+                "188600484": "新店北新場",
+                "188600485": "蘆洲中山場",
+                "188600486": "燦坤光復場",
+                "188600487": "燦坤瑞隆",
+                "188600488": "員林國宅場",
+                "188600489": "燦坤彰化場",
+                "188600490": "景平天空",
+                "188600491": "牛埔東",
+                "188600492": "燦坤南崁",
+                "188600493": "台中大里",
+                "188600494": "家福龍安",
+                "188600495": "家福自由",
+                "188600496": "家福重和",
+                "188600504": "寶雅惠民",
+                "188600505": "高雄博愛",
+                "188600516": "燦坤豐樂",
+                "188600536": "水上中興",
+                "188600539": "淡水中山場",
+                "188600540": "台南郡平場"
+            };
+        }
+        
+        // 獲取請求標頭
+        function getRequestHeaders(lotCode) {
+            return {
+                'Content-Type': 'application/json',
+                'kt-token': "ilbnrfsjr6a0fnq20wyz50dtrqp3jah5zohmw9a92yry4xcyak2rome9mqtjpjbq1724qtbih0",
+                'kt-appid': '16bbf366b49a48fab362b7f163d96c63',
+                'kt-lotcodes': lotCode,
+                'op-source': '3000',
+                'client-flag': 'PC'
+            };
+        }
+        
+        // 格式化日期
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        
+        // 格式化日期時間供API使用
+        function formatDateForApi(dateString, isEnd = false) {
+            if (!dateString) return '';
+            
+            const date = new Date(dateString);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            
+            if (isEnd) {
+                return `${year}-${month}-${day} 23:59:59`;
+            } else {
+                return `${year}-${month}-${day} 00:00:00`;
+            }
+        }
+        
+        // 顯示狀態訊息
+        function showStatus(message, type) {
+            statusMessage.textContent = message;
+            statusMessage.className = `status-message ${type}`;
+            statusMessage.style.display = 'block';
+            
+            setTimeout(() => {
+                statusMessage.style.display = 'none';
+            }, 5000);
+        }
+        
+        // 查看圖片
+        function viewImage(lotCode, imgName) {
+            if (!imgName || !lotCode) return;
+            
+            try {
+                const parts = imgName.split('_');
+                if (parts.length >= 3) {
+                    const timestamp = parts[0];
+                    const deviceIP = parts[1];
+                    const year = timestamp.substring(0, 4);
+                    const month = timestamp.substring(4, 6);
+                    const day = timestamp.substring(6, 8);
+                    
+                    const imageUrl = `https://gpark16501.keytop.cn/images/${lotCode}/${deviceIP}/${year}/${month}/${day}/${imgName}`;
+                    window.open(imageUrl, '_blank');
+                } else {
+                    const imageUrl = `https://gpark16501.keytop.cn/images/${lotCode}/${imgName}`;
+                    window.open(imageUrl, '_blank');
+                }
+            } catch (error) {
+                console.error('解析圖片URL時發生錯誤:', error);
+                const imageUrl = `https://gpark16501.keytop.cn/images/${lotCode}/${imgName}`;
+                window.open(imageUrl, '_blank');
+            }
+        }
+        
+        // 重設按鈕點擊事件
+        resetBtn.addEventListener('click', function() {
+            singleLotBtn.click();
+            document.getElementById('lotCode').value = '188600343';
+            
+            const toDate = new Date();
+            const fromDate = new Date();
+            fromDate.setDate(fromDate.getDate() - 30);
+            
+            document.getElementById('operaDateFrom').value = formatDate(fromDate);
+            document.getElementById('operaDateTo').value = formatDate(toDate);
+            
+            dataFetchModeNormal.click(); // 重置為標準模式
+            
+            currentSortColumn = null;
+            currentSortDirection = 'asc';
+            document.querySelectorAll('.results-table th').forEach(header => {
+                header.classList.remove('sorted-asc', 'sorted-desc');
+            });
+            
+            deviceTableSortColumn = null;
+            deviceTableSortDirection = 'asc';
+            document.querySelectorAll('#deviceErrorRateTable th').forEach(header => {
+                header.classList.remove('sorted-asc', 'sorted-desc');
+            });
+            
+            allApiData = [];
+            filteredData = [];
+            nodeErrorStats = null;
+            deviceDailyTrendData = null;
+            lotErrorRates = [];
+            trendStartDate = '';
+            trendEndDate = '';
+            trendDateArray = [];
+            
+            displayNoResults();
+            errorRatePanel.style.display = 'none';
+            exportOptions.style.display = 'none';
+            
+            showStatus('表單已重設', 'info');
+        });
+        
+        // 匯出裝置節點辨識錯誤率分析CSV
+        function exportDeviceErrorRateCSV() {
+            if (!nodeErrorStats || nodeErrorStats.length === 0) {
+                showStatus('沒有裝置錯誤率分析資料可匯出', 'error');
+                return;
+            }
+            
+            try {
+                // 準備CSV內容
+                let csvContent = "";
+                
+                // 添加統計信息標頭
+                csvContent += "裝置節點辨識錯誤率分析\r\n";
+                csvContent += `匯出時間: ${new Date().toLocaleString('zh-TW')}\r\n`;
+                csvContent += `查詢時間範圍: ${trendStartDate} 至 ${trendEndDate}\r\n`;
+                csvContent += `資料擷取模式: ${fetchMode === 'normal' ? '標準模式（完整資料）' : '快速模式（第一頁資料）'}\r\n`;
+                csvContent += `總裝置數量: ${nodeErrorStats.length}\r\n`;
+                csvContent += `\r\n`;
+                
+                // CSV標頭
+                const headers = ["車場ID", "車場名稱", "裝置名稱", "節點類型", "裝置IP", "總進出次數", "錯誤次數", "錯誤率"];
+                csvContent += headers.join(",") + "\r\n";
+                
+                // 添加每筆裝置資料
+                nodeErrorStats.forEach(node => {
+                    const row = [
+                        `"${node.lotCode}"`,
+                        `"${node.lotName}"`,
+                        `"${node.nodeName}"`,
+                        `"${node.nodeType}"`,
+                        `"${node.deviceIP}"`,
+                        node.totalInOut,
+                        node.totalErrors,
+                        `"${node.errorRate}%"`
+                    ];
+                    csvContent += row.join(",") + "\r\n";
+                });
+                
+                // 使用正確的編碼和換行符
+                const bom = "\uFEFF"; // UTF-8 BOM
+                const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement("a");
+                const url = URL.createObjectURL(blob);
+                
+                const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '');
+                const filename = `裝置節點錯誤率分析_${nodeErrorStats.length}裝置_${fetchMode}模式_${timestamp}.csv`;
+                
+                link.href = url;
+                link.setAttribute("download", filename);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showStatus(`已匯出 ${nodeErrorStats.length} 個裝置的錯誤率分析資料`, 'success');
+                
+            } catch (error) {
+                console.error('匯出失敗:', error);
+                showStatus('匯出失敗: ' + error.message, 'error');
+            }
+        }
+        
+        // 匯出每日加總分析CSV
+        function exportDailySummaryCSV() {
+            if (!deviceDailyTrendData || !trendDateArray || trendDateArray.length === 0) {
+                showStatus('沒有每日加總分析資料可匯出', 'error');
+                return;
+            }
+            
+            try {
+                // 準備CSV內容
+                let csvContent = "";
+                
+                // 添加統計信息標頭
+                csvContent += "每日加總分析\r\n";
+                csvContent += `匯出時間: ${new Date().toLocaleString('zh-TW')}\r\n`;
+                csvContent += `查詢時間範圍: ${trendStartDate} 至 ${trendEndDate}\r\n`;
+                csvContent += `資料擷取模式: ${fetchMode === 'normal' ? '標準模式（完整資料）' : '快速模式（第一頁資料）'}\r\n`;
+                csvContent += `總天數: ${trendDateArray.length}\r\n`;
+                csvContent += `\r\n`;
+                
+                // 收集所有裝置ID
+                const deviceIds = new Set();
+                trendDateArray.forEach(date => {
+                    const dailyData = deviceDailyTrendData[date] || {};
+                    Object.keys(dailyData).forEach(deviceKey => {
+                        deviceIds.add(deviceKey);
+                    });
+                });
+                
+                // 建立裝置ID到裝置名稱的映射
+                const deviceInfoMap = {};
+                nodeErrorStats.forEach(node => {
+                    const deviceKey = `${node.lotCode}-${node.nodeId}`;
+                    deviceInfoMap[deviceKey] = {
+                        lotCode: node.lotCode,
+                        lotName: node.lotName,
+                        nodeName: node.nodeName,
+                        deviceIP: node.deviceIP
+                    };
+                });
+                
+                // CSV標頭
+                const headers = ["日期", "裝置ID", "車場ID", "車場名稱", "裝置名稱", "裝置IP", "進出次數", "錯誤次數", "錯誤率"];
+                csvContent += headers.join(",") + "\r\n";
+                
+                // 添加每日資料
+                trendDateArray.forEach(date => {
+                    const dailyData = deviceDailyTrendData[date] || {};
+                    
+                    // 如果當天有資料
+                    if (Object.keys(dailyData).length > 0) {
+                        Object.keys(dailyData).forEach(deviceKey => {
+                            const deviceData = dailyData[deviceKey];
+                            const deviceInfo = deviceInfoMap[deviceKey] || {
+                                lotCode: deviceKey.split('-')[0],
+                                lotName: getLotName(deviceKey.split('-')[0]),
+                                nodeName: `裝置${deviceKey.split('-')[1]}`,
+                                deviceIP: '未知IP'
+                            };
+                            
+                            const row = [
+                                `"${date}"`,
+                                `"${deviceKey}"`,
+                                `"${deviceInfo.lotCode}"`,
+                                `"${deviceInfo.lotName}"`,
+                                `"${deviceInfo.nodeName}"`,
+                                `"${deviceInfo.deviceIP}"`,
+                                deviceData.inOut || 0,
+                                deviceData.errors || 0,
+                                `"${deviceData.rate || '0.00'}%"`
+                            ];
+                            csvContent += row.join(",") + "\r\n";
+                        });
+                    } else {
+                        // 如果當天沒有資料，還是輸出空行
+                        const row = [
+                            `"${date}"`,
+                            '""', '""', '""', '""', '""', 0, 0, '"0.00%"'
+                        ];
+                        csvContent += row.join(",") + "\r\n";
+                    }
+                });
+                
+                // 使用正確的編碼和換行符
+                const bom = "\uFEFF"; // UTF-8 BOM
+                const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement("a");
+                const url = URL.createObjectURL(blob);
+                
+                const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '');
+                const filename = `每日加總分析_${trendDateArray.length}天_${fetchMode}模式_${timestamp}.csv`;
+                
+                link.href = url;
+                link.setAttribute("download", filename);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showStatus(`已匯出 ${trendDateArray.length} 天的每日加總分析資料`, 'success');
+                
+            } catch (error) {
+                console.error('匯出失敗:', error);
+                showStatus('匯出失敗: ' + error.message, 'error');
+            }
+        }
+        
+        // 匯出錯誤輸入記錄CSV
+        function exportErrorInputCSV() {
+            if (allApiData.length === 0) {
+                showStatus('沒有操作記錄資料可匯出', 'error');
+                return;
+            }
+            
+            try {
+                // 篩選出錯誤記錄
+                const errorRecords = allApiData.filter(item => isErrorRecord(item));
+                
+                if (errorRecords.length === 0) {
+                    showStatus('沒有錯誤輸入記錄可匯出', 'info');
+                    return;
+                }
+                
+                // 準備CSV內容
+                let csvContent = "";
+                
+                // 添加統計信息標頭
+                csvContent += "錯誤輸入記錄\r\n";
+                csvContent += `匯出時間: ${new Date().toLocaleString('zh-TW')}\r\n`;
+                csvContent += `查詢時間範圍: ${trendStartDate} 至 ${trendEndDate}\r\n`;
+                csvContent += `資料擷取模式: ${fetchMode === 'normal' ? '標準模式（完整資料）' : '快速模式（第一頁資料）'}\r\n`;
+                csvContent += `總錯誤記錄筆數: ${errorRecords.length}\r\n`;
+                csvContent += `總操作記錄筆數: ${allApiData.length}\r\n`;
+                csvContent += `錯誤率: ${(errorRecords.length / allApiData.length * 100).toFixed(2)}%\r\n`;
+                csvContent += `\r\n`;
+                
+                // CSV標頭
+                const headers = ["序號", "車廠代號", "車廠名稱", "操作時間", "原車牌", "新車牌", "節點類型", 
+                               "操作人員", "用戶ID", "車輛類型", "操作資源", "圖片名稱", "車輛時間", "裝置資訊"];
+                csvContent += headers.join(",") + "\r\n";
+                
+                // 添加每筆錯誤記錄
+                errorRecords.forEach((item, index) => {
+                    const lotCode = item.lotCodeAssist || '未知';
+                    const lotName = getLotName(lotCode);
+                    const nodeTypeText = nodeTypeMap[item.nodeType] || item.nodeType || '';
+                    
+                    // 準備圖片連結（CSV中顯示完整URL）
+                    let imgNameCSV = item.imgName || '';
+                    if (imgNameCSV && imgNameCSV !== '000000.jpg') {
+                        try {
+                            const parts = imgNameCSV.split('_');
+                            if (parts.length >= 3) {
+                                const timestamp = parts[0];
+                                const deviceIP = parts[1];
+                                const year = timestamp.substring(0, 4);
+                                const month = timestamp.substring(4, 6);
+                                const day = timestamp.substring(6, 8);
+                                
+                                imgNameCSV = `https://gpark16501.keytop.cn/images/${lotCode}/${deviceIP}/${year}/${month}/${day}/${imgNameCSV}`;
+                            } else {
+                                imgNameCSV = `https://gpark16501.keytop.cn/images/${lotCode}/${imgNameCSV}`;
+                            }
+                        } catch (error) {
+                            imgNameCSV = `https://gpark16501.keytop.cn/images/${lotCode}/${imgNameCSV}`;
+                        }
+                    }
+                    
+                    const row = [
+                        index + 1,
+                        `"${lotCode}"`,
+                        `"${lotName}"`,
+                        `"${item.modifyTime || ''}"`,
+                        `"${item.carNo || ''}"`,
+                        `"${item.carNo2 || ''}"`,
+                        `"${nodeTypeText}"`,
+                        `"${item.userName || ''}"`,
+                        `"${item.userId || ''}"`,
+                        `"${item.carStyle || ''}"`,
+                        `"${item.resource || ''}"`,
+                        `"${imgNameCSV}"`,
+                        `"${item.carTime || ''}"`,
+                        `"${item.deviceInfo || ''}"`
+                    ];
+                    csvContent += row.join(",") + "\r\n";
+                });
+                
+                // 使用正確的編碼和換行符
+                const bom = "\uFEFF"; // UTF-8 BOM
+                const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement("a");
+                const url = URL.createObjectURL(blob);
+                
+                const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '');
+                const filename = `錯誤輸入記錄_${errorRecords.length}筆_${fetchMode}模式_${timestamp}.csv`;
+                
+                link.href = url;
+                link.setAttribute("download", filename);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showStatus(`已匯出 ${errorRecords.length} 筆錯誤輸入記錄`, 'success');
+                
+            } catch (error) {
+                console.error('匯出失敗:', error);
+                showStatus('匯出失敗: ' + error.message, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
