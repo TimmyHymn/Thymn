@@ -610,6 +610,48 @@
             color: #2a5298;
         }
         
+        .data-loaded-indicator {
+            background-color: #e7f7ef;
+            color: #0a8f4e;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .detailed-data-toggle {
+            margin: 15px 0;
+            padding: 15px;
+            background-color: #f8fafc;
+            border-radius: 8px;
+            border-left: 4px solid #2a5298;
+        }
+        
+        .detailed-data-toggle label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-weight: 600;
+            color: #2a5298;
+        }
+        
+        .detailed-data-toggle input {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .detailed-data-toggle small {
+            display: block;
+            margin-top: 5px;
+            color: #64748b;
+            font-size: 13px;
+        }
+        
         @media (max-width: 768px) {
             .content {
                 padding: 20px;
@@ -721,6 +763,23 @@
                 </div>
             </div>
             
+            <!-- 新增：詳細數據加載控制開關 -->
+            <div class="detailed-data-toggle">
+                <label>
+                    <input type="checkbox" id="loadAllDetails">
+                    <span>全場查詢時同時加載詳細數據（額外約480次請求）</span>
+                </label>
+                <small>
+                    注意：勾選此選項將查詢所有車場的6種詳細記錄，可能需要較長時間和較多網絡請求。
+                    若不勾選，全場查詢預設只加載匯總數據，詳細數據將在切換查詢類型時按需加載。
+                </small>
+            </div>
+            
+            <div id="dataLoadedIndicator" class="data-loaded-indicator" style="display: none;">
+                <i class="fas fa-check-circle"></i>
+                <span>數據已加載完成，可隨意切換查詢類型</span>
+            </div>
+            
             <div class="buttons">
                 <button id="singleQueryBtn" class="btn btn-primary">
                     <i class="fas fa-search"></i> 單場查詢
@@ -748,7 +807,7 @@
                 </div>
                 
                 <!-- 匯總數據表格 -->
-                <div id="summaryTableContainer" class="table-container" style="display: none;">
+                <div id="summaryTableContainer" class="table-container" style="display: block;">
                     <table id="summaryTable">
                         <thead>
                             <tr>
@@ -963,7 +1022,22 @@
 
         // 全局變量
         let summaryData = [];
-        let detailData = [];
+        let detailData = {
+            inModify: [],
+            inUncertain: [],
+            inEmpty: [],
+            outModify: [],
+            outUncertain: [],
+            outEmpty: []
+        };
+        let detailDataTotals = {
+            inModify: 0,
+            inUncertain: 0,
+            inEmpty: 0,
+            outModify: 0,
+            outUncertain: 0,
+            outEmpty: 0
+        };
         let summarySortColumn = 'name';
         let summarySortDirection = 'asc';
         let detailSortColumn = 'parkName';
@@ -976,6 +1050,19 @@
         let totalPages = 1;
         let totalRecords = 0;
         let currentLotCode = '';
+        let currentStartDate = '';
+        let currentEndDate = '';
+        let isDataLoaded = false; // 標記是否已加載所有數據
+        let isSingleParkQuery = false; // 標記是否為單場查詢
+        let currentDetailData = []; // 當前顯示的詳細數據
+        let dataLoadedFlags = {
+            inModify: false,
+            inUncertain: false,
+            inEmpty: false,
+            outModify: false,
+            outUncertain: false,
+            outEmpty: false
+        }; // 標記每種詳細數據是否已加載
         
         // DOM元素
         const startDateEl = document.getElementById('startDate');
@@ -989,6 +1076,8 @@
         const resetBtn = document.getElementById('resetBtn');
         const queryOptions = document.querySelectorAll('.query-option');
         const queryTypeTitleEl = document.getElementById('queryTypeTitle');
+        const dataLoadedIndicatorEl = document.getElementById('dataLoadedIndicator');
+        const loadAllDetailsEl = document.getElementById('loadAllDetails');
         const statusEl = document.getElementById('status');
         const statusTextEl = document.getElementById('statusText');
         const resultsContainerEl = document.querySelector('.results-container');
@@ -1055,7 +1144,7 @@
         
         // 綁定事件
         function bindEvents() {
-            singleQueryBtn.addEventListener('click', executeQuery);
+            singleQueryBtn.addEventListener('click', executeSingleQuery);
             allQueryBtn.addEventListener('click', executeAllQuery);
             exportBtn.addEventListener('click', exportToCSV);
             resetBtn.addEventListener('click', resetForm);
@@ -1063,25 +1152,47 @@
             // 查詢類型切換
             queryOptions.forEach(option => {
                 option.addEventListener('click', function() {
-                    queryOptions.forEach(opt => opt.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    // 更新當前查詢類型
-                    currentQueryType = this.getAttribute('data-query-type');
-                    
-                    // 更新節點類型和查詢類型（如果不是匯總數據）
-                    if (currentQueryType !== 'summary') {
-                        currentNodeType = parseInt(this.getAttribute('data-node-type'));
-                        currentType = parseInt(this.getAttribute('data-type'));
-                    }
-                    
-                    // 更新查詢類型標題
-                    updateQueryTypeTitle();
-                    
-                    // 如果有當前查詢數據，重新查詢
-                    if (currentLotCode && startDateEl.value && endDateEl.value) {
-                        currentPage = 1; // 重置到第一頁
-                        executeQuery();
+                    // 如果已經加載數據，直接切換顯示
+                    if (isDataLoaded && currentQueryType !== 'summary') {
+                        queryOptions.forEach(opt => opt.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        // 更新當前查詢類型
+                        currentQueryType = this.getAttribute('data-query-type');
+                        
+                        // 更新節點類型和查詢類型（如果不是匯總數據）
+                        if (currentQueryType !== 'summary') {
+                            currentNodeType = parseInt(this.getAttribute('data-node-type'));
+                            currentType = parseInt(this.getAttribute('data-type'));
+                        }
+                        
+                        // 更新查詢類型標題
+                        updateQueryTypeTitle();
+                        
+                        // 顯示相應的數據
+                        switchToQueryType();
+                    } else {
+                        // 如果沒有加載數據，正常執行查詢
+                        queryOptions.forEach(opt => opt.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        // 更新當前查詢類型
+                        currentQueryType = this.getAttribute('data-query-type');
+                        
+                        // 更新節點類型和查詢類型（如果不是匯總數據）
+                        if (currentQueryType !== 'summary') {
+                            currentNodeType = parseInt(this.getAttribute('data-node-type'));
+                            currentType = parseInt(this.getAttribute('data-type'));
+                        }
+                        
+                        // 更新查詢類型標題
+                        updateQueryTypeTitle();
+                        
+                        // 如果有當前查詢數據，重新查詢
+                        if (currentLotCode && startDateEl.value && endDateEl.value) {
+                            currentPage = 1; // 重置到第一頁
+                            executeQuery();
+                        }
                     }
                 });
             });
@@ -1156,7 +1267,10 @@
             pageSizeSelectEl.addEventListener('change', () => {
                 pageSize = parseInt(pageSizeSelectEl.value);
                 currentPage = 1; // 重置到第一頁
-                if (currentLotCode && startDateEl.value && endDateEl.value && currentQueryType !== 'summary') {
+                if (isDataLoaded && currentQueryType !== 'summary') {
+                    // 如果已加載數據，重新計算分頁
+                    updateCurrentPageData();
+                } else if (currentLotCode && startDateEl.value && endDateEl.value && currentQueryType !== 'summary') {
                     executeQuery();
                 }
             });
@@ -1171,6 +1285,229 @@
                     imageModalEl.style.display = 'none';
                 }
             });
+            
+            // 日期變化時重置數據加載狀態
+            startDateEl.addEventListener('change', () => {
+                isDataLoaded = false;
+                dataLoadedIndicatorEl.style.display = 'none';
+                resetDataLoadedFlags();
+            });
+            
+            endDateEl.addEventListener('change', () => {
+                isDataLoaded = false;
+                dataLoadedIndicatorEl.style.display = 'none';
+                resetDataLoadedFlags();
+            });
+            
+            // 詳細數據加載開關事件
+            loadAllDetailsEl.addEventListener('change', () => {
+                if (loadAllDetailsEl.checked) {
+                    showStatus('已啟用全場詳細數據加載，下次全場查詢將加載所有詳細數據', 'info');
+                } else {
+                    showStatus('已關閉全場詳細數據加載，下次全場查詢將只加載匯總數據', 'info');
+                }
+            });
+        }
+        
+        // 重置數據加載標記
+        function resetDataLoadedFlags() {
+            dataLoadedFlags = {
+                inModify: false,
+                inUncertain: false,
+                inEmpty: false,
+                outModify: false,
+                outUncertain: false,
+                outEmpty: false
+            };
+        }
+        
+        // 更新當前頁的數據
+        function updateCurrentPageData() {
+            if (currentQueryType === 'summary') return;
+            
+            const data = detailData[currentQueryType] || [];
+            totalRecords = detailDataTotals[currentQueryType] || 0;
+            
+            if (data.length > 0) {
+                // 計算分頁
+                totalPages = Math.ceil(totalRecords / pageSize);
+                
+                // 獲取當前頁的數據
+                const startIndex = (currentPage - 1) * pageSize;
+                const endIndex = Math.min(startIndex + pageSize, data.length);
+                currentDetailData = data.slice(startIndex, endIndex);
+                
+                // 渲染表格
+                sortDetailData();
+                renderDetailTable();
+                
+                // 更新分頁
+                if (totalPages > 1) {
+                    paginationEl.style.display = 'flex';
+                    updatePagination();
+                } else {
+                    paginationEl.style.display = 'none';
+                }
+            } else {
+                // 如果沒有數據，清空表格並顯示無數據訊息
+                clearDetailTable();
+            }
+        }
+        
+        // 清空詳細表格
+        function clearDetailTable() {
+            detailBodyEl.innerHTML = '';
+            const row = document.createElement('tr');
+            row.innerHTML = `<td colspan="8" style="text-align: center; padding: 40px; color: #64748b;">沒有找到相關數據</td>`;
+            detailBodyEl.appendChild(row);
+            resultCountEl.textContent = '0';
+            paginationEl.style.display = 'none';
+        }
+        
+        // 清空匯總表格
+        function clearSummaryTable() {
+            summaryBodyEl.innerHTML = '';
+            const row = document.createElement('tr');
+            row.innerHTML = `<td colspan="12" style="text-align: center; padding: 40px; color: #64748b;">沒有找到匯總數據</td>`;
+            summaryBodyEl.appendChild(row);
+            resultCountEl.textContent = '0';
+        }
+        
+        // 切換查詢類型（當數據已加載時）
+        function switchToQueryType() {
+            if (currentQueryType === 'summary') {
+                // 顯示匯總數據
+                summaryTableContainerEl.style.display = 'block';
+                detailTableContainerEl.style.display = 'none';
+                paginationEl.style.display = 'none';
+                
+                if (summaryData.length > 0) {
+                    renderSummaryTable();
+                    showStatus(`已顯示匯總數據 (${summaryData.length} 筆記錄)`, 'info');
+                } else {
+                    clearSummaryTable();
+                    showStatus('沒有找到匯總數據', 'warning');
+                }
+            } else {
+                // 顯示詳細記錄
+                summaryTableContainerEl.style.display = 'none';
+                detailTableContainerEl.style.display = 'block';
+                
+                // 重置到第一頁
+                currentPage = 1;
+                
+                // 檢查是否已加載該類型的數據
+                const dataForType = detailData[currentQueryType];
+                const totalForType = detailDataTotals[currentQueryType];
+                
+                if (dataLoadedFlags[currentQueryType] && totalForType > 0) {
+                    // 如果已有數據，直接顯示
+                    currentDetailData = dataForType;
+                    totalRecords = totalForType;
+                    updateCurrentPageData();
+                    showStatus(`已顯示${queryTypeTitleEl.textContent}數據 (${totalRecords} 筆記錄)`, 'info');
+                } else {
+                    // 如果沒有數據，提示用戶加載
+                    showStatus(`${queryTypeTitleEl.textContent}數據尚未加載，正在按需加載...`, 'info');
+                    loadCurrentTypeData();
+                }
+            }
+        }
+        
+        // 按需加載當前類型的數據
+        async function loadCurrentTypeData() {
+            if (!currentStartDate || !currentEndDate) {
+                showStatus('請先執行查詢', 'error');
+                return;
+            }
+            
+            showLoading(`正在加載${queryTypeTitleEl.textContent}數據...`);
+            
+            try {
+                // 根據當前查詢類型確定參數
+                let nodeType, dataType;
+                switch(currentQueryType) {
+                    case 'inModify':
+                        nodeType = 1; dataType = 1;
+                        break;
+                    case 'inUncertain':
+                        nodeType = 1; dataType = 0;
+                        break;
+                    case 'inEmpty':
+                        nodeType = 1; dataType = 2;
+                        break;
+                    case 'outModify':
+                        nodeType = 2; dataType = 1;
+                        break;
+                    case 'outUncertain':
+                        nodeType = 2; dataType = 0;
+                        break;
+                    case 'outEmpty':
+                        nodeType = 2; dataType = 2;
+                        break;
+                    default:
+                        throw new Error('未知查詢類型');
+                }
+                
+                if (isSingleParkQuery) {
+                    // 單場查詢：只加載當前車場的數據
+                    await fetchAllDetailPages(currentLotCode, currentStartDate, currentEndDate, {
+                        type: currentQueryType,
+                        nodeType: nodeType,
+                        dataType: dataType
+                    });
+                } else {
+                    // 全場查詢：加載所有車場的該類型數據
+                    progressContainerEl.style.display = 'block';
+                    let completed = 0;
+                    
+                    for (let i = 0; i < lotCodes.length; i++) {
+                        const lotCode = lotCodes[i];
+                        const parkName = lotNames[lotCode] || lotCode;
+                        
+                        // 更新進度
+                        completed++;
+                        const progress = Math.round((completed / lotCodes.length) * 100);
+                        progressFillEl.style.width = `${progress}%`;
+                        progressTextEl.textContent = `${completed} / ${lotCodes.length}`;
+                        loadingTextEl.textContent = `正在查詢 ${parkName} 的 ${queryTypeTitleEl.textContent} 數據...`;
+                        
+                        await fetchAllDetailPagesForAllParks(lotCode, currentStartDate, currentEndDate, {
+                            type: currentQueryType,
+                            nodeType: nodeType,
+                            dataType: dataType
+                        });
+                        
+                        // 避免請求過快
+                        await new Promise(resolve => setTimeout(resolve, 50));
+                    }
+                }
+                
+                // 獲取加載的數據
+                currentDetailData = detailData[currentQueryType];
+                totalRecords = detailDataTotals[currentQueryType];
+                
+                // 標記該類型數據已加載
+                dataLoadedFlags[currentQueryType] = true;
+                
+                // 重置到第一頁
+                currentPage = 1;
+                
+                hideLoading();
+                
+                if (totalRecords > 0) {
+                    updateCurrentPageData();
+                    showStatus(`成功加載${queryTypeTitleEl.textContent}數據 (${totalRecords} 筆記錄)`, 'success');
+                } else {
+                    clearDetailTable();
+                    showStatus('沒有查詢到相關記錄', 'warning');
+                }
+                
+            } catch (error) {
+                hideLoading();
+                showStatus(`加載失敗: ${error.message}`, 'error');
+                console.error('加載錯誤:', error);
+            }
         }
         
         // 更新查詢類型標題
@@ -1303,8 +1640,8 @@
             }
         }
         
-        // 執行查詢
-        async function executeQuery() {
+        // 執行單場查詢（獲取所有7種類型數據）
+        async function executeSingleQuery() {
             const startDate = startDateEl.value;
             const endDate = endDateEl.value;
             const selectedPark = parkSelectEl.value;
@@ -1325,18 +1662,216 @@
                 return;
             }
             
+            // 保存當前查詢參數
+            currentLotCode = selectedPark;
+            currentStartDate = startDate;
+            currentEndDate = endDate;
+            isSingleParkQuery = true;
+            
             // 顯示載入狀態
-            showLoading('正在查詢數據...');
+            showLoading('正在查詢所有類型數據，請稍候...');
+            
+            // 重置數據
             summaryData = [];
-            detailData = [];
+            detailData = {
+                inModify: [],
+                inUncertain: [],
+                inEmpty: [],
+                outModify: [],
+                outUncertain: [],
+                outEmpty: []
+            };
+            detailDataTotals = {
+                inModify: 0,
+                inUncertain: 0,
+                inEmpty: 0,
+                outModify: 0,
+                outUncertain: 0,
+                outEmpty: 0
+            };
+            currentDetailData = [];
+            resetDataLoadedFlags();
             
             try {
-                if (currentQueryType === 'summary') {
-                    // 查詢匯總數據
-                    await executeSummaryQuery(selectedPark, startDate, endDate);
+                // 1. 查詢匯總數據
+                await executeSummaryQuery(selectedPark, startDate, endDate);
+                
+                // 2. 查詢6種詳細記錄
+                const detailTypes = [
+                    {type: 'inModify', nodeType: 1, dataType: 1},
+                    {type: 'inUncertain', nodeType: 1, dataType: 0},
+                    {type: 'inEmpty', nodeType: 1, dataType: 2},
+                    {type: 'outModify', nodeType: 2, dataType: 1},
+                    {type: 'outUncertain', nodeType: 2, dataType: 0},
+                    {type: 'outEmpty', nodeType: 2, dataType: 2}
+                ];
+                
+                // 設置進度條
+                progressContainerEl.style.display = 'block';
+                
+                for (let i = 0; i < detailTypes.length; i++) {
+                    const detailType = detailTypes[i];
+                    loadingTextEl.textContent = `正在查詢 ${getQueryTypeName(detailType.type)} 數據 (${i+1}/${detailTypes.length})`;
+                    
+                    // 更新進度
+                    const progress = Math.round(((i + 1) / detailTypes.length) * 100);
+                    progressFillEl.style.width = `${progress}%`;
+                    progressTextEl.textContent = `${i + 1} / ${detailTypes.length}`;
+                    
+                    // 查詢詳細數據（獲取所有頁面）
+                    await fetchAllDetailPages(selectedPark, startDate, endDate, detailType);
+                    
+                    // 標記該類型數據已加載
+                    dataLoadedFlags[detailType.type] = true;
+                    
+                    // 避免請求過快
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                }
+                
+                // 標記數據已加載完成
+                isDataLoaded = true;
+                
+                // 顯示數據加載完成提示
+                hideLoading();
+                dataLoadedIndicatorEl.style.display = 'flex';
+                showResults();
+                
+                // 顯示當前查詢類型的數據
+                switchToQueryType();
+                
+                showStatus(`成功加載所有類型數據，可隨意切換查詢類型`, 'success');
+                
+            } catch (error) {
+                hideLoading();
+                showStatus(`查詢失敗: ${error.message}`, 'error');
+                console.error('查詢錯誤:', error);
+            }
+        }
+        
+        // 執行全場查詢（預設只加載匯總數據，可選加載詳細數據）
+        async function executeAllQuery() {
+            const startDate = startDateEl.value;
+            const endDate = endDateEl.value;
+            
+            // 驗證輸入
+            if (!startDate || !endDate) {
+                showStatus('請選擇起始日期和結束日期', 'error');
+                return;
+            }
+            
+            if (new Date(startDate) > new Date(endDate)) {
+                showStatus('起始日期不能晚於結束日期', 'error');
+                return;
+            }
+            
+            // 檢查是否要加載詳細數據
+            const loadAllDetails = loadAllDetailsEl.checked;
+            
+            // 保存當前查詢參數
+            currentStartDate = startDate;
+            currentEndDate = endDate;
+            currentLotCode = 'all';
+            isSingleParkQuery = false;
+            
+            // 顯示載入狀態
+            if (loadAllDetails) {
+                showLoading('正在查詢所有車場所有類型數據，請稍候...');
+            } else {
+                showLoading('正在查詢所有車場匯總數據，請稍候...');
+            }
+            
+            // 重置數據
+            summaryData = [];
+            detailData = {
+                inModify: [],
+                inUncertain: [],
+                inEmpty: [],
+                outModify: [],
+                outUncertain: [],
+                outEmpty: []
+            };
+            detailDataTotals = {
+                inModify: 0,
+                inUncertain: 0,
+                inEmpty: 0,
+                outModify: 0,
+                outUncertain: 0,
+                outEmpty: 0
+            };
+            currentDetailData = [];
+            resetDataLoadedFlags();
+            
+            try {
+                // 1. 查詢所有車場的匯總數據
+                await executeAllSummaryQuery(startDate, endDate);
+                
+                // 2. 如果用戶選擇了加載詳細數據，則查詢所有車場的6種詳細記錄
+                if (loadAllDetails) {
+                    const detailTypes = [
+                        {type: 'inModify', nodeType: 1, dataType: 1},
+                        {type: 'inUncertain', nodeType: 1, dataType: 0},
+                        {type: 'inEmpty', nodeType: 1, dataType: 2},
+                        {type: 'outModify', nodeType: 2, dataType: 1},
+                        {type: 'outUncertain', nodeType: 2, dataType: 0},
+                        {type: 'outEmpty', nodeType: 2, dataType: 2}
+                    ];
+                    
+                    // 設置進度條
+                    progressContainerEl.style.display = 'block';
+                    const totalTasks = lotCodes.length * detailTypes.length;
+                    let completedTasks = 0;
+                    
+                    // 為每個車場查詢每種詳細記錄
+                    for (let i = 0; i < lotCodes.length; i++) {
+                        const lotCode = lotCodes[i];
+                        const parkName = lotNames[lotCode] || lotCode;
+                        
+                        for (let j = 0; j < detailTypes.length; j++) {
+                            const detailType = detailTypes[j];
+                            
+                            // 更新進度
+                            completedTasks++;
+                            const progress = Math.round((completedTasks / totalTasks) * 100);
+                            progressFillEl.style.width = `${progress}%`;
+                            progressTextEl.textContent = `${completedTasks} / ${totalTasks}`;
+                            loadingTextEl.textContent = `正在查詢 ${parkName} 的 ${getQueryTypeName(detailType.type)} 數據...`;
+                            
+                            // 查詢詳細數據
+                            await fetchAllDetailPagesForAllParks(lotCode, startDate, endDate, detailType);
+                            
+                            // 標記該類型數據已加載
+                            dataLoadedFlags[detailType.type] = true;
+                            
+                            // 避免請求過快
+                            await new Promise(resolve => setTimeout(resolve, 100));
+                        }
+                    }
+                    
+                    // 標記數據已加載完成
+                    isDataLoaded = true;
+                    
+                    // 顯示數據加載完成提示
+                    hideLoading();
+                    dataLoadedIndicatorEl.style.display = 'flex';
+                    showResults();
+                    
+                    // 顯示當前查詢類型的數據
+                    switchToQueryType();
+                    
+                    showStatus(`成功加載所有車場所有類型數據，可隨意切換查詢類型`, 'success');
                 } else {
-                    // 查詢詳細記錄
-                    await executeDetailQuery(selectedPark, startDate, endDate);
+                    // 只加載了匯總數據
+                    isDataLoaded = false; // 標記為未加載詳細數據
+                    dataLoadedIndicatorEl.style.display = 'none';
+                    
+                    hideLoading();
+                    showResults();
+                    
+                    // 顯示匯總數據
+                    currentQueryType = 'summary';
+                    switchToQueryType();
+                    
+                    showStatus(`成功加載所有車場匯總數據。如需查看詳細數據，請切換查詢類型，系統將按需加載`, 'success');
                 }
                 
             } catch (error) {
@@ -1346,7 +1881,138 @@
             }
         }
         
-        // 執行匯總數據查詢
+        // 為全場查詢獲取詳細記錄
+        async function fetchAllDetailPagesForAllParks(lotCode, startDate, endDate, detailType) {
+            let allData = [];
+            let page = 1;
+            const pageSize = 50; // 每頁50條以減少請求次數
+            let hasMore = true;
+            
+            while (hasMore) {
+                try {
+                    const data = await fetchUncertainData(
+                        lotCode, 
+                        startDate, 
+                        endDate, 
+                        detailType.nodeType, 
+                        detailType.dataType, 
+                        page, 
+                        pageSize
+                    );
+                    
+                    if (data && data.vos && data.vos.length > 0) {
+                        // 轉換數據格式
+                        const formattedData = data.vos.map(item => ({
+                            parkId: lotCode,
+                            parkName: lotNames[lotCode] || lotCode,
+                            nodeName: item.nodeName || '未知節點',
+                            nodeType: detailType.nodeType === 1 ? '入口' : '出口',
+                            carNo: item.carNo || '未知',
+                            carTime: item.carTime || '未知時間',
+                            cameraIp: item.cameraIp || '未知IP',
+                            imgPreviewUrl: item.imgPreviewUrl || '',
+                            imgUrl: item.imgUrl || '',
+                            cameraType: item.cameraType || 0
+                        }));
+                        
+                        allData = allData.concat(formattedData);
+                        
+                        // 檢查是否還有更多數據
+                        if (data.vos.length < pageSize) {
+                            hasMore = false;
+                        } else {
+                            page++;
+                        }
+                    } else {
+                        hasMore = false;
+                    }
+                } catch (error) {
+                    console.warn(`獲取車場 ${lotCode} 的 ${detailType.type} 數據失敗:`, error);
+                    hasMore = false;
+                }
+                
+                // 避免請求過快
+                await new Promise(resolve => setTimeout(resolve, 50));
+            }
+            
+            // 將數據添加到對應的類型中
+            detailData[detailType.type] = detailData[detailType.type].concat(allData);
+            detailDataTotals[detailType.type] += allData.length;
+        }
+        
+        // 獲取查詢類型名稱
+        function getQueryTypeName(type) {
+            switch(type) {
+                case 'inModify': return '入口修改率';
+                case 'inUncertain': return '入口不確定率';
+                case 'inEmpty': return '入口空車牌率';
+                case 'outModify': return '出口修改率';
+                case 'outUncertain': return '出口不確定率';
+                case 'outEmpty': return '出口空車牌率';
+                default: return '未知類型';
+            }
+        }
+        
+        // 查詢所有詳細記錄頁面（單場查詢用）
+        async function fetchAllDetailPages(lotCode, startDate, endDate, detailType) {
+            let allData = [];
+            let page = 1;
+            const pageSize = 100; // 每頁100條以減少請求次數
+            let hasMore = true;
+            
+            while (hasMore) {
+                try {
+                    const data = await fetchUncertainData(
+                        lotCode, 
+                        startDate, 
+                        endDate, 
+                        detailType.nodeType, 
+                        detailType.dataType, 
+                        page, 
+                        pageSize
+                    );
+                    
+                    if (data && data.vos && data.vos.length > 0) {
+                        // 轉換數據格式
+                        const formattedData = data.vos.map(item => ({
+                            parkId: lotCode,
+                            parkName: lotNames[lotCode] || lotCode,
+                            nodeName: item.nodeName || '未知節點',
+                            nodeType: detailType.nodeType === 1 ? '入口' : '出口',
+                            carNo: item.carNo || '未知',
+                            carTime: item.carTime || '未知時間',
+                            cameraIp: item.cameraIp || '未知IP',
+                            imgPreviewUrl: item.imgPreviewUrl || '',
+                            imgUrl: item.imgUrl || '',
+                            cameraType: item.cameraType || 0
+                        }));
+                        
+                        allData = allData.concat(formattedData);
+                        
+                        // 檢查是否還有更多數據
+                        if (data.vos.length < pageSize) {
+                            hasMore = false;
+                        } else {
+                            page++;
+                        }
+                    } else {
+                        hasMore = false;
+                    }
+                } catch (error) {
+                    console.warn(`獲取${detailType.type}數據失敗:`, error);
+                    hasMore = false;
+                }
+                
+                // 避免請求過快
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            // 保存數據
+            detailData[detailType.type] = allData;
+            detailDataTotals[detailType.type] = allData.length;
+        }
+        
+        // 執行匯總數據查詢（單場）
         async function executeSummaryQuery(lotCode, startDate, endDate) {
             // 查詢貨幣單位
             const currency = await fetchCurrency(lotCode);
@@ -1357,7 +2023,7 @@
             // 查詢每個日期範圍的數據
             for (let i = 0; i < dateRanges.length; i++) {
                 const range = dateRanges[i];
-                loadingTextEl.textContent = `正在查詢 ${range.start} 至 ${range.end} 的數據 (${i+1}/${dateRanges.length})`;
+                loadingTextEl.textContent = `正在查詢匯總數據 ${range.start} 至 ${range.end} (${i+1}/${dateRanges.length})`;
                 
                 const data = await fetchRecognitionData(lotCode, range.start, range.end);
                 if (data) {
@@ -1383,14 +2049,120 @@
                 // 避免請求過快
                 await new Promise(resolve => setTimeout(resolve, 100));
             }
+        }
+        
+        // 執行所有車場匯總數據查詢
+        async function executeAllSummaryQuery(startDate, endDate) {
+            // 進度追蹤
+            let completed = 0;
+            const totalParks = lotCodes.length;
             
-            // 顯示結果
-            hideLoading();
-            showResults();
-            sortSummaryData();
-            renderSummaryTable();
+            // 為每個車場查詢數據
+            for (let i = 0; i < lotCodes.length; i++) {
+                const lotCode = lotCodes[i];
+                const parkName = lotNames[lotCode] || lotCode;
+                
+                // 更新進度
+                completed++;
+                const progress = Math.round((completed / totalParks) * 100);
+                progressFillEl.style.width = `${progress}%`;
+                progressTextEl.textContent = `${completed} / ${totalParks}`;
+                loadingTextEl.textContent = `正在查詢 ${parkName} 匯總數據...`;
+                
+                try {
+                    // 查詢貨幣單位
+                    const currency = await fetchCurrency(lotCode);
+                    
+                    // 分割日期範圍
+                    const dateRanges = splitDateRange(startDate, endDate);
+                    
+                    // 查詢每個日期範圍的數據
+                    for (const range of dateRanges) {
+                        const data = await fetchRecognitionData(lotCode, range.start, range.end);
+                        if (data) {
+                            // 添加匯總數據
+                            summaryData.push({
+                                id: lotCode,
+                                name: parkName,
+                                code: lotCode,
+                                currency: currency,
+                                dateRange: `${formatDateDisplay(range.start)} - ${formatDateDisplay(range.end)}`,
+                                inTotal: data.inTotal || 0,
+                                outTotal: data.outTotal || 0,
+                                inEmptyCarNoRate: data.inEmptyCarNoRate || 0,
+                                outEmptyCarNoRate: data.outEmptyCarNoRate || 0,
+                                inUncertainRate: data.inUncertainRate || 0,
+                                outUncertainRate: data.outUncertainRate || 0,
+                                inModifyRate: data.inModifyRate || 0,
+                                outModifyRate: data.outModifyRate || 0,
+                                abnormalRate: data.abnormalRate || 0
+                            });
+                        }
+                        
+                        // 避免請求過快
+                        await new Promise(resolve => setTimeout(resolve, 50));
+                    }
+                    
+                } catch (error) {
+                    console.error(`查詢車場 ${lotCode} 匯總數據失敗:`, error);
+                    // 即使個別車場失敗，也繼續查詢其他車場
+                }
+            }
+        }
+        
+        // 傳統查詢（保留原有功能）
+        async function executeQuery() {
+            const startDate = startDateEl.value;
+            const endDate = endDateEl.value;
+            const selectedPark = parkSelectEl.value;
             
-            showStatus(`成功查詢車場 "${lotNames[lotCode]}" 的匯總數據`, 'success');
+            // 驗證輸入
+            if (!startDate || !endDate) {
+                showStatus('請選擇起始日期和結束日期', 'error');
+                return;
+            }
+            
+            if (!selectedPark) {
+                showStatus('請選擇要查詢的車場', 'error');
+                return;
+            }
+            
+            if (new Date(startDate) > new Date(endDate)) {
+                showStatus('起始日期不能晚於結束日期', 'error');
+                return;
+            }
+            
+            // 重置數據加載狀態
+            isDataLoaded = false;
+            dataLoadedIndicatorEl.style.display = 'none';
+            resetDataLoadedFlags();
+            
+            // 顯示載入狀態
+            showLoading('正在查詢數據...');
+            summaryData = [];
+            currentDetailData = [];
+            
+            try {
+                if (currentQueryType === 'summary') {
+                    // 查詢匯總數據
+                    await executeSummaryQuery(selectedPark, startDate, endDate);
+                    
+                    hideLoading();
+                    showResults();
+                    sortSummaryData();
+                    renderSummaryTable();
+                    
+                    showStatus(`成功查詢車場 "${lotNames[selectedPark]}" 的匯總數據`, 'success');
+                } else {
+                    // 查詢詳細記錄
+                    await executeDetailQuery(selectedPark, startDate, endDate);
+                }
+                
+            } catch (error) {
+                hideLoading();
+                showStatus(`查詢失敗: ${error.message}`, 'error');
+                console.error('查詢錯誤:', error);
+            }
         }
         
         // 執行詳細記錄查詢
@@ -1406,7 +2178,7 @@
             );
             
             if (data && data.vos) {
-                detailData = data.vos.map(item => ({
+                currentDetailData = data.vos.map(item => ({
                     parkId: lotCode,
                     parkName: lotNames[lotCode] || lotCode,
                     nodeName: item.nodeName || '未知節點',
@@ -1432,110 +2204,11 @@
                 showStatus(`成功查詢到 ${totalRecords} 筆記錄`, 'success');
             } else {
                 hideLoading();
-                detailData = [];
+                currentDetailData = [];
                 totalRecords = 0;
                 totalPages = 1;
-                renderDetailTable();
-                updatePagination();
+                clearDetailTable();
                 showStatus('沒有查詢到相關記錄', 'warning');
-            }
-        }
-        
-        // 執行全場查詢
-        async function executeAllQuery() {
-            const startDate = startDateEl.value;
-            const endDate = endDateEl.value;
-            
-            // 驗證輸入
-            if (!startDate || !endDate) {
-                showStatus('請選擇起始日期和結束日期', 'error');
-                return;
-            }
-            
-            if (new Date(startDate) > new Date(endDate)) {
-                showStatus('起始日期不能晚於結束日期', 'error');
-                return;
-            }
-            
-            // 只有匯總數據支持全場查詢
-            if (currentQueryType !== 'summary') {
-                showStatus('全場查詢僅支持匯總數據', 'warning');
-                return;
-            }
-            
-            // 顯示載入狀態
-            showLoading('正在查詢所有車場數據...');
-            progressContainerEl.style.display = 'block';
-            summaryData = [];
-            
-            try {
-                // 分割日期範圍
-                const dateRanges = splitDateRange(startDate, endDate);
-                
-                // 進度追蹤
-                let completed = 0;
-                const totalParks = lotCodes.length;
-                
-                // 為每個車場查詢數據
-                for (let i = 0; i < lotCodes.length; i++) {
-                    const lotCode = lotCodes[i];
-                    const parkName = lotNames[lotCode] || lotCode;
-                    
-                    // 更新進度
-                    completed++;
-                    const progress = Math.round((completed / totalParks) * 100);
-                    progressFillEl.style.width = `${progress}%`;
-                    progressTextEl.textContent = `${completed} / ${totalParks}`;
-                    loadingTextEl.textContent = `正在查詢 ${parkName}...`;
-                    
-                    try {
-                        // 查詢貨幣單位
-                        const currency = await fetchCurrency(lotCode);
-                        
-                        // 查詢每個日期範圍的數據
-                        for (const range of dateRanges) {
-                            const data = await fetchRecognitionData(lotCode, range.start, range.end);
-                            if (data) {
-                                // 添加匯總數據
-                                summaryData.push({
-                                    id: lotCode,
-                                    name: parkName,
-                                    code: lotCode,
-                                    currency: currency,
-                                    dateRange: `${formatDateDisplay(range.start)} - ${formatDateDisplay(range.end)}`,
-                                    inTotal: data.inTotal || 0,
-                                    outTotal: data.outTotal || 0,
-                                    inEmptyCarNoRate: data.inEmptyCarNoRate || 0,
-                                    outEmptyCarNoRate: data.outEmptyCarNoRate || 0,
-                                    inUncertainRate: data.inUncertainRate || 0,
-                                    outUncertainRate: data.outUncertainRate || 0,
-                                    inModifyRate: data.inModifyRate || 0,
-                                    outModifyRate: data.outModifyRate || 0,
-                                    abnormalRate: data.abnormalRate || 0
-                                });
-                            }
-                            
-                            // 避免請求過快
-                            await new Promise(resolve => setTimeout(resolve, 50));
-                        }
-                        
-                    } catch (error) {
-                        console.error(`查詢車場 ${lotCode} 失敗:`, error);
-                        // 即使個別車場失敗，也繼續查詢其他車場
-                    }
-                }
-                
-                // 顯示結果
-                hideLoading();
-                showResults();
-                sortSummaryData();
-                renderSummaryTable();
-                showStatus(`成功查詢 ${summaryData.length} 筆匯總數據`, 'success');
-                
-            } catch (error) {
-                hideLoading();
-                showStatus(`查詢失敗: ${error.message}`, 'error');
-                console.error('查詢錯誤:', error);
             }
         }
         
@@ -1745,7 +2418,7 @@
         
         // 排序詳細數據
         function sortDetailData() {
-            detailData.sort((a, b) => {
+            currentDetailData.sort((a, b) => {
                 let aValue = a[detailSortColumn];
                 let bValue = b[detailSortColumn];
                 
@@ -1773,10 +2446,7 @@
             summaryBodyEl.innerHTML = '';
             
             if (summaryData.length === 0) {
-                const row = document.createElement('tr');
-                row.innerHTML = `<td colspan="12" style="text-align: center; padding: 40px; color: #64748b;">沒有找到匯總數據</td>`;
-                summaryBodyEl.appendChild(row);
-                resultCountEl.textContent = '0';
+                clearSummaryTable();
                 return;
             }
             
@@ -1831,16 +2501,13 @@
             // 清空表格
             detailBodyEl.innerHTML = '';
             
-            if (detailData.length === 0) {
-                const row = document.createElement('tr');
-                row.innerHTML = `<td colspan="8" style="text-align: center; padding: 40px; color: #64748b;">沒有找到相關數據</td>`;
-                detailBodyEl.appendChild(row);
-                resultCountEl.textContent = '0';
+            if (!currentDetailData || currentDetailData.length === 0) {
+                clearDetailTable();
                 return;
             }
             
             // 添加數據行
-            detailData.forEach(item => {
+            currentDetailData.forEach(item => {
                 const row = document.createElement('tr');
                 
                 // 檢查是否有圖片
@@ -1935,7 +2602,14 @@
             if (page < 1 || page > totalPages || page === currentPage) return;
             
             currentPage = page;
-            executeQuery();
+            
+            // 如果已加載數據，直接顯示對應頁面
+            if (isDataLoaded && currentQueryType !== 'summary') {
+                updateCurrentPageData();
+            } else if (currentLotCode && currentStartDate && currentEndDate && currentQueryType !== 'summary') {
+                // 否則執行查詢
+                executeDetailQuery(currentLotCode, currentStartDate, currentEndDate);
+            }
         }
         
         // 匯出 CSV
@@ -2014,7 +2688,7 @@
         
         // 匯出詳細數據到CSV
         function exportDetailToCSV() {
-            if (detailData.length === 0) {
+            if (!currentDetailData || currentDetailData.length === 0) {
                 showStatus('沒有數據可以匯出', 'warning');
                 return;
             }
@@ -2033,7 +2707,7 @@
                 ];
                 
                 // 準備 CSV 數據行
-                const rows = detailData.map(item => [
+                const rows = currentDetailData.map(item => [
                     item.parkName,
                     item.nodeName,
                     item.nodeType,
@@ -2056,7 +2730,10 @@
                 const link = document.createElement('a');
                 link.href = url;
                 const queryType = queryTypeTitleEl.textContent.replace(/\s+/g, '_');
-                link.download = `停車場${queryType}_${currentLotCode}_${new Date().toISOString().slice(0, 10)}.csv`;
+                const filename = isSingleParkQuery 
+                    ? `停車場${queryType}_${currentLotCode}_${new Date().toISOString().slice(0, 10)}.csv`
+                    : `停車場${queryType}_全場_${new Date().toISOString().slice(0, 10)}.csv`;
+                link.download = filename;
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
@@ -2090,6 +2767,7 @@
             loadingEl.style.display = 'flex';
             resultsContainerEl.style.display = 'none';
             statusEl.style.display = 'none';
+            dataLoadedIndicatorEl.style.display = 'none';
             
             // 禁用查詢按鈕
             singleQueryBtn.disabled = true;
@@ -2137,13 +2815,29 @@
             pageSize = 30;
             pageSizeSelectEl.value = '30';
             
+            // 重置數據加載狀態
+            isDataLoaded = false;
+            dataLoadedIndicatorEl.style.display = 'none';
+            resetDataLoadedFlags();
+            
+            // 重置詳細數據加載開關
+            loadAllDetailsEl.checked = false;
+            
             // 隱藏結果
             resultsContainerEl.style.display = 'none';
             summaryTableContainerEl.style.display = 'none';
             detailTableContainerEl.style.display = 'none';
             paginationEl.style.display = 'none';
             summaryData = [];
-            detailData = [];
+            detailData = {
+                inModify: [],
+                inUncertain: [],
+                inEmpty: [],
+                outModify: [],
+                outUncertain: [],
+                outEmpty: []
+            };
+            currentDetailData = [];
             
             // 重置排序
             summarySortColumn = 'name';
