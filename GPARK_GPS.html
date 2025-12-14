@@ -360,6 +360,32 @@
             font-size: 0.85rem;
         }
         
+        .location-permission-help {
+            background-color: #fef3c7;
+            border: 1px solid #fbbf24;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .location-permission-help h4 {
+            color: #92400e;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .location-permission-help ol {
+            padding-left: 20px;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+            color: #78350f;
+        }
+        
+        .location-permission-help li {
+            margin-bottom: 5px;
+        }
+        
         footer {
             text-align: center;
             padding: 20px 15px;
@@ -441,11 +467,47 @@
                 </div>
                 
                 <div class="location-info">
-                    <div id="location-info">尚未取得位置資訊，請點擊下方按鈕獲取</div>
+                    <div id="location-info">點擊下方按鈕取得您的位置</div>
                     <button id="get-location-btn" class="btn btn-primary">
                         <i class="fas fa-location-crosshairs"></i>
                         取得目前位置
                     </button>
+                    
+                    <!-- iPhone位置權限說明 -->
+                    <div id="location-permission-help" class="location-permission-help">
+                        <h4><i class="fas fa-info-circle"></i> iPhone位置權限設定說明：</h4>
+                        <ol>
+                            <li>點擊Safari網址欄左邊的「大小」圖示（AA）</li>
+                            <li>選擇「網站設定」</li>
+                            <li>將「位置」設定改為「允許」</li>
+                            <li>返回網頁，重新點擊「取得目前位置」</li>
+                        </ol>
+                        <p style="font-size: 0.85rem; color: #92400e; margin-bottom: 10px;">
+                            如果還是不行，請檢查：
+                        </p>
+                        <ul style="padding-left: 20px; font-size: 0.85rem; color: #78350f;">
+                            <li>設定 > 隱私權 > 定位服務 > Safari > 設為「使用App期間」</li>
+                            <li>設定 > Safari > 隱私權與安全性 > 關閉「防止跨網站追蹤」</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- 手動位置輸入選項 -->
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e2e8f0;">
+                    <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 10px;">
+                        如果無法取得位置，請選擇一個預設位置：
+                    </p>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button id="use-taipei-station" class="btn btn-primary" style="flex: 1; min-width: 140px; padding: 10px; font-size: 0.9rem;">
+                            <i class="fas fa-train"></i> 台北車站
+                        </button>
+                        <button id="use-taipei101" class="btn btn-primary" style="flex: 1; min-width: 140px; padding: 10px; font-size: 0.9rem;">
+                            <i class="fas fa-building"></i> 台北101
+                        </button>
+                        <button id="use-kaohsiung" class="btn btn-primary" style="flex: 1; min-width: 140px; padding: 10px; font-size: 0.9rem;">
+                            <i class="fas fa-sun"></i> 高雄車站
+                        </button>
+                    </div>
                 </div>
             </section>
             
@@ -612,6 +674,7 @@
         // DOM元素
         const getLocationBtn = document.getElementById('get-location-btn');
         const locationInfo = document.getElementById('location-info');
+        const locationPermissionHelp = document.getElementById('location-permission-help');
         const selectedParkingElement = document.getElementById('selected-parking');
         const selectedName = document.getElementById('selected-name');
         const selectedId = document.getElementById('selected-id');
@@ -641,10 +704,11 @@
             return R * c;
         }
         
-        // 取得使用者位置
+        // 取得使用者位置 - iPhone 修正版
         function getUserLocation() {
             if (!navigator.geolocation) {
                 locationInfo.innerHTML = '<span style="color:#ef4444;">您的瀏覽器不支援地理定位功能</span>';
+                locationPermissionHelp.style.display = 'block';
                 return;
             }
             
@@ -652,6 +716,13 @@
             getLocationBtn.innerHTML = '<div class="loading"></div> 定位中...';
             getLocationBtn.classList.add('btn-disabled');
             getLocationBtn.disabled = true;
+            
+            // 增加超時時間，給用戶更多時間授權
+            const options = {
+                enableHighAccuracy: true,
+                timeout: 15000, // 15秒超時
+                maximumAge: 0
+            };
             
             navigator.geolocation.getCurrentPosition(
                 (position) => {
@@ -662,6 +733,7 @@
                     
                     // 顯示位置資訊
                     locationInfo.innerHTML = `緯度: ${lat.toFixed(6)}, 經度: ${lng.toFixed(6)}`;
+                    locationPermissionHelp.style.display = 'none';
                     
                     // 恢復按鈕狀態
                     getLocationBtn.innerHTML = '<i class="fas fa-location-crosshairs"></i> 重新定位';
@@ -670,43 +742,114 @@
                     
                     // 更新停車場列表
                     updateParkingList(userLocation);
+                    
+                    // 如果還沒有選擇停車場，選擇最近的
+                    if (!selectedParking) {
+                        selectNearestParking();
+                    }
                 },
                 (error) => {
                     // 取得位置失敗
                     let errorMessage = "無法取得您的位置";
+                    let errorDetails = "";
                     
                     switch(error.code) {
                         case error.PERMISSION_DENIED:
                             errorMessage = "您拒絕了位置存取權限";
+                            errorDetails = "請檢查您的Safari位置權限設定。";
+                            // 顯示iPhone設定說明
+                            locationPermissionHelp.style.display = 'block';
                             break;
                         case error.POSITION_UNAVAILABLE:
                             errorMessage = "位置資訊不可用";
+                            errorDetails = "請檢查您的裝置定位功能是否已開啟。";
                             break;
                         case error.TIMEOUT:
                             errorMessage = "取得位置超時";
+                            errorDetails = "定位時間過長，請重試或使用預設位置。";
+                            locationPermissionHelp.style.display = 'block';
                             break;
                     }
                     
-                    locationInfo.innerHTML = `<span style="color:#ef4444;">${errorMessage}</span>`;
+                    locationInfo.innerHTML = `
+                        <div style="color:#ef4444; margin-bottom:10px;">
+                            <strong>${errorMessage}</strong><br>
+                            <small>${errorDetails}</small>
+                        </div>
+                    `;
                     
                     // 恢復按鈕狀態
-                    getLocationBtn.innerHTML = '<i class="fas fa-location-crosshairs"></i> 取得目前位置';
+                    getLocationBtn.innerHTML = '<i class="fas fa-location-crosshairs"></i> 重新取得位置';
                     getLocationBtn.classList.remove('btn-disabled');
                     getLocationBtn.disabled = false;
-                    
-                    // 使用預設位置（台北車站）作為示範
-                    useDefaultLocation();
-                }
+                },
+                options
             );
         }
         
-        // 使用預設位置（台北車站）作為示範
-        function useDefaultLocation() {
+        // 選擇最近的停車場
+        function selectNearestParking() {
+            if (!userLocation) return;
+            
+            let minDistance = Infinity;
+            let nearest = null;
+            
+            for (const [id, parking] of Object.entries(parkingLots)) {
+                const distance = calculateDistance(
+                    userLocation.lat, 
+                    userLocation.lng, 
+                    parking.lat, 
+                    parking.lng
+                );
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearest = { id, ...parking, distance };
+                }
+            }
+            
+            if (nearest) {
+                selectedParking = nearest;
+                updateSelectedParking(nearest);
+            }
+        }
+        
+        // 使用預設位置（台北車站）
+        function useTaipeiStation() {
             userLocation = { lat: 25.047675, lng: 121.517055 }; // 台北車站座標
             locationInfo.innerHTML = `緯度: ${userLocation.lat.toFixed(6)}, 經度: ${userLocation.lng.toFixed(6)} (預設位置-台北車站)`;
+            locationPermissionHelp.style.display = 'none';
             
             // 更新停車場列表
             updateParkingList(userLocation);
+            
+            // 選擇最近的停車場
+            selectNearestParking();
+        }
+        
+        // 使用台北101位置
+        function useTaipei101() {
+            userLocation = { lat: 25.0339639, lng: 121.5644722 }; // 台北101座標
+            locationInfo.innerHTML = `緯度: ${userLocation.lat.toFixed(6)}, 經度: ${userLocation.lng.toFixed(6)} (預設位置-台北101)`;
+            locationPermissionHelp.style.display = 'none';
+            
+            // 更新停車場列表
+            updateParkingList(userLocation);
+            
+            // 選擇最近的停車場
+            selectNearestParking();
+        }
+        
+        // 使用高雄車站位置
+        function useKaohsiung() {
+            userLocation = { lat: 22.639444, lng: 120.302778 }; // 高雄車站座標
+            locationInfo.innerHTML = `緯度: ${userLocation.lat.toFixed(6)}, 經度: ${userLocation.lng.toFixed(6)} (預設位置-高雄車站)`;
+            locationPermissionHelp.style.display = 'none';
+            
+            // 更新停車場列表
+            updateParkingList(userLocation);
+            
+            // 選擇最近的停車場
+            selectNearestParking();
         }
         
         // 更新選中的停車場資訊
@@ -1017,14 +1160,25 @@
             navigateBtn.addEventListener('click', openGoogleMapsNavigation);
             copyAddressBtn.addEventListener('click', copyAddressToClipboard);
             
+            // 綁定預設位置按鈕
+            document.getElementById('use-taipei-station').addEventListener('click', useTaipeiStation);
+            document.getElementById('use-taipei101').addEventListener('click', useTaipei101);
+            document.getElementById('use-kaohsiung').addEventListener('click', useKaohsiung);
+            
             // 預設使用台北車站位置
-            useDefaultLocation();
+            useTaipeiStation();
             
             // 開始更新車位資訊
             updateAllParkingSpaces();
             
             // 啟動倒數計時
             startCountdown();
+            
+            // 檢查地理位置支援
+            if (!navigator.geolocation) {
+                locationInfo.innerHTML = '<span style="color:#ef4444;">您的瀏覽器不支援地理定位功能，請使用預設位置。</span>';
+                locationPermissionHelp.style.display = 'block';
+            }
         }
         
         // 頁面載入完成後初始化
