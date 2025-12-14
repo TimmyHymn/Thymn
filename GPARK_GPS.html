@@ -386,6 +386,113 @@
             margin-bottom: 5px;
         }
         
+        .address-input-container {
+            background-color: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .address-input-container.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .address-input-container h4 {
+            color: #1e293b;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .address-input {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .address-input input {
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 1rem;
+            width: 100%;
+        }
+        
+        .address-input input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .address-examples {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .address-examples p {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+        
+        .address-examples ul {
+            padding-left: 20px;
+            font-size: 0.85rem;
+            color: #475569;
+        }
+        
+        .address-examples li {
+            margin-bottom: 5px;
+        }
+        
+        .default-locations {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .default-locations p {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-bottom: 10px;
+        }
+        
+        .default-location-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .default-location-btn {
+            flex: 1;
+            min-width: 140px;
+            padding: 10px;
+            font-size: 0.9rem;
+            background-color: #e2e8f0;
+            color: #475569;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .default-location-btn:active {
+            background-color: #cbd5e1;
+            transform: translateY(1px);
+        }
+        
         footer {
             text-align: center;
             padding: 20px 15px;
@@ -403,6 +510,16 @@
             border: 2px solid rgba(255,255,255,.3);
             border-radius: 50%;
             border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(59, 130, 246, 0.3);
+            border-radius: 50%;
+            border-top-color: #3b82f6;
             animation: spin 1s ease-in-out infinite;
         }
         
@@ -473,6 +590,28 @@
                         取得目前位置
                     </button>
                     
+                    <!-- 地址輸入區塊 -->
+                    <div id="address-input-container" class="address-input-container">
+                        <h4><i class="fas fa-map-pin"></i> 請輸入您的地址進行定位</h4>
+                        <div class="address-input">
+                            <input type="text" id="address-input-field" placeholder="例如：台北市信義區市府路1號" autocomplete="off">
+                            <button id="use-address-btn" class="btn btn-secondary">
+                                <i class="fas fa-search-location"></i>
+                                使用此地址定位
+                            </button>
+                        </div>
+                        
+                        <div class="address-examples">
+                            <p>地址輸入範例：</p>
+                            <ul>
+                                <li>台北市信義區市府路1號</li>
+                                <li>台中市西屯區台灣大道三段99號</li>
+                                <li>高雄市左營區高鐵路105號</li>
+                                <li>新北市板橋區縣民大道二段7號</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
                     <!-- iPhone位置權限說明 -->
                     <div id="location-permission-help" class="location-permission-help">
                         <h4><i class="fas fa-info-circle"></i> iPhone位置權限設定說明：</h4>
@@ -483,28 +622,22 @@
                             <li>返回網頁，重新點擊「取得目前位置」</li>
                         </ol>
                         <p style="font-size: 0.85rem; color: #92400e; margin-bottom: 10px;">
-                            如果還是不行，請檢查：
+                            如果不想使用GPS定位，您也可以使用地址定位功能。
                         </p>
-                        <ul style="padding-left: 20px; font-size: 0.85rem; color: #78350f;">
-                            <li>設定 > 隱私權 > 定位服務 > Safari > 設為「使用App期間」</li>
-                            <li>設定 > Safari > 隱私權與安全性 > 關閉「防止跨網站追蹤」</li>
-                        </ul>
                     </div>
                 </div>
                 
-                <!-- 手動位置輸入選項 -->
-                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e2e8f0;">
-                    <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 10px;">
-                        如果無法取得位置，請選擇一個預設位置：
-                    </p>
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <button id="use-taipei-station" class="btn btn-primary" style="flex: 1; min-width: 140px; padding: 10px; font-size: 0.9rem;">
+                <!-- 預設位置區塊 -->
+                <div class="default-locations">
+                    <p>或直接使用預設位置：</p>
+                    <div class="default-location-buttons">
+                        <button id="use-taipei-station" class="default-location-btn">
                             <i class="fas fa-train"></i> 台北車站
                         </button>
-                        <button id="use-taipei101" class="btn btn-primary" style="flex: 1; min-width: 140px; padding: 10px; font-size: 0.9rem;">
+                        <button id="use-taipei101" class="default-location-btn">
                             <i class="fas fa-building"></i> 台北101
                         </button>
-                        <button id="use-kaohsiung" class="btn btn-primary" style="flex: 1; min-width: 140px; padding: 10px; font-size: 0.9rem;">
+                        <button id="use-kaohsiung" class="default-location-btn">
                             <i class="fas fa-sun"></i> 高雄車站
                         </button>
                     </div>
@@ -582,7 +715,7 @@
         // 博客停車場資料
         const parkingLots = {
             "188600343": { name: "家福敦北", lat: 25.052, lng: 121.544 },
-            "188600416": { name: "新店加氣站", lat: 24.982, lng: 121.541 },
+            "188600416": { name: "新店加氣站", lat: 24.9819694, lng: 121.5150789 },
             "188600417": { name: "家福新店安康", lat: 24.967, lng: 121.531 },
             "188600418": { name: "寶雅樂華", lat: 25.008, lng: 121.510 },
             "188600419": { name: "土城金城", lat: 24.986, lng: 121.444 },
@@ -674,6 +807,9 @@
         // DOM元素
         const getLocationBtn = document.getElementById('get-location-btn');
         const locationInfo = document.getElementById('location-info');
+        const addressInputContainer = document.getElementById('address-input-container');
+        const addressInputField = document.getElementById('address-input-field');
+        const useAddressBtn = document.getElementById('use-address-btn');
         const locationPermissionHelp = document.getElementById('location-permission-help');
         const selectedParkingElement = document.getElementById('selected-parking');
         const selectedName = document.getElementById('selected-name');
@@ -704,11 +840,111 @@
             return R * c;
         }
         
+        // 使用地址進行地理編碼
+        async function geocodeAddress(address) {
+            if (!address || address.trim() === '') {
+                showError('請輸入地址');
+                return null;
+            }
+            
+            try {
+                // 使用台灣的地址進行地理編碼
+                // 我們使用Nominatim API（OpenStreetMap）
+                const encodedAddress = encodeURIComponent(address + ', Taiwan');
+                const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodedAddress}&limit=1&accept-language=zh-TW`;
+                
+                // 顯示載入狀態
+                useAddressBtn.innerHTML = '<div class="spinner"></div> 定位中...';
+                useAddressBtn.classList.add('btn-disabled');
+                useAddressBtn.disabled = true;
+                
+                const response = await fetch(url, {
+                    headers: {
+                        'User-Agent': 'ParkingNavigator/1.0' // Nominatim要求有User-Agent
+                    }
+                });
+                
+                const data = await response.json();
+                
+                // 恢復按鈕狀態
+                useAddressBtn.innerHTML = '<i class="fas fa-search-location"></i> 使用此地址定位';
+                useAddressBtn.classList.remove('btn-disabled');
+                useAddressBtn.disabled = false;
+                
+                if (data && data.length > 0) {
+                    const lat = parseFloat(data[0].lat);
+                    const lng = parseFloat(data[0].lon);
+                    const displayName = data[0].display_name.split(',')[0]; // 只取第一部分
+                    
+                    return {
+                        lat,
+                        lng,
+                        address: displayName,
+                        fullAddress: data[0].display_name
+                    };
+                } else {
+                    showError('找不到此地址，請嘗試更詳細的地址');
+                    return null;
+                }
+            } catch (error) {
+                console.error('地理編碼錯誤:', error);
+                
+                // 恢復按鈕狀態
+                useAddressBtn.innerHTML = '<i class="fas fa-search-location"></i> 使用此地址定位';
+                useAddressBtn.classList.remove('btn-disabled');
+                useAddressBtn.disabled = false;
+                
+                showError('地址定位失敗，請檢查網路或使用預設位置');
+                return null;
+            }
+        }
+        
+        // 顯示錯誤訊息
+        function showError(message) {
+            locationInfo.innerHTML = `<div style="color:#ef4444;"><strong>${message}</strong></div>`;
+        }
+        
+        // 顯示成功訊息
+        function showSuccess(message) {
+            locationInfo.innerHTML = `<div style="color:#10b981;"><strong>${message}</strong></div>`;
+        }
+        
+        // 使用地址定位
+        async function useAddressForLocation() {
+            const address = addressInputField.value.trim();
+            if (!address) {
+                showError('請輸入地址');
+                return;
+            }
+            
+            const geocodeResult = await geocodeAddress(address);
+            if (geocodeResult) {
+                userLocation = { lat: geocodeResult.lat, lng: geocodeResult.lng };
+                locationInfo.innerHTML = `
+                    <div style="color:#10b981; margin-bottom: 5px;">
+                        <strong>地址定位成功！</strong>
+                    </div>
+                    <div style="font-size: 0.9rem;">
+                        地址: ${geocodeResult.address}<br>
+                        緯度: ${geocodeResult.lat.toFixed(6)}, 經度: ${geocodeResult.lng.toFixed(6)}
+                    </div>
+                `;
+                locationPermissionHelp.style.display = 'none';
+                
+                // 更新停車場列表
+                updateParkingList(userLocation);
+                
+                // 選擇最近的停車場
+                selectNearestParking();
+            }
+        }
+        
         // 取得使用者位置 - iPhone 修正版
         function getUserLocation() {
             if (!navigator.geolocation) {
                 locationInfo.innerHTML = '<span style="color:#ef4444;">您的瀏覽器不支援地理定位功能</span>';
                 locationPermissionHelp.style.display = 'block';
+                addressInputContainer.classList.add('active');
                 return;
             }
             
@@ -734,6 +970,7 @@
                     // 顯示位置資訊
                     locationInfo.innerHTML = `緯度: ${lat.toFixed(6)}, 經度: ${lng.toFixed(6)}`;
                     locationPermissionHelp.style.display = 'none';
+                    addressInputContainer.classList.remove('active');
                     
                     // 恢復按鈕狀態
                     getLocationBtn.innerHTML = '<i class="fas fa-location-crosshairs"></i> 重新定位';
@@ -756,18 +993,19 @@
                     switch(error.code) {
                         case error.PERMISSION_DENIED:
                             errorMessage = "您拒絕了位置存取權限";
-                            errorDetails = "請檢查您的Safari位置權限設定。";
-                            // 顯示iPhone設定說明
-                            locationPermissionHelp.style.display = 'block';
+                            errorDetails = "請使用地址定位功能或選擇預設位置。";
+                            // 顯示地址輸入框
+                            addressInputContainer.classList.add('active');
                             break;
                         case error.POSITION_UNAVAILABLE:
                             errorMessage = "位置資訊不可用";
-                            errorDetails = "請檢查您的裝置定位功能是否已開啟。";
+                            errorDetails = "請檢查您的裝置定位功能是否已開啟，或使用地址定位。";
+                            addressInputContainer.classList.add('active');
                             break;
                         case error.TIMEOUT:
                             errorMessage = "取得位置超時";
-                            errorDetails = "定位時間過長，請重試或使用預設位置。";
-                            locationPermissionHelp.style.display = 'block';
+                            errorDetails = "定位時間過長，請重試或使用地址定位。";
+                            addressInputContainer.classList.add('active');
                             break;
                     }
                     
@@ -777,6 +1015,7 @@
                             <small>${errorDetails}</small>
                         </div>
                     `;
+                    locationPermissionHelp.style.display = 'block';
                     
                     // 恢復按鈕狀態
                     getLocationBtn.innerHTML = '<i class="fas fa-location-crosshairs"></i> 重新取得位置';
@@ -818,6 +1057,7 @@
             userLocation = { lat: 25.047675, lng: 121.517055 }; // 台北車站座標
             locationInfo.innerHTML = `緯度: ${userLocation.lat.toFixed(6)}, 經度: ${userLocation.lng.toFixed(6)} (預設位置-台北車站)`;
             locationPermissionHelp.style.display = 'none';
+            addressInputContainer.classList.remove('active');
             
             // 更新停車場列表
             updateParkingList(userLocation);
@@ -831,6 +1071,7 @@
             userLocation = { lat: 25.0339639, lng: 121.5644722 }; // 台北101座標
             locationInfo.innerHTML = `緯度: ${userLocation.lat.toFixed(6)}, 經度: ${userLocation.lng.toFixed(6)} (預設位置-台北101)`;
             locationPermissionHelp.style.display = 'none';
+            addressInputContainer.classList.remove('active');
             
             // 更新停車場列表
             updateParkingList(userLocation);
@@ -844,6 +1085,7 @@
             userLocation = { lat: 22.639444, lng: 120.302778 }; // 高雄車站座標
             locationInfo.innerHTML = `緯度: ${userLocation.lat.toFixed(6)}, 經度: ${userLocation.lng.toFixed(6)} (預設位置-高雄車站)`;
             locationPermissionHelp.style.display = 'none';
+            addressInputContainer.classList.remove('active');
             
             // 更新停車場列表
             updateParkingList(userLocation);
@@ -1157,6 +1399,7 @@
         function initPage() {
             // 綁定按鈕事件
             getLocationBtn.addEventListener('click', getUserLocation);
+            useAddressBtn.addEventListener('click', useAddressForLocation);
             navigateBtn.addEventListener('click', openGoogleMapsNavigation);
             copyAddressBtn.addEventListener('click', copyAddressToClipboard);
             
@@ -1164,6 +1407,13 @@
             document.getElementById('use-taipei-station').addEventListener('click', useTaipeiStation);
             document.getElementById('use-taipei101').addEventListener('click', useTaipei101);
             document.getElementById('use-kaohsiung').addEventListener('click', useKaohsiung);
+            
+            // 允許按Enter鍵進行地址定位
+            addressInputField.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    useAddressForLocation();
+                }
+            });
             
             // 預設使用台北車站位置
             useTaipeiStation();
@@ -1176,8 +1426,9 @@
             
             // 檢查地理位置支援
             if (!navigator.geolocation) {
-                locationInfo.innerHTML = '<span style="color:#ef4444;">您的瀏覽器不支援地理定位功能，請使用預設位置。</span>';
+                locationInfo.innerHTML = '<span style="color:#ef4444;">您的瀏覽器不支援地理定位功能，請使用地址定位。</span>';
                 locationPermissionHelp.style.display = 'block';
+                addressInputContainer.classList.add('active');
             }
         }
         
