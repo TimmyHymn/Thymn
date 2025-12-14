@@ -647,17 +647,17 @@
             <div id="selected-parking" class="selected-parking">
                 <div class="section-header">
                     <h3>導航目的地</h3>
-                    <div class="distance-badge status-available" id="distance-badge">約 1.2 公里</div>
+                    <div class="distance-badge status-available" id="distance-badge">約 0 公里</div>
                 </div>
                 
                 <div class="parking-details">
                     <div class="detail-box">
                         <h4>停車場名稱</h4>
-                        <p id="selected-name">家福敦北</p>
+                        <p id="selected-name">尚未選擇</p>
                     </div>
                     <div class="detail-box">
                         <h4>停車場編號</h4>
-                        <p id="selected-id">188600343</p>
+                        <p id="selected-id">--</p>
                     </div>
                     <div class="detail-box">
                         <h4>剩餘車位</h4>
@@ -665,16 +665,16 @@
                     </div>
                     <div class="detail-box">
                         <h4>車位狀態</h4>
-                        <p id="selected-status">載入中...</p>
+                        <p id="selected-status">--</p>
                     </div>
                 </div>
                 
                 <div class="navigation-buttons">
-                    <button id="navigate-btn" class="btn btn-secondary">
+                    <button id="navigate-btn" class="btn btn-secondary" disabled>
                         <i class="fas fa-directions"></i>
                         使用Google Maps導航
                     </button>
-                    <button id="copy-address-btn" class="btn btn-primary">
+                    <button id="copy-address-btn" class="btn btn-primary" disabled>
                         <i class="fas fa-copy"></i>
                         複製地址
                     </button>
@@ -1045,8 +1045,8 @@
                 // 更新停車場列表
                 updateParkingList(userLocation);
                 
-                // 選擇最近的停車場
-                selectNearestParking();
+                // 不要自動選擇最近的停車場
+                // selectNearestParking();
             }
         }
         
@@ -1091,10 +1091,10 @@
                     // 更新停車場列表
                     updateParkingList(userLocation);
                     
-                    // 如果還沒有選擇停車場，選擇最近的
-                    if (!selectedParking) {
-                        selectNearestParking();
-                    }
+                    // 不要自動選擇最近的停車場
+                    // if (!selectedParking) {
+                    //     selectNearestParking();
+                    // }
                 },
                 (error) => {
                     // 取得位置失敗
@@ -1173,8 +1173,8 @@
             // 更新停車場列表
             updateParkingList(userLocation);
             
-            // 選擇最近的停車場
-            selectNearestParking();
+            // 不要自動選擇最近的停車場
+            // selectNearestParking();
         }
         
         // 使用台北101位置
@@ -1187,8 +1187,8 @@
             // 更新停車場列表
             updateParkingList(userLocation);
             
-            // 選擇最近的停車場
-            selectNearestParking();
+            // 不要自動選擇最近的停車場
+            // selectNearestParking();
         }
         
         // 使用高雄車站位置
@@ -1201,8 +1201,8 @@
             // 更新停車場列表
             updateParkingList(userLocation);
             
-            // 選擇最近的停車場
-            selectNearestParking();
+            // 不要自動選擇最近的停車場
+            // selectNearestParking();
         }
         
         // 更新選中的停車場資訊
@@ -1238,6 +1238,12 @@
             }
             
             selectedParkingElement.classList.add('active');
+            
+            // 啟用導航和複製按鈕
+            navigateBtn.disabled = false;
+            navigateBtn.classList.remove('btn-disabled');
+            copyAddressBtn.disabled = false;
+            copyAddressBtn.classList.remove('btn-disabled');
         }
         
         // 更新選中停車場的車位資訊
@@ -1351,7 +1357,7 @@
             availableCountElement.textContent = `可用: ${availableCount}`;
         }
         
-        // 開啟Google Maps導航
+        // 開啟Google Maps導航 - 修正版
         function openGoogleMapsNavigation() {
             if (!selectedParking) {
                 alert('請先點擊選擇一個停車場作為導航目的地');
@@ -1363,13 +1369,33 @@
                 return;
             }
             
-            // Google Maps導航URL
+            // Google Maps導航URL - 修正版：使用直接導航模式
+            // 方式1: 使用 maps/dir/ 模式 (會顯示路線規劃，然後可以點擊開始導航)
             const origin = `${userLocation.lat},${userLocation.lng}`;
             const destination = `${selectedParking.lat},${selectedParking.lng}`;
             const url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
             
+            // 方式2: 也可以嘗試使用 navigation 模式 (在某些裝置上會直接啟動導航)
+            // const navUrl = `https://www.google.com/maps/search/?api=1&query=${selectedParking.lat},${selectedParking.lng}&query_place_id=${selectedParking.id}`;
+            
+            // 方式3: 使用 maps/dir/ 並加上 dir_action=navigate 參數
+            // const navUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving&dir_action=navigate`;
+            
             // 開啟新分頁
             window.open(url, '_blank');
+            
+            // 在手機上，如果安裝了Google Maps App，可能會自動開啟App
+            // 以下是嘗試在移動裝置上直接開啟App的備用方案
+            if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+                // 嘗試使用 universal link 開啟 Google Maps App
+                const appUrl = `comgooglemaps://?saddr=${origin}&daddr=${destination}&directionsmode=driving`;
+                const appUrlAndroid = `google.navigation:q=${selectedParking.lat},${selectedParking.lng}&mode=d`;
+                
+                setTimeout(() => {
+                    // 嘗試開啟App，如果失敗則會回到網頁版本
+                    window.location = appUrl;
+                }, 1000);
+            }
         }
         
         // 複製地址到剪貼簿
@@ -1379,7 +1405,8 @@
                 return;
             }
             
-            const text = `博客停車場: ${selectedParking.name} (編號: ${selectedParking.id})`;
+            // 取得詳細地址（如果有的話）
+            const text = `${selectedParking.name}\n停車場編號: ${selectedParking.id}`;
             
             // 使用Clipboard API
             navigator.clipboard.writeText(text)
@@ -1396,7 +1423,18 @@
                 })
                 .catch(err => {
                     console.error('複製失敗: ', err);
-                    alert('複製失敗，請手動複製地址');
+                    // 備用方案：使用 document.execCommand
+                    const textArea = document.createElement('textarea');
+                    textArea.value = text;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    try {
+                        document.execCommand('copy');
+                        alert('地址已複製到剪貼簿');
+                    } catch (e) {
+                        alert('複製失敗，請手動複製地址');
+                    }
+                    document.body.removeChild(textArea);
                 });
         }
         
@@ -1541,6 +1579,15 @@
                 locationPermissionHelp.style.display = 'block';
                 addressInputContainer.classList.add('active');
             }
+            
+            // 初始隱藏選中停車場區塊
+            selectedParkingElement.classList.remove('active');
+            
+            // 初始禁用導航和複製按鈕
+            navigateBtn.disabled = true;
+            navigateBtn.classList.add('btn-disabled');
+            copyAddressBtn.disabled = true;
+            copyAddressBtn.classList.add('btn-disabled');
         }
         
         // 頁面載入完成後初始化
