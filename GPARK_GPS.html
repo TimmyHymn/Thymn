@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>博客停車場實時導航</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Noto Sans TC', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 0;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            background-color: white;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            padding: 20px 15px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+        
+        .logo i {
+            font-size: 1.8rem;
+        }
+        
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+        
+        .subtitle {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 12px;
+        }
+        
+        .update-info {
+            background-color: rgba(255, 255, 255, 0.15);
+            padding: 8px 12px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+        }
+        
+        #countdown {
+            font-weight: bold;
+            color: #fbbf24;
+        }
+        
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            flex-grow: 1;
+            gap: 20px;
+        }
+        
+        .section {
+            background-color: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        
+        .section-header h2 {
+            font-size: 1.3rem;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+        
+        .status-full {
+            background-color: #ef4444;
+            color: white;
+        }
+        
+        .status-available {
+            background-color: #10b981;
+            color: white;
+        }
+        
+        .location-info {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        #location-info {
+            background-color: white;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            min-height: 48px;
+            font-size: 0.9rem;
+            word-break: break-all;
+        }
+        
+        .btn {
+            padding: 14px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            margin-bottom: 8px;
+        }
+        
+        .btn-primary {
+            background-color: #3b82f6;
+            color: white;
+        }
+        
+        .btn-primary:active {
+            background-color: #2563eb;
+            transform: translateY(1px);
+        }
+        
+        .btn-secondary {
+            background-color: #10b981;
+            color: white;
+        }
+        
+        .btn-secondary:active {
+            background-color: #059669;
+            transform: translateY(1px);
+        }
+        
+        .btn-disabled {
+            background-color: #94a3b8;
+            color: #cbd5e1;
+            cursor: not-allowed;
+        }
+        
+        .nearest-result {
+            background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #bfdbfe;
+            display: none;
+        }
+        
+        .nearest-result.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .nearest-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 16px;
+        }
+        
+        .detail-box {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .detail-box h4 {
+            color: #64748b;
+            font-size: 0.8rem;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .detail-box p {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        
+        .parking-list-container {
+            max-height: 300px;
+            overflow-y: auto;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        
+        thead {
+            background-color: #f1f5f9;
+            position: sticky;
+            top: 0;
+        }
+        
+        th {
+            padding: 14px 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #475569;
+            border-bottom: 2px solid #e2e8f0;
+            font-size: 0.85rem;
+        }
+        
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        tr:active {
+            background-color: #e2e8f0;
+        }
+        
+        tr.selected {
+            background-color: #dbeafe;
+            border-left: 4px solid #3b82f6;
+        }
+        
+        .parking-id {
+            font-weight: 600;
+            color: #3b82f6;
+            font-size: 0.85rem;
+        }
+        
+        .distance-cell {
+            font-weight: 600;
+            color: #10b981;
+        }
+        
+        .status-cell {
+            font-weight: 600;
+        }
+        
+        .status-available-cell {
+            color: #10b981;
+        }
+        
+        .status-full-cell {
+            color: #ef4444;
+        }
+        
+        .progress-container {
+            margin-bottom: 16px;
+        }
+        
+        #progressBar {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+        
+        #progressText {
+            text-align: center;
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+        
+        .abnormal-section {
+            background: linear-gradient(135deg, #fee2e2 0%, #fef2f2 100%);
+            border: 1px solid #fecaca;
+        }
+        
+        .abnormal-section h2 {
+            color: #dc2626;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px 15px;
+            background-color: #f1f5f9;
+            color: #64748b;
+            font-size: 0.8rem;
+            border-top: 1px solid #e2e8f0;
+            margin-top: auto;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* 手機橫向優化 */
+        @media (min-width: 480px) and (max-width: 768px) {
+            .container {
+                max-width: 95%;
+                margin: 10px auto;
+                border-radius: 16px;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+            
+            header {
+                border-radius: 16px 16px 0 0;
+            }
+        }
+        
+        /* 平板優化 */
+        @media (min-width: 769px) {
+            .container {
+                max-width: 700px;
+                margin: 20px auto;
+                border-radius: 20px;
+            }
+            
+            .main-content {
+                padding: 25px;
+            }
+            
+            header {
+                border-radius: 20px 20px 0 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-parking"></i>
+                <h1>博客停車場實時導航</h1>
+            </div>
+            <p class="subtitle">GPS定位 + 實時車位查詢 (60秒自動更新)</p>
+            <div class="update-info">
+                <span>更新倒數: <span id="countdown">60</span> 秒</span>
+                <span id="last-update">尚未更新</span>
+            </div>
+        </header>
+        
+        <div class="main-content">
+            <!-- 位置區塊 -->
+            <section class="section">
+                <div class="section-header">
+                    <h2><i class="fas fa-map-marker-alt"></i> 您目前的位置</h2>
+                </div>
+                
+                <div class="location-info">
+                    <div id="location-info">尚未取得位置資訊，請點擊下方按鈕獲取</div>
+                    <button id="get-location-btn" class="btn btn-primary">
+                        <i class="fas fa-location-crosshairs"></i>
+                        取得目前位置
+                    </button>
+                </div>
+                
+                <p style="font-size: 0.9rem; color: #64748b;">系統會根據您的位置，自動計算最近的博客停車場，並提供Google Maps導航路線。</p>
+            </section>
+            
+            <!-- 最近停車場區塊 -->
+            <section id="nearest-result" class="section nearest-result">
+                <div class="section-header">
+                    <h3>最近的停車場</h3>
+                    <div class="distance-badge status-available" id="distance-badge">約 1.2 公里</div>
+                </div>
+                
+                <div class="nearest-details">
+                    <div class="detail-box">
+                        <h4>停車場名稱</h4>
+                        <p id="nearest-name">家福敦北</p>
+                    </div>
+                    <div class="detail-box">
+                        <h4>停車場編號</h4>
+                        <p id="nearest-id">188600343</p>
+                    </div>
+                    <div class="detail-box">
+                        <h4>剩餘車位</h4>
+                        <p id="nearest-spaces">-- / --</p>
+                    </div>
+                    <div class="detail-box">
+                        <h4>車位狀態</h4>
+                        <p id="nearest-status">載入中...</p>
+                    </div>
+                </div>
+                
+                <div class="navigation-buttons">
+                    <button id="navigate-btn" class="btn btn-secondary">
+                        <i class="fas fa-directions"></i>
+                        使用Google Maps導航
+                    </button>
+                    <button id="copy-address-btn" class="btn btn-primary">
+                        <i class="fas fa-copy"></i>
+                        複製地址
+                    </button>
+                </div>
+            </section>
+            
+            <!-- 停車場列表區塊 -->
+            <section class="section">
+                <div class="section-header">
+                    <h2><i class="fas fa-list"></i> 停車場列表 (按距離排序)</h2>
+                    <div class="status-badge status-available" id="available-count">可用: --</div>
+                </div>
+                <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 12px;">點擊列表中的停車場即可自動導航至該目的地</p>
+                <div class="parking-list-container">
+                    <table id="parking-table">
+                        <thead>
+                            <tr>
+                                <th>編號</th>
+                                <th>名稱</th>
+                                <th>距離</th>
+                                <th>車位</th>
+                                <th>狀態</th>
+                            </tr>
+                        </thead>
+                        <tbody id="parking-table-body">
+                            <!-- 表格內容將由JavaScript動態生成 -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            
+            <!-- 實時車位查詢區塊 -->
+            <section class="section">
+                <div class="section-header">
+                    <h2><i class="fas fa-sync-alt"></i> 實時車位查詢</h2>
+                    <div class="status-badge status-available" id="total-count">總數: --</div>
+                </div>
+                
+                <div class="progress-container">
+                    <progress id="progressBar" value="0" max="100"></progress>
+                    <p id="progressText">等待查詢中...</p>
+                </div>
+                
+                <div class="parking-list-container">
+                    <table id="spaces-table">
+                        <thead>
+                            <tr>
+                                <th>編號</th>
+                                <th>名稱</th>
+                                <th>剩餘</th>
+                                <th>總車位</th>
+                                <th>狀態</th>
+                            </tr>
+                        </thead>
+                        <tbody id="spaces-table-body">
+                            <!-- 表格內容將由JavaScript動態生成 -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            
+            <!-- 已滿場站清單區塊 -->
+            <section id="abnormal-section" class="section abnormal-section" style="display: none;">
+                <div class="section-header">
+                    <h2><i class="fas fa-exclamation-triangle"></i> 已滿場站清單</h2>
+                    <div class="status-badge status-full" id="full-count">已滿: 0</div>
+                </div>
+                
+                <div class="parking-list-container">
+                    <table id="full-table">
+                        <thead>
+                            <tr>
+                                <th>編號</th>
+                                <th>名稱</th>
+                                <th>剩餘車位</th>
+                                <th>總車位</th>
+                            </tr>
+                        </thead>
+                        <tbody id="full-table-body">
+                            <!-- 表格內容將由JavaScript動態生成 -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+        
+        <footer>
+            <p>© 2023 博客停車場導航系統 | 本系統使用Google Maps進行導航</p>
+            <p style="margin-top: 8px; font-size: 0.75rem;">位置資料僅供本頁面使用，每60秒自動更新車位資訊</p>
+        </footer>
+    </div>
+
+    <script>
+        // API配置
+        const token = "ilbnrfsjr6a0fnq20wyz50dtrqp3jah5zohmw9a92yry4xcyak2rome9mqtjpjbq1724qtbih0";
+        const refreshInterval = 60; // 每幾秒更新一次
+        
+        // 博客停車場資料
+        const parkingLots = {
+            "188600343": { name: "家福敦北", lat: 25.052, lng: 121.544 },
+            "188600416": { name: "新店加氣站", lat: 24.982, lng: 121.541 },
+            "188600417": { name: "家福新店安康", lat: 24.967, lng: 121.531 },
+            "188600418": { name: "寶雅樂華", lat: 25.008, lng: 121.510 },
+            "188600419": { name: "土城金城", lat: 24.986, lng: 121.444 },
+            "188600420": { name: "土城峰廷", lat: 24.972, lng: 121.426 },
+            "188600421": { name: "汐止明峰家福", lat: 25.068, lng: 121.657 },
+            "188600422": { name: "格致家福", lat: 25.139, lng: 121.506 },
+            "188600423": { name: "華齡家福", lat: 25.085, lng: 121.520 },
+            "188600424": { name: "北投公館家福", lat: 25.117, lng: 121.498 },
+            "188600425": { name: "寶雅楠梓藍田", lat: 22.727, lng: 120.326 },
+            "188600426": { name: "燦坤海佃", lat: 23.042, lng: 120.185 },
+            "188600427": { name: "寶雅德華", lat: 25.039, lng: 121.555 },
+            "188600428": { name: "土銀敦和(航港局)", lat: 25.026, lng: 121.548 },
+            "188600429": { name: "林口文化北全聯", lat: 25.077, lng: 121.365 },
+            "188600431": { name: "燦坤經國", lat: 24.996, lng: 121.299 },
+            "188600432": { name: "新埔燦坤", lat: 24.970, lng: 121.408 },
+            "188600433": { name: "藏壽司思源", lat: 25.052, lng: 121.463 },
+            "188600434": { name: "藏壽司捷運路", lat: 25.017, lng: 121.463 },
+            "188600435": { name: "藏壽司集賢路", lat: 25.086, lng: 121.494 },
+            "188600436": { name: "藏壽司竹北", lat: 24.829, lng: 121.016 },
+            "188600437": { name: "竹北三民", lat: 24.833, lng: 121.012 },
+            "188600438": { name: "楊梅農會", lat: 24.914, lng: 121.146 },
+            "188600439": { name: "藏壽司青埔", lat: 25.008, lng: 121.201 },
+            "188600440": { name: "寶雅健康2", lat: 22.625, lng: 120.318 },
+            "188600442": { name: "寶雅美妝文心南", lat: 24.142, lng: 120.647 },
+            "188600443": { name: "博愛大樓", lat: 25.044, lng: 121.520 },
+            "188600444": { name: "家福岡山", lat: 22.796, lng: 120.295 },
+            "188600446": { name: "台灣大道", lat: 24.164, lng: 120.672 },
+            "188600447": { name: "花蓮民權", lat: 23.976, lng: 121.606 },
+            "188600448": { name: "台北南海", lat: 25.032, lng: 121.514 },
+            "188600449": { name: "台南轉運站-汽車", lat: 22.999, lng: 120.213 },
+            "188600451": { name: "藏壽司員林", lat: 23.959, lng: 120.574 },
+            "188600452": { name: "台北內湖", lat: 25.069, lng: 121.586 },
+            "188600453": { name: "台中美村南", lat: 24.132, lng: 120.664 },
+            "188600454": { name: "燦坤內埔", lat: 22.615, lng: 120.597 },
+            "188600455": { name: "寶家潮州", lat: 22.550, lng: 120.543 },
+            "188600456": { name: "家福豐南", lat: 24.243, lng: 120.723 },
+            "188600458": { name: "燦坤永華", lat: 22.989, lng: 120.184 },
+            "188600460": { name: "喜互惠羅莊", lat: 24.757, lng: 121.753 },
+            "188600461": { name: "喜互惠文化", lat: 24.758, lng: 121.752 },
+            "188600462": { name: "喜互惠慈安", lat: 24.766, lng: 121.748 },
+            "188600463": { name: "寶雅內壢", lat: 24.971, lng: 121.258 },
+            "188600464": { name: "雀客花蓮", lat: 23.994, lng: 121.631 },
+            "188600465": { name: "寶雅鳳山五福", lat: 22.630, lng: 120.352 },
+            "188600466": { name: "嘉義新民2", lat: 23.481, lng: 120.448 },
+            "188600467": { name: "迪卡儂", lat: 25.054, lng: 121.368 },
+            "188600468": { name: "喜互惠頭城", lat: 24.857, lng: 121.824 },
+            "188600469": { name: "喜互惠和平", lat: 24.309, lng: 121.745 },
+            "188600471": { name: "藏壽司中清", lat: 24.176, lng: 120.662 },
+            "188600472": { name: "藏壽司福科", lat: 24.184, lng: 120.614 },
+            "188600473": { name: "藏壽司惠文", lat: 24.149, lng: 120.644 },
+            "188600474": { name: "藏壽司沙鹿", lat: 24.237, lng: 120.561 },
+            "188600475": { name: "藏壽司嘉義", lat: 23.485, lng: 120.441 },
+            "188600476": { name: "藏壽司頭份", lat: 24.688, lng: 120.904 },
+            "188600477": { name: "藏壽司開元", lat: 23.012, lng: 120.226 },
+            "188600478": { name: "藏壽司楠梓藍田", lat: 22.727, lng: 120.326 },
+            "188600479": { name: "淡水新民", lat: 25.177, lng: 121.439 },
+            "188600480": { name: "林口仁愛二場", lat: 25.077, lng: 121.360 },
+            "188600481": { name: "燦坤彰化", lat: 24.081, lng: 120.542 },
+            "188600483": { name: "北斗中山場", lat: 23.877, lng: 120.525 },
+            "188600484": { name: "新店北新場", lat: 24.967, lng: 121.543 },
+            "188600485": { name: "蘆洲中山場", lat: 25.091, lng: 121.464 },
+            "188600486": { name: "燦坤光復場", lat: 25.043, lng: 121.557 },
+            "188600487": { name: "燦坤瑞隆", lat: 22.609, lng: 120.331 },
+            "188600488": { name: "員林國宅場", lat: 23.959, lng: 120.574 },
+            "188600489": { name: "燦坤彰化場", lat: 24.081, lng: 120.542 },
+            "188600490": { name: "景平天空", lat: 24.992, lng: 121.519 },
+            "188600491": { name: "牛埔東", lat: 22.681, lng: 120.307 },
+            "188600492": { name: "燦坤南崁", lat: 25.048, lng: 121.287 },
+            "188600493": { name: "台中大里", lat: 24.099, lng: 120.679 },
+            "188600494": { name: "家福龍安", lat: 24.957, lng: 121.225 },
+            "188600495": { name: "家福自由", lat: 25.022, lng: 121.533 },
+            "188600496": { name: "家福重和", lat: 25.065, lng: 121.483 },
+            "188600504": { name: "寶雅惠民", lat: 22.622, lng: 120.301 },
+            "188600505": { name: "高雄博愛", lat: 22.669, lng: 120.302 },
+            "188600516": { name: "燦坤豐樂", lat: 24.147, lng: 120.641 },
+            "188600536": { name: "水上中興", lat: 23.431, lng: 120.397 },
+            "188600539": { name: "淡水中山場", lat: 25.177, lng: 121.439 },
+            "188600540": { name: "台南郡平場", lat: 22.980, lng: 120.185 }
+        };
+        
+        // 全域變數
+        const lotCodes = Object.keys(parkingLots);
+        let userLocation = null;
+        let nearestParking = null;
+        let selectedParking = null; // 用戶選擇的停車場
+        let parkingData = {}; // 儲存車位資料
+        let countdown = refreshInterval;
+        let updateTimer = null;
+        
+        // DOM元素
+        const getLocationBtn = document.getElementById('get-location-btn');
+        const locationInfo = document.getElementById('location-info');
+        const nearestResult = document.getElementById('nearest-result');
+        const nearestName = document.getElementById('nearest-name');
+        const nearestId = document.getElementById('nearest-id');
+        const nearestSpaces = document.getElementById('nearest-spaces');
+        const nearestStatus = document.getElementById('nearest-status');
+        const distanceBadge = document.getElementById('distance-badge');
+        const navigateBtn = document.getElementById('navigate-btn');
+        const copyAddressBtn = document.getElementById('copy-address-btn');
+        const parkingTableBody = document.getElementById('parking-table-body');
+        const spacesTableBody = document.getElementById('spaces-table-body');
+        const fullTableBody = document.getElementById('full-table-body');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const countdownElement = document.getElementById('countdown');
+        const lastUpdateElement = document.getElementById('last-update');
+        const availableCountElement = document.getElementById('available-count');
+        const totalCountElement = document.getElementById('total-count');
+        const fullCountElement = document.getElementById('full-count');
+        const abnormalSection = document.getElementById('abnormal-section');
+        
+        // 計算兩個座標之間的距離（使用Haversine公式，單位：公里）
+        function calculateDistance(lat1, lng1, lat2, lng2) {
+            const R = 6371; // 地球半徑（公里）
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLng = (lng2 - lng1) * Math.PI / 180;
+            const a = 
+                Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+                Math.sin(dLng/2) * Math.sin(dLng/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+        
+        // 找到最近的停車場
+        function findNearestParking(userLat, userLng) {
+            let minDistance = Infinity;
+            let nearest = null;
+            
+            for (const [id, parking] of Object.entries(parkingLots)) {
+                const distance = calculateDistance(userLat, userLng, parking.lat, parking.lng);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearest = { id, ...parking, distance };
+                }
+            }
+            
+            return nearest;
+        }
+        
+        // 取得使用者位置
+        function getUserLocation() {
+            if (!navigator.geolocation) {
+                locationInfo.innerHTML = '<span style="color:#ef4444;">您的瀏覽器不支援地理定位功能</span>';
+                return;
+            }
+            
+            // 顯示載入狀態
+            getLocationBtn.innerHTML = '<div class="loading"></div> 定位中...';
+            getLocationBtn.classList.add('btn-disabled');
+            getLocationBtn.disabled = true;
+            
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    // 成功取得位置
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    userLocation = { lat, lng };
+                    
+                    // 顯示位置資訊
+                    locationInfo.innerHTML = `緯度: ${lat.toFixed(6)}, 經度: ${lng.toFixed(6)}`;
+                    
+                    // 恢復按鈕狀態
+                    getLocationBtn.innerHTML = '<i class="fas fa-location-crosshairs"></i> 重新定位';
+                    getLocationBtn.classList.remove('btn-disabled');
+                    getLocationBtn.disabled = false;
+                    
+                    // 找到最近的停車場
+                    nearestParking = findNearestParking(lat, lng);
+                    
+                    // 顯示結果
+                    showNearestParking(nearestParking);
+                    
+                    // 更新停車場列表
+                    updateParkingTable(userLocation);
+                },
+                (error) => {
+                    // 取得位置失敗
+                    let errorMessage = "無法取得您的位置";
+                    
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMessage = "您拒絕了位置存取權限";
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMessage = "位置資訊不可用";
+                            break;
+                        case error.TIMEOUT:
+                            errorMessage = "取得位置超時";
+                            break;
+                    }
+                    
+                    locationInfo.innerHTML = `<span style="color:#ef4444;">${errorMessage}</span>`;
+                    
+                    // 恢復按鈕狀態
+                    getLocationBtn.innerHTML = '<i class="fas fa-location-crosshairs"></i> 取得目前位置';
+                    getLocationBtn.classList.remove('btn-disabled');
+                    getLocationBtn.disabled = false;
+                    
+                    // 使用預設位置（台北車站）作為示範
+                    useDefaultLocation();
+                }
+            );
+        }
+        
+        // 使用預設位置（台北車站）作為示範
+        function useDefaultLocation() {
+            userLocation = { lat: 25.047675, lng: 121.517055 }; // 台北車站座標
+            locationInfo.innerHTML = `緯度: ${userLocation.lat.toFixed(6)}, 經度: ${userLocation.lng.toFixed(6)} (預設位置-台北車站)`;
+            
+            // 找到最近的停車場
+            nearestParking = findNearestParking(userLocation.lat, userLocation.lng);
+            
+            // 顯示結果
+            showNearestParking(nearestParking);
+            
+            // 更新停車場列表
+            updateParkingTable(userLocation);
+        }
+        
+        // 顯示最近的停車場
+        function showNearestParking(parking) {
+            // 如果用戶沒有手動選擇停車場，才顯示最近的
+            if (!selectedParking) {
+                nearestName.textContent = parking.name;
+                nearestId.textContent = parking.id;
+                
+                // 格式化距離
+                let distanceText;
+                if (parking.distance < 1) {
+                    distanceText = `約 ${Math.round(parking.distance * 1000)} 公尺`;
+                } else {
+                    distanceText = `約 ${parking.distance.toFixed(1)} 公里`;
+                }
+                
+                distanceBadge.textContent = distanceText;
+                
+                // 更新車位資訊
+                if (parkingData[parking.id]) {
+                    updateNearestParkingInfo(parking.id);
+                }
+                
+                nearestResult.classList.add('active');
+            }
+        }
+        
+        // 更新最近停車場的車位資訊
+        function updateNearestParkingInfo(parkingId) {
+            const data = parkingData[parkingId];
+            if (data) {
+                nearestSpaces.textContent = `${data.freeSpace} / ${data.totalSpace}`;
+                
+                if (data.freeSpace > 0) {
+                    nearestStatus.innerHTML = '<span class="status-available-cell">可停</span>';
+                    distanceBadge.className = 'distance-badge status-available';
+                } else {
+                    nearestStatus.innerHTML = '<span class="status-full-cell">已滿</span>';
+                    distanceBadge.className = 'distance-badge status-full';
+                }
+            }
+        }
+        
+        // 更新停車場列表表格
+        function updateParkingTable(userLocation) {
+            // 清空表格
+            parkingTableBody.innerHTML = '';
+            
+            // 創建停車場陣列並計算距離
+            const parkingArray = Object.entries(parkingLots).map(([id, parking]) => {
+                const distance = calculateDistance(
+                    userLocation.lat, 
+                    userLocation.lng, 
+                    parking.lat, 
+                    parking.lng
+                );
+                return { id, ...parking, distance };
+            });
+            
+            // 按距離排序（由近到遠）
+            parkingArray.sort((a, b) => a.distance - b.distance);
+            
+            // 更新可用停車場計數
+            let availableCount = 0;
+            
+            // 生成表格行
+            parkingArray.forEach(parking => {
+                const row = document.createElement('tr');
+                
+                // 格式化距離
+                let distanceText;
+                let statusText;
+                let spacesText = '-- / --';
+                
+                if (parking.distance < 1) {
+                    distanceText = `${Math.round(parking.distance * 1000)} 公尺`;
+                } else {
+                    distanceText = `${parking.distance.toFixed(1)} 公里`;
+                }
+                
+                // 檢查是否有車位資料
+                if (parkingData[parking.id]) {
+                    const data = parkingData[parking.id];
+                    spacesText = `${data.freeSpace} / ${data.totalSpace}`;
+                    
+                    if (data.freeSpace > 0) {
+                        statusText = '<span class="status-available-cell">可停</span>';
+                        availableCount++;
+                    } else {
+                        statusText = '<span class="status-full-cell">已滿</span>';
+                    }
+                } else {
+                    statusText = '<span style="color:#64748b;">載入中...</span>';
+                }
+                
+                // 檢查是否為選中的停車場
+                const isSelected = selectedParking && selectedParking.id === parking.id;
+                const rowClass = isSelected ? 'selected' : '';
+                
+                row.className = rowClass;
+                row.innerHTML = `
+                    <td class="parking-id">${parking.id}</td>
+                    <td>${parking.name}</td>
+                    <td class="distance-cell">${distanceText}</td>
+                    <td>${spacesText}</td>
+                    <td class="status-cell">${statusText}</td>
+                `;
+                
+                // 添加點擊事件
+                row.addEventListener('click', () => {
+                    // 移除所有行的選中狀態
+                    document.querySelectorAll('#parking-table-body tr').forEach(tr => {
+                        tr.classList.remove('selected');
+                    });
+                    
+                    // 添加當前行的選中狀態
+                    row.classList.add('selected');
+                    
+                    // 設定為選中的停車場
+                    selectedParking = parking;
+                    
+                    // 更新最近停車場區塊
+                    updateSelectedParking(parking);
+                    
+                    // 滾動到最近停車場區塊
+                    nearestResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                });
+                
+                parkingTableBody.appendChild(row);
+            });
+            
+            // 更新可用停車場計數
+            availableCountElement.textContent = `可用: ${availableCount}`;
+        }
+        
+        // 更新選中的停車場資訊
+        function updateSelectedParking(parking) {
+            nearestName.textContent = parking.name;
+            nearestId.textContent = parking.id;
+            
+            // 計算距離
+            if (userLocation) {
+                const distance = calculateDistance(
+                    userLocation.lat, 
+                    userLocation.lng, 
+                    parking.lat, 
+                    parking.lng
+                );
+                
+                let distanceText;
+                if (distance < 1) {
+                    distanceText = `約 ${Math.round(distance * 1000)} 公尺`;
+                } else {
+                    distanceText = `約 ${distance.toFixed(1)} 公里`;
+                }
+                
+                distanceBadge.textContent = distanceText;
+            }
+            
+            // 更新車位資訊
+            if (parkingData[parking.id]) {
+                updateNearestParkingInfo(parking.id);
+            } else {
+                nearestSpaces.textContent = '-- / --';
+                nearestStatus.innerHTML = '<span style="color:#64748b;">載入中...</span>';
+            }
+            
+            nearestResult.classList.add('active');
+        }
+        
+        // 開啟Google Maps導航
+        function openGoogleMapsNavigation() {
+            let targetParking = selectedParking || nearestParking;
+            
+            if (!targetParking || !userLocation) {
+                alert('請先取得您的位置或選擇停車場');
+                return;
+            }
+            
+            // Google Maps導航URL
+            const origin = `${userLocation.lat},${userLocation.lng}`;
+            const destination = `${targetParking.lat},${targetParking.lng}`;
+            const url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
+            
+            // 開啟新分頁
+            window.open(url, '_blank');
+        }
+        
+        // 複製地址到剪貼簿
+        function copyAddressToClipboard() {
+            let targetParking = selectedParking || nearestParking;
+            
+            if (!targetParking) return;
+            
+            const text = `博客停車場: ${targetParking.name} (編號: ${targetParking.id})`;
+            
+            // 使用Clipboard API
+            navigator.clipboard.writeText(text)
+                .then(() => {
+                    // 顯示成功訊息
+                    const originalText = copyAddressBtn.innerHTML;
+                    copyAddressBtn.innerHTML = '<i class="fas fa-check"></i> 已複製';
+                    copyAddressBtn.style.backgroundColor = '#10b981';
+                    
+                    setTimeout(() => {
+                        copyAddressBtn.innerHTML = originalText;
+                        copyAddressBtn.style.backgroundColor = '';
+                    }, 2000);
+                })
+                .catch(err => {
+                    console.error('複製失敗: ', err);
+                    alert('複製失敗，請手動複製地址');
+                });
+        }
+        
+        // API查詢函數 - 獲取停車場資訊
+        async function fetchParkInfo(lotCode) {
+            try {
+                const res = await fetch("https://gpark.keytop.cn/nkc/index/getParkInfo", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "kt-token": token,
+                        "kt-appId": "16bbf366b49a48fab362b7f163d96c63",
+                        "kt-lotcodes": lotCode,
+                        "authCode": "index/getParkInfo",
+                        "client-flag": "PC",
+                    },
+                    body: JSON.stringify({ lotCode })
+                });
+                const data = await res.json();
+                if (data.resultCode === 200 && data.data) {
+                    return {
+                        lotCode: lotCode,
+                        name: parkingLots[lotCode]?.name || "未知場站",
+                        freeSpace: data.data.freeSpace,
+                        totalSpace: data.data.totalSpace,
+                        status: data.data.freeSpace > 0 ? "available" : "full"
+                    };
+                } else {
+                    return null;
+                }
+            } catch (error) {
+                console.error(`查詢 ${lotCode} 失敗:`, error);
+                return null;
+            }
+        }
+        
+        // 更新所有停車場車位資訊
+        async function updateAllParkingSpaces() {
+            progressBar.value = 0;
+            progressText.textContent = "開始查詢...";
+            
+            let allLots = [];
+            let fullLots = [];
+            let successCount = 0;
+            
+            // 重置停車場資料
+            parkingData = {};
+            
+            for (let i = 0; i < lotCodes.length; i++) {
+                const lotCode = lotCodes[i];
+                const info = await fetchParkInfo(lotCode);
+                
+                if (info) {
+                    // 儲存資料
+                    parkingData[lotCode] = {
+                        freeSpace: info.freeSpace,
+                        totalSpace: info.totalSpace
+                    };
+                    
+                    // 添加到列表
+                    allLots.push(info);
+                    
+                    // 檢查是否已滿
+                    if (info.freeSpace === 0) {
+                        fullLots.push(info);
+                    }
+                    
+                    successCount++;
+                }
+                
+                // 更新進度條
+                progressBar.value = Math.round(((i + 1) / lotCodes.length) * 100);
+                progressText.textContent = `已完成 ${i + 1}/${lotCodes.length} 場站查詢`;
+            }
+            
+            // 更新顯示
+            progressText.textContent = `查詢完成 ✅ (成功: ${successCount}/${lotCodes.length})`;
+            
+            // 更新車位表格
+            updateSpacesTable(allLots);
+            
+            // 更新已滿場站表格
+            updateFullTable(fullLots);
+            
+            // 更新統計資訊
+            totalCountElement.textContent = `總數: ${allLots.length}`;
+            fullCountElement.textContent = `已滿: ${fullLots.length}`;
+            
+            // 更新最近停車場資訊
+            if (nearestParking) {
+                updateNearestParkingInfo(nearestParking.id);
+            }
+            
+            // 更新選中的停車場資訊
+            if (selectedParking) {
+                updateNearestParkingInfo(selectedParking.id);
+            }
+            
+            // 更新停車場列表
+            if (userLocation) {
+                updateParkingTable(userLocation);
+            }
+            
+            // 更新最後更新時間
+            const now = new Date();
+            lastUpdateElement.textContent = now.toLocaleTimeString('zh-TW');
+            
+            // 顯示或隱藏已滿場站區域
+            if (fullLots.length > 0) {
+                abnormalSection.style.display = 'block';
+            } else {
+                abnormalSection.style.display = 'none';
+            }
+            
+            // 重置倒數計時
+            countdown = refreshInterval;
+        }
+        
+        // 更新車位表格
+        function updateSpacesTable(allLots) {
+            // 清空表格
+            spacesTableBody.innerHTML = '';
+            
+            // 按剩餘車位排序（從多到少）
+            allLots.sort((a, b) => b.freeSpace - a.freeSpace);
+            
+            // 生成表格行
+            allLots.forEach(parking => {
+                const row = document.createElement('tr');
+                
+                let statusHtml;
+                if (parking.status === "available") {
+                    statusHtml = '<span class="status-available-cell">可停</span>';
+                } else {
+                    statusHtml = '<span class="status-full-cell">已滿</span>';
+                }
+                
+                row.innerHTML = `
+                    <td class="parking-id">${parking.lotCode}</td>
+                    <td>${parking.name}</td>
+                    <td>${parking.freeSpace}</td>
+                    <td>${parking.totalSpace}</td>
+                    <td class="status-cell">${statusHtml}</td>
+                `;
+                
+                // 添加點擊事件
+                row.addEventListener('click', () => {
+                    const parkingInfo = parkingLots[parking.lotCode];
+                    if (parkingInfo) {
+                        // 移除所有行的選中狀態
+                        document.querySelectorAll('#parking-table-body tr').forEach(tr => {
+                            tr.classList.remove('selected');
+                        });
+                        
+                        // 設定為選中的停車場
+                        selectedParking = {
+                            id: parking.lotCode,
+                            name: parking.name,
+                            lat: parkingInfo.lat,
+                            lng: parkingInfo.lng
+                        };
+                        
+                        // 更新最近停車場區塊
+                        updateSelectedParking(selectedParking);
+                        
+                        // 滾動到最近停車場區塊
+                        nearestResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                });
+                
+                spacesTableBody.appendChild(row);
+            });
+        }
+        
+        // 更新已滿場站表格
+        function updateFullTable(fullLots) {
+            // 清空表格
+            fullTableBody.innerHTML = '';
+            
+            // 生成表格行
+            fullLots.forEach(parking => {
+                const row = document.createElement('tr');
+                
+                row.innerHTML = `
+                    <td class="parking-id">${parking.lotCode}</td>
+                    <td>${parking.name}</td>
+                    <td style="color:#ef4444; font-weight:bold;">${parking.freeSpace}</td>
+                    <td>${parking.totalSpace}</td>
+                `;
+                
+                fullTableBody.appendChild(row);
+            });
+        }
+        
+        // 倒數計時更新
+        function startCountdown() {
+            if (updateTimer) {
+                clearInterval(updateTimer);
+            }
+            
+            updateTimer = setInterval(() => {
+                countdown--;
+                countdownElement.textContent = countdown;
+                
+                if (countdown <= 0) {
+                    updateAllParkingSpaces();
+                }
+            }, 1000);
+        }
+        
+        // 初始化頁面
+        function initPage() {
+            // 綁定按鈕事件
+            getLocationBtn.addEventListener('click', getUserLocation);
+            navigateBtn.addEventListener('click', openGoogleMapsNavigation);
+            copyAddressBtn.addEventListener('click', copyAddressToClipboard);
+            
+            // 預設使用台北車站位置
+            useDefaultLocation();
+            
+            // 開始更新車位資訊
+            updateAllParkingSpaces();
+            
+            // 啟動倒數計時
+            startCountdown();
+        }
+        
+        // 頁面載入完成後初始化
+        document.addEventListener('DOMContentLoaded', initPage);
+    </script>
+</body>
+</html>
