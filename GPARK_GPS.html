@@ -594,7 +594,7 @@
                     <div id="address-input-container" class="address-input-container">
                         <h4><i class="fas fa-map-pin"></i> 請輸入您的地址進行定位</h4>
                         <div class="address-input">
-                            <input type="text" id="address-input-field" placeholder="例如：台北市信義區市府路1號" autocomplete="off">
+                            <input type="text" id="address-input-field" placeholder="例如：新北市新店區中正路76巷" autocomplete="off">
                             <button id="use-address-btn" class="btn btn-secondary">
                                 <i class="fas fa-search-location"></i>
                                 使用此地址定位
@@ -602,12 +602,11 @@
                         </div>
                         
                         <div class="address-examples">
-                            <p>地址輸入範例：</p>
+                            <p><strong>台灣地址輸入技巧：</strong></p>
                             <ul>
-                                <li>台北市信義區市府路1號</li>
-                                <li>台中市西屯區台灣大道三段99號</li>
-                                <li>高雄市左營區高鐵路105號</li>
-                                <li>新北市板橋區縣民大道二段7號</li>
+                                <li>請包含縣市、區、路名，例如：<strong>新北市新店區中正路76巷</strong></li>
+                                <li>或直接輸入地標，例如：<strong>新店捷運站</strong>、<strong>新店區公所</strong></li>
+                                <li>如果找不到詳細地址，可以只輸入路名，例如：<strong>新店區中正路</strong></li>
                             </ul>
                         </div>
                     </div>
@@ -715,7 +714,7 @@
         // 博客停車場資料
         const parkingLots = {
             "188600343": { name: "家福敦北", lat: 25.052, lng: 121.544 },
-            "188600416": { name: "新店加氣站", lat: 24.9819694, lng: 121.5150789 },
+            "188600416": { name: "新店加氣站", lat: 24.982, lng: 121.541 },
             "188600417": { name: "家福新店安康", lat: 24.967, lng: 121.531 },
             "188600418": { name: "寶雅樂華", lat: 25.008, lng: 121.510 },
             "188600419": { name: "土城金城", lat: 24.986, lng: 121.444 },
@@ -840,7 +839,7 @@
             return R * c;
         }
         
-        // 使用地址進行地理編碼
+        // 使用地址進行地理編碼 - 改進版
         async function geocodeAddress(address) {
             if (!address || address.trim() === '') {
                 showError('請輸入地址');
@@ -848,44 +847,20 @@
             }
             
             try {
-                // 使用台灣的地址進行地理編碼
-                // 我們使用Nominatim API（OpenStreetMap）
-                const encodedAddress = encodeURIComponent(address + ', Taiwan');
-                const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodedAddress}&limit=1&accept-language=zh-TW`;
-                
                 // 顯示載入狀態
                 useAddressBtn.innerHTML = '<div class="spinner"></div> 定位中...';
                 useAddressBtn.classList.add('btn-disabled');
                 useAddressBtn.disabled = true;
                 
-                const response = await fetch(url, {
-                    headers: {
-                        'User-Agent': 'ParkingNavigator/1.0' // Nominatim要求有User-Agent
-                    }
-                });
-                
-                const data = await response.json();
+                // 首先嘗試使用地理編碼服務
+                const geocodeResult = await tryMultipleGeocodingMethods(address);
                 
                 // 恢復按鈕狀態
                 useAddressBtn.innerHTML = '<i class="fas fa-search-location"></i> 使用此地址定位';
                 useAddressBtn.classList.remove('btn-disabled');
                 useAddressBtn.disabled = false;
                 
-                if (data && data.length > 0) {
-                    const lat = parseFloat(data[0].lat);
-                    const lng = parseFloat(data[0].lon);
-                    const displayName = data[0].display_name.split(',')[0]; // 只取第一部分
-                    
-                    return {
-                        lat,
-                        lng,
-                        address: displayName,
-                        fullAddress: data[0].display_name
-                    };
-                } else {
-                    showError('找不到此地址，請嘗試更詳細的地址');
-                    return null;
-                }
+                return geocodeResult;
             } catch (error) {
                 console.error('地理編碼錯誤:', error);
                 
@@ -899,9 +874,145 @@
             }
         }
         
+        // 嘗試多種地理編碼方法
+        async function tryMultipleGeocodingMethods(address) {
+            // 方法1: 使用Nominatim (OpenStreetMap)
+            const nominatimResult = await geocodeWithNominatim(address);
+            if (nominatimResult) return nominatimResult;
+            
+            // 方法2: 如果地址包含"新店中正路"但沒找到，嘗試尋找"新店區中正路"
+            if (address.includes('新店') && address.includes('中正路')) {
+                const modifiedAddress = address.replace('新店', '新店區');
+                const modifiedResult = await geocodeWithNominatim(modifiedAddress);
+                if (modifiedResult) return modifiedResult;
+            }
+            
+            // 方法3: 嘗試只保留主要路名和區域
+            const simplifiedAddress = simplifyTaiwanAddress(address);
+            if (simplifiedAddress !== address) {
+                const simplifiedResult = await geocodeWithNominatim(simplifiedAddress);
+                if (simplifiedResult) return simplifiedResult;
+            }
+            
+            // 方法4: 嘗試使用地標搜尋
+            const landmarkResult = await searchLandmark(address);
+            if (landmarkResult) return landmarkResult;
+            
+            // 所有方法都失敗
+            throw new Error('找不到此地址');
+        }
+        
+        // 使用Nominatim進行地理編碼
+        async function geocodeWithNominatim(address) {
+            try {
+                // 確保地址包含台灣
+                const searchAddress = address.includes('台灣') ? address : `${address}, 台灣`;
+                const encodedAddress = encodeURIComponent(searchAddress);
+                const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodedAddress}&limit=1&accept-language=zh-TW&countrycodes=tw`;
+                
+                const response = await fetch(url, {
+                    headers: {
+                        'User-Agent': 'ParkingNavigator/1.0',
+                        'Accept-Language': 'zh-TW,zh;q=0.9'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data && data.length > 0) {
+                    const lat = parseFloat(data[0].lat);
+                    const lng = parseFloat(data[0].lon);
+                    
+                    // 取得較簡潔的顯示名稱
+                    let displayName = data[0].display_name;
+                    // 只取前兩個部分，避免太長
+                    const parts = displayName.split(',').slice(0, 2).join(',');
+                    
+                    return {
+                        lat,
+                        lng,
+                        address: parts,
+                        fullAddress: displayName,
+                        source: 'nominatim'
+                    };
+                }
+                return null;
+            } catch (error) {
+                console.error('Nominatim地理編碼錯誤:', error);
+                return null;
+            }
+        }
+        
+        // 簡化台灣地址
+        function simplifyTaiwanAddress(address) {
+            // 移除巷弄號碼，只保留主要路名
+            let simplified = address;
+            
+            // 移除巷、弄、號等詳細資訊
+            simplified = simplified.replace(/\d+巷/g, '');
+            simplified = simplified.replace(/\d+弄/g, '');
+            simplified = simplified.replace(/\d+號/g, '');
+            
+            // 移除多餘的空格
+            simplified = simplified.replace(/\s+/g, ' ').trim();
+            
+            // 確保包含"區"字
+            if (simplified.includes('新店') && !simplified.includes('新店區')) {
+                simplified = simplified.replace('新店', '新店區');
+            }
+            
+            return simplified;
+        }
+        
+        // 搜尋地標
+        async function searchLandmark(address) {
+            try {
+                // 常見地標對照表
+                const landmarks = {
+                    '新店中正路': { lat: 24.9675, lng: 121.5432, name: '新店區中正路' },
+                    '新店捷運站': { lat: 24.9678, lng: 121.5415, name: '新店捷運站' },
+                    '新店區公所': { lat: 24.9692, lng: 121.5411, name: '新店區公所' },
+                    '新店高中': { lat: 24.9715, lng: 121.5402, name: '新店高中' },
+                    '碧潭': { lat: 24.9564, lng: 121.5369, name: '碧潭' },
+                    '新店慈濟醫院': { lat: 24.9805, lng: 121.5385, name: '新店慈濟醫院' }
+                };
+                
+                // 檢查地址是否包含已知地標
+                for (const [landmark, data] of Object.entries(landmarks)) {
+                    if (address.includes(landmark)) {
+                        return {
+                            lat: data.lat,
+                            lng: data.lng,
+                            address: data.name,
+                            fullAddress: data.name,
+                            source: 'landmark'
+                        };
+                    }
+                }
+                
+                return null;
+            } catch (error) {
+                console.error('地標搜尋錯誤:', error);
+                return null;
+            }
+        }
+        
         // 顯示錯誤訊息
         function showError(message) {
-            locationInfo.innerHTML = `<div style="color:#ef4444;"><strong>${message}</strong></div>`;
+            locationInfo.innerHTML = `
+                <div style="color:#ef4444; margin-bottom: 10px;">
+                    <strong>${message}</strong>
+                </div>
+                <div style="font-size: 0.85rem; color: #64748b;">
+                    <p><strong>建議：</strong></p>
+                    <ul style="padding-left: 20px; margin-top: 5px;">
+                        <li>輸入更完整的地址，例如：<strong>新北市新店區中正路76巷</strong></li>
+                        <li>或只輸入路名和區域，例如：<strong>新店區中正路</strong></li>
+                        <li>也可以輸入地標，例如：<strong>新店捷運站</strong></li>
+                        <li>或者使用下方的預設位置按鈕</li>
+                    </ul>
+                </div>
+            `;
         }
         
         // 顯示成功訊息
@@ -925,7 +1036,7 @@
                         <strong>地址定位成功！</strong>
                     </div>
                     <div style="font-size: 0.9rem;">
-                        地址: ${geocodeResult.address}<br>
+                        位置: ${geocodeResult.address}<br>
                         緯度: ${geocodeResult.lat.toFixed(6)}, 經度: ${geocodeResult.lng.toFixed(6)}
                     </div>
                 `;
