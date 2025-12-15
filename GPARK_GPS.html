@@ -63,8 +63,30 @@
             margin-bottom: 10px;
         }
         
-        .logo i {
+        /* 新增：圖片圖標容器樣式 */
+        .logo-icon-container {
+            height: 40px;
+            width: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        /* 新增：圖片樣式 */
+        .logo-icon-container img {
+            height: 100%;
+            width: auto;
+            max-width: 100%;
+            object-fit: contain;
+        }
+        
+        /* 新增：備用文字樣式 */
+        .logo-fallback {
+            display: none;
             font-size: 1.8rem;
+            color: white;
+            font-weight: bold;
         }
         
         h1 {
@@ -576,7 +598,12 @@
     <div class="container">
         <header>
             <div class="logo">
-                <i class="fas fa-parking"></i>
+                <!-- 修改這裡：將原本的FontAwesome圖標替換為自定義圖片 -->
+                <div class="logo-icon-container">
+                    <img src="https://www.mrpark.com.tw/images/corpimg.png" alt="博客停車場" 
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <span class="logo-fallback">[P]</span>
+                </div>
                 <h1>博客停車場導航</h1>
             </div>
             <p class="subtitle">GPS定位 + 實時車位查詢 (60秒自動更新)</p>
