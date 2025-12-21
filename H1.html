@@ -121,9 +121,11 @@
   }
   
   // 顯示選取的歌本，並清空下方顯示區（同時清除前次感覺記錄）
-  function showBookName(bookCode, bookName) { 
+  function showBookName(bookCode, bookName) {
+ 
   
-    document.getElementById('book-display').value = bookName; 
+    document.getElementById('book-display').value = bookName;
+ 
 numberValue = "";    
      document.getElementById('book-number').value = '';
 
@@ -145,6 +147,8 @@ numberValue = "";
     }
     const screenWidth = window.innerWidth;
     const charCount = longestLine.length;
+    
+    if (charCount>13){charCount=13;}
     const fontSize = (screenWidth / charCount) * 0.93;
     function isNumeric(line) { return /^\d+$/.test(line); }
     function isOnlyPunctuation(line) { return /^[.,\/#!$%\^&\*;:{}=\-_`~()]+$/.test(line); }
@@ -505,3 +509,4 @@ results += `<div style="font-size: 6vw;">
 </script>
 </body>
 </html>
+
