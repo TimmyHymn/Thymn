@@ -1,4 +1,4 @@
-const CACHE_NAME = 'v1'; // 使用新版本號來強制更新緩存
+const CACHE_NAME = 'v2'; // 使用新版本號來強制更新緩存
 const CACHE_FILES = [
     '/Thymn/H1.html',
     '/Thymn/manifest.json',
@@ -72,3 +72,4 @@ self.addEventListener('fetch', event => {
     );
     console.log('Fetching:', event.request.url);
 });
+
