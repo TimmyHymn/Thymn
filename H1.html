@@ -143,12 +143,11 @@ numberValue = "";
       const digitCount = (lines[i].match(/\d/g) || []).length;
       if (lines[i].length > longestLine.length && digitCount <= 3) {
         longestLine = lines[i];
+        if (longestLine>13){longestLine=13;}
       }
     }
     const screenWidth = window.innerWidth;
-    //  const charCount = longestL
-    let charCount= longestL
-    if (charCount>13){charCount=13;}
+    const charCount= longestLine.length;
     const fontSize = (screenWidth / charCount) * 0.93;
     function isNumeric(line) { return /^\d+$/.test(line); }
     function isOnlyPunctuation(line) { return /^[.,\/#!$%\^&\*;:{}=\-_`~()]+$/.test(line); }
@@ -509,5 +508,6 @@ results += `<div style="font-size: 6vw;">
 </script>
 </body>
 </html>
+
 
 
