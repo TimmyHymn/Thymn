@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CITY CAFE 客戶查詢系統</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, sans-serif; 
+            background-color: #f8fafc; 
+            margin: 0; 
+            padding: 15px; 
+            display: flex; 
+            justify-content: center; 
+            min-height: 100vh;
+        }
+        .container { 
+            background: white; 
+            width: 100%; 
+            max-width: 420px; 
+            border-radius: 25px; 
+            border-top: 8px solid #008d41; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08); 
+            overflow: hidden; 
+        }
+        .header { 
+            padding: 25px 20px 15px; 
+            text-align: center; 
+            background: linear-gradient(135deg, #008d41 0%, #16a34a 100%);
+        }
+        .header h1 { 
+            color: white; 
+            margin: 0; 
+            font-weight: 900; 
+            letter-spacing: -0.5px; 
+            font-size: 24px;
+        }
+        .header p { 
+            color: rgba(255,255,255,0.9); 
+            margin: 5px 0 0; 
+            font-size: 14px; 
+        }
+        .content { padding: 0 20px 25px; }
+        
+        /* 登入區域 */
+        .login-area { padding: 20px 0 10px; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { 
+            display: block; 
+            margin-bottom: 6px; 
+            color: #475569; 
+            font-weight: 600; 
+            font-size: 14px; 
+        }
+        input { 
+            border: 2px solid #e2e8f0; 
+            border-radius: 12px; 
+            padding: 14px; 
+            font-size: 16px; 
+            outline: none; 
+            transition: 0.2s; 
+            width: 100%; 
+        }
+        input:focus { 
+            border-color: #008d41; 
+            box-shadow: 0 0 0 3px rgba(0, 141, 65, 0.1); 
+        }
+        .btn-login { 
+            background: #008d41; 
+            color: white; 
+            border: none; 
+            border-radius: 12px; 
+            padding: 16px; 
+            font-size: 16px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            width: 100%; 
+            margin-top: 10px; 
+            transition: background 0.2s; 
+        }
+        .btn-login:hover { background: #006a31; }
+        .btn-login:disabled { 
+            opacity: 0.6; 
+            cursor: not-allowed; 
+        }
+        
+        /* 餘額顯示 */
+        .balance-cards { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 15px; 
+            margin: 25px 0; 
+        }
+        .balance-card { 
+            border-radius: 18px; 
+            padding: 20px 15px; 
+            text-align: center; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+        }
+        .balance-card.latte { 
+            background: linear-gradient(135deg, #fffaf5 0%, #ffedd5 100%); 
+            border: 2px solid #fed7aa; 
+        }
+        .balance-card.ame { 
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); 
+            border: 2px solid #bbf7d0; 
+        }
+        .balance-title { 
+            font-size: 13px; 
+            font-weight: bold; 
+            margin-bottom: 5px; 
+        }
+        .balance-title.latte { color: #ea580c; }
+        .balance-title.ame { color: #15803d; }
+        .balance-value { 
+            font-size: 42px; 
+            font-weight: 900; 
+            margin: 10px 0; 
+        }
+        .balance-value.latte { color: #f97316; }
+        .balance-value.ame { color: #16a34a; }
+        .balance-subtitle { 
+            font-size: 12px; 
+            color: #64748b; 
+            margin-top: 5px; 
+        }
+        
+        /* 預約區域 */
+        .reservation-area { 
+            background: #f8fafc; 
+            border-radius: 20px; 
+            padding: 20px; 
+            margin-top: 25px; 
+            border: 1px solid #e2e8f0; 
+        }
+        .reservation-title { 
+            color: #1e293b; 
+            font-weight: 700; 
+            margin: 0 0 20px; 
+            font-size: 18px; 
+            text-align: center; 
+        }
+        .drink-selector { 
+            display: flex; 
+            gap: 10px; 
+            margin-bottom: 20px; 
+        }
+        .drink-option { 
+            flex: 1; 
+            text-align: center; 
+            padding: 15px 10px; 
+            border-radius: 12px; 
+            border: 2px solid #e2e8f0; 
+            background: white; 
+            cursor: pointer; 
+            transition: all 0.2s; 
+        }
+        .drink-option.selected { 
+            border-color: #008d41; 
+            background: #f0fdf4; 
+            box-shadow: 0 0 0 3px rgba(0, 141, 65, 0.1); 
+        }
+        .drink-icon { 
+            font-size: 24px; 
+            margin-bottom: 5px; 
+        }
+        .drink-name { 
+            font-weight: 600; 
+            font-size: 14px; 
+            margin-bottom: 3px; 
+        }
+        .drink-option.selected .drink-name.latte { color: #ea580c; }
+        .drink-option.selected .drink-name.ame { color: #15803d; }
+        .drink-balance { 
+            font-size: 12px; 
+            color: #64748b; 
+        }
+        
+        .temp-selector { 
+            display: flex; 
+            gap: 10px; 
+            margin-bottom: 20px; 
+        }
+        .temp-option { 
+            flex: 1; 
+            text-align: center; 
+            padding: 12px; 
+            border-radius: 12px; 
+            border: 2px solid #e2e8f0; 
+            background: white; 
+            cursor: pointer; 
+            transition: all 0.2s; 
+        }
+        .temp-option.selected { 
+            border-color: #3b82f6; 
+            background: #eff6ff; 
+        }
+        .temp-icon { 
+            font-size: 20px; 
+            margin-bottom: 5px; 
+        }
+        .temp-name { font-weight: 600; font-size: 14px; }
+        
+        .quantity-selector { margin-bottom: 25px; }
+        .quantity-control { 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            margin-top: 10px; 
+        }
+        .quantity-btn { 
+            width: 44px; 
+            height: 44px; 
+            border-radius: 50%; 
+            border: 2px solid #e2e8f0; 
+            background: white; 
+            font-size: 20px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            transition: all 0.2s; 
+        }
+        .quantity-btn:active { transform: scale(0.95); }
+        .quantity-display { 
+            flex: 1; 
+            text-align: center; 
+            font-size: 36px; 
+            font-weight: 900; 
+            color: #1e293b; 
+        }
+        .quantity-label { 
+            font-size: 14px; 
+            color: #475569; 
+            font-weight: 600; 
+            margin-bottom: 8px; 
+        }
+        
+        .btn-reserve { 
+            background: #008d41; 
+            color: white; 
+            border: none; 
+            border-radius: 12px; 
+            padding: 16px; 
+            font-size: 16px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            width: 100%; 
+            transition: background 0.2s; 
+        }
+        .btn-reserve:hover { background: #006a31; }
+        .btn-reserve:disabled { 
+            opacity: 0.6; 
+            cursor: not-allowed; 
+        }
+        
+        /* 預約記錄 */
+        .reservation-list { 
+            margin-top: 25px; 
+            background: white; 
+            border-radius: 20px; 
+            padding: 20px; 
+            border: 1px solid #e2e8f0; 
+        }
+        .list-title { 
+            color: #1e293b; 
+            font-weight: 700; 
+            margin: 0 0 15px; 
+            font-size: 16px; 
+        }
+        .reservation-item { 
+            padding: 15px; 
+            border-radius: 12px; 
+            background: #f8fafc; 
+            margin-bottom: 10px; 
+            border-left: 4px solid #008d41; 
+        }
+        .reservation-header { 
+            display: flex; 
+            justify-content: space-between; 
+            margin-bottom: 8px; 
+        }
+        .reservation-drink { 
+            font-weight: 700; 
+            font-size: 15px; 
+        }
+        .reservation-drink.latte { color: #ea580c; }
+        .reservation-drink.ame { color: #15803d; }
+        .reservation-date { 
+            font-size: 12px; 
+            color: #64748b; 
+        }
+        .reservation-details { 
+            display: flex; 
+            justify-content: space-between; 
+            font-size: 14px; 
+            color: #475569; 
+        }
+        
+        /* 訊息 */
+        .message { 
+            padding: 12px 15px; 
+            border-radius: 12px; 
+            margin: 15px 0; 
+            font-size: 14px; 
+            display: none; 
+        }
+        .message.success { 
+            background: #f0fdf4; 
+            color: #15803d; 
+            border: 1px solid #bbf7d0; 
+            display: block; 
+        }
+        .message.error { 
+            background: #fef2f2; 
+            color: #dc2626; 
+            border: 1px solid #fecaca; 
+            display: block; 
+        }
+        .message.info { 
+            background: #eff6ff; 
+            color: #1d4ed8; 
+            border: 1px solid #bfdbfe; 
+            display: block; 
+        }
+        
+        /* 共用 */
+        .hidden { display: none; }
+        .flex { display: flex; }
+        .center { text-align: center; }
+        .loading { 
+            text-align: center; 
+            padding: 20px; 
+            color: #64748b; 
+        }
+        .loading::after { 
+            content: ""; 
+            display: inline-block; 
+            width: 20px; 
+            height: 20px; 
+            margin-left: 10px; 
+            border: 2px solid #e2e8f0; 
+            border-top-color: #008d41; 
+            border-radius: 50%; 
+            animation: spin 1s linear infinite; 
+        }
+        @keyframes spin { 
+            to { transform: rotate(360deg); } 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>CITY CAFE</h1>
+            <p>會員點數查詢與預約系統</p>
+        </div>
+        
+        <div class="content">
+            <!-- 登入區域 -->
+            <div id="loginArea" class="login-area">
+                <div class="input-group">
+                    <label for="phone">手機號碼</label>
+                    <input id="phone" type="tel" placeholder="請輸入完整手機號碼" maxlength="10">
+                </div>
+                <div class="input-group">
+                    <label for="password">密碼</label>
+                    <input id="password" type="password" placeholder="預設為****" maxlength="4">
+                </div>
+                <button id="btnLogin" class="btn-login" onclick="login()">登入查詢</button>
+                
+                <div id="loginMessage" class="message"></div>
+            </div>
+            
+            <!-- 主要內容 (登入後顯示) -->
+            <div id="mainContent" class="hidden">
+                <!-- 餘額顯示 -->
+                <div class="balance-cards">
+                    <div class="balance-card latte">
+                        <div class="balance-title latte">拿鐵剩餘杯數</div>
+                        <div id="latteBalance" class="balance-value latte">0</div>
+                        <div class="balance-subtitle">可預約: <span id="latteAvailable">0</span> 杯</div>
+                    </div>
+                    <div class="balance-card ame">
+                        <div class="balance-title ame">美式剩餘杯數</div>
+                        <div id="ameBalance" class="balance-value ame">0</div>
+                        <div class="balance-subtitle">可預約: <span id="ameAvailable">0</span> 杯</div>
+                    </div>
+                </div>
+                
+                <!-- 預約區域 -->
+                <div class="reservation-area">
+                    <h3 class="reservation-title">咖啡預約</h3>
+                    
+                    <!-- 選擇飲品 -->
+                    <div class="drink-selector">
+                        <div class="drink-option selected" data-drink="latte" onclick="selectDrink('latte')">
+                            <div class="drink-icon">☕️</div>
+                            <div class="drink-name latte">拿鐵咖啡</div>
+                            <div class="drink-balance">可預約: <span id="latteSelect">0</span> 杯</div>
+                        </div>
+                        <div class="drink-option" data-drink="ame" onclick="selectDrink('ame')">
+                            <div class="drink-icon">🧊</div>
+                            <div class="drink-name ame">美式咖啡</div>
+                            <div class="drink-balance">可預約: <span id="ameSelect">0</span> 杯</div>
+                        </div>
+                    </div>
+                    
+                    <!-- 選擇溫度 -->
+                    <div class="temp-selector">
+                        <div class="temp-option selected" data-temp="hot" onclick="selectTemp('hot')">
+                            <div class="temp-icon">🔥</div>
+                            <div class="temp-name">熱飲</div>
+                        </div>
+                        <div class="temp-option" data-temp="cold" onclick="selectTemp('cold')">
+                            <div class="temp-icon">❄️</div>
+                            <div class="temp-name">冰飲</div>
+                        </div>
+                    </div>
+                    
+                    <!-- 選擇數量 -->
+                    <div class="quantity-selector">
+                        <div class="quantity-label">預約杯數</div>
+                        <div class="quantity-control">
+                            <button class="quantity-btn" onclick="changeQuantity(-1)">-</button>
+                            <div id="quantityDisplay" class="quantity-display">1</div>
+                            <button class="quantity-btn" onclick="changeQuantity(1)">+</button>
+                        </div>
+                    </div>
+                    
+                    <button id="btnReserve" class="btn-reserve" onclick="makeReservation()">確認預約</button>
+                </div>
+                
+                <!-- 預約記錄 -->
+                <div class="reservation-list">
+                    <h4 class="list-title">近期預約記錄</h4>
+                    <div id="reservationList">
+                        <div class="center" style="color: #94a3b8; padding: 20px;">
+                            尚無預約記錄
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="center" style="margin-top: 20px;">
+                    <button class="fix-link" onclick="logout()" style="color: #64748b; background: none; border: none; text-decoration: underline; cursor: pointer;">登出</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API設定
+        const API_URL = "https://script.google.com/macros/s/AKfycbz9Z3cFZUdzloJL9HsKMFfSUe9lvAu_SUhNAGS1rbzr5Da2-J6SOfjiKCyUu-OWlcIh/exec";
+        
+        // 狀態變數
+        let userData = null;
+        let selectedDrink = 'latte';
+        let selectedTemp = 'hot';
+        let selectedQuantity = 1;
+        let maxQuantity = 0;
+        let localReservations = []; // 本地預約記錄
+        
+        // 登入功能
+        async function login() {
+            const phone = document.getElementById('phone').value.trim();
+            const password = document.getElementById('password').value.trim();
+            
+            if (!phone || phone.length < 10) {
+                showMessage('請輸入完整手機號碼(10位數)', 'error');
+                return;
+            }
+            
+            if (!password || password.length !== 4) {
+                showMessage('請輸入4位數密碼', 'error');
+                return;
+            }
+            
+            // 顯示載入狀態
+            const btn = document.getElementById('btnLogin');
+            btn.disabled = true;
+            btn.textContent = '登入中...';
+            
+            try {
+                // 發送登入請求
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        phone: phone,
+                        action: 'check',
+                        isAdmin: false,
+                        pwd: password
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'new_user') {
+                    showMessage('找不到此手機號碼，請確認號碼是否正確', 'error');
+                    return;
+                }
+                
+                if (data.status === 'error') {
+                    showMessage(data.message || '登入失敗', 'error');
+                    return;
+                }
+                
+                // 登入成功
+                userData = data;
+                userData.phone = phone;
+                
+                // 更新UI
+                updateBalance();
+                showMainContent();
+                
+                // 載入預約記錄
+                await loadReservations();
+                
+                showMessage('登入成功！', 'success');
+                
+            } catch (error) {
+                console.error('登入錯誤:', error);
+                showMessage('系統錯誤，請稍後再試', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '登入查詢';
+            }
+        }
+        
+        // 顯示主內容
+        function showMainContent() {
+            document.getElementById('loginArea').classList.add('hidden');
+            document.getElementById('mainContent').classList.remove('hidden');
+        }
+        
+        // 更新餘額顯示
+        function updateBalance() {
+            if (!userData) return;
+            
+            // 顯示剩餘杯數
+            document.getElementById('latteBalance').textContent = userData.latte || 0;
+            document.getElementById('ameBalance').textContent = userData.ame || 0;
+            
+            // 更新可預約杯數
+            updateAvailableQuantities();
+        }
+        
+        // 更新可預約數量
+        function updateAvailableQuantities() {
+            if (!userData) return;
+            
+            const latteAvailable = userData.latte || 0;
+            const ameAvailable = userData.ame || 0;
+            
+            document.getElementById('latteAvailable').textContent = latteAvailable;
+            document.getElementById('ameAvailable').textContent = ameAvailable;
+            document.getElementById('latteSelect').textContent = latteAvailable;
+            document.getElementById('ameSelect').textContent = ameAvailable;
+            
+            // 更新當前選擇飲品的最大數量
+            maxQuantity = selectedDrink === 'latte' ? latteAvailable : ameAvailable;
+            
+            // 確保選擇數量不超過最大數量
+            if (selectedQuantity > maxQuantity) {
+                selectedQuantity = maxQuantity;
+                document.getElementById('quantityDisplay').textContent = selectedQuantity;
+            }
+            
+            // 更新按鈕狀態
+            document.getElementById('btnReserve').disabled = maxQuantity === 0;
+        }
+        
+        // 選擇飲品
+        function selectDrink(drink) {
+            selectedDrink = drink;
+            
+            // 更新UI
+            document.querySelectorAll('.drink-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            document.querySelector(`.drink-option[data-drink="${drink}"]`).classList.add('selected');
+            
+            // 更新最大數量
+            updateAvailableQuantities();
+        }
+        
+        // 選擇溫度
+        function selectTemp(temp) {
+            selectedTemp = temp;
+            
+            // 更新UI
+            document.querySelectorAll('.temp-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            document.querySelector(`.temp-option[data-temp="${temp}"]`).classList.add('selected');
+        }
+        
+        // 修改數量
+        function changeQuantity(delta) {
+            let newQuantity = selectedQuantity + delta;
+            
+            // 限制範圍
+            if (newQuantity < 1) newQuantity = 1;
+            if (newQuantity > maxQuantity) newQuantity = maxQuantity;
+            
+            selectedQuantity = newQuantity;
+            document.getElementById('quantityDisplay').textContent = selectedQuantity;
+        }
+        
+        // 預約功能 - 已修改
+        async function makeReservation() {
+            if (!userData || selectedQuantity < 1) return;
+            
+            const btn = document.getElementById('btnReserve');
+            btn.disabled = true;
+            btn.textContent = '預約中...';
+            
+            try {
+                // 先扣除點數（使用兌換功能）
+                const deductResponse = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        phone: userData.phone,
+                        action: 'client_use',
+                        item: selectedDrink === 'latte' ? 'Latte' : 'Americano',
+                        quantity: selectedQuantity,
+                        drinkType: selectedDrink === 'latte' ? '拿鐵' : '美式',
+                        temperature: selectedTemp === 'hot' ? '熱飲' : '冰飲',
+                        isAdmin: false,
+                        operator: '客戶'
+                    })
+                });
+                
+                const deductData = await deductResponse.json();
+                
+                if (deductData.status !== 'success') {
+                    showMessage('預約失敗: ' + (dedractData.message || '點數不足'), 'error');
+                    return;
+                }
+                
+                // 更新本地資料
+                if (selectedDrink === 'latte') {
+                    userData.latte -= selectedQuantity;
+                } else {
+                    userData.ame -= selectedQuantity;
+                }
+                
+                // 更新UI餘額
+                updateBalance();
+                
+                // 建立本地預約記錄
+                const reservation = {
+                    timestamp: new Date(),
+                    phone: userData.phone,
+                    drinkType: selectedDrink === 'latte' ? '拿鐵' : '美式',
+                    temperature: selectedTemp === 'hot' ? '熱飲' : '冰飲',
+                    quantity: selectedQuantity,
+                    status: '已預約',
+                    operator: '客戶',
+                    note: `預約${selectedQuantity}杯${selectedDrink === 'latte' ? '拿鐵' : '美式'}(${selectedTemp === 'hot' ? '熱飲' : '冰飲'})`
+                };
+                
+                // 添加到本地記錄陣列
+                localReservations.unshift(reservation);
+                
+                // 更新網頁上的預約記錄顯示
+                updateReservationDisplay();
+                
+                showMessage(`預約成功！已預約 ${selectedQuantity} 杯${selectedDrink === 'latte' ? '拿鐵' : '美式'}(${selectedTemp === 'hot' ? '熱飲' : '冰飲'})`, 'success');
+                
+                // 重置選擇
+                selectedQuantity = 1;
+                document.getElementById('quantityDisplay').textContent = 1;
+                
+            } catch (error) {
+                console.error('預約錯誤:', error);
+                showMessage('系統錯誤，請稍後再試', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '確認預約';
+            }
+        }
+        
+        // 更新預約記錄顯示 - 修改為使用本地數據
+        function updateReservationDisplay() {
+            const container = document.getElementById('reservationList');
+            
+            // 如果沒有預約記錄
+            if (localReservations.length === 0) {
+                container.innerHTML = '<div class="center" style="color: #94a3b8; padding: 20px;">尚無預約記錄</div>';
+                return;
+            }
+            
+            // 只顯示最近5筆
+            const recentReservations = localReservations.slice(0, 5);
+            let html = '';
+            
+            recentReservations.forEach(reservation => {
+                const date = new Date(reservation.timestamp);
+                const dateStr = `${date.getMonth()+1}/${date.getDate()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+                
+                html += `
+                    <div class="reservation-item">
+                        <div class="reservation-header">
+                            <div class="reservation-drink ${reservation.drinkType.toLowerCase()}">
+                                ${reservation.drinkType} ${reservation.temperature}
+                            </div>
+                            <div class="reservation-date">${dateStr}</div>
+                        </div>
+                        <div class="reservation-details">
+                            <span>${reservation.quantity} 杯</span>
+                            <span>狀態: ${reservation.status || '已預約'}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // 載入預約記錄 - 修改為從API載入後存到本地
+        async function loadReservations() {
+            if (!userData) return;
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        phone: userData.phone,
+                        action: 'get_reservations',
+                        isAdmin: false
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success' && data.reservations && data.reservations.length > 0) {
+                    // 將API返回的預約記錄存到本地
+                    localReservations = data.reservations.map(res => ({
+                        timestamp: new Date(res.timestamp),
+                        phone: res.phone,
+                        drinkType: res.drinkType === 'Latte' ? '拿鐵' : '美式',
+                        temperature: res.temperature,
+                        quantity: res.quantity,
+                        status: res.status,
+                        operator: res.operator,
+                        note: res.note
+                    }));
+                    
+                    // 按時間倒序排列 (最新的在最前面)
+                    localReservations.sort((a, b) => b.timestamp - a.timestamp);
+                }
+                
+                // 更新顯示
+                updateReservationDisplay();
+                
+            } catch (error) {
+                console.error('載入預約記錄錯誤:', error);
+                // 如果載入失敗，使用空陣列
+                localReservations = [];
+                updateReservationDisplay();
+            }
+        }
+        
+        // 登出
+        function logout() {
+            userData = null;
+            localReservations = []; // 清空本地預約記錄
+            document.getElementById('mainContent').classList.add('hidden');
+            document.getElementById('loginArea').classList.remove('hidden');
+            document.getElementById('phone').value = '';
+            document.getElementById('password').value = '';
+            showMessage('已登出', 'info');
+        }
+        
+        // 顯示訊息
+        function showMessage(text, type) {
+            const msgElement = document.getElementById('loginMessage');
+            msgElement.textContent = text;
+            msgElement.className = 'message ' + type;
+            
+            // 3秒後自動隱藏
+            setTimeout(() => {
+                msgElement.className = 'message';
+            }, 3000);
+        }
+        
+        // 輸入框按Enter登入
+        document.getElementById('password').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                login();
+            }
+        });
+        
+        // 手機號碼限制只能輸入數字
+        document.getElementById('phone').addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+        
+        // 密碼限制只能輸入數字
+        document.getElementById('password').addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+        
+        // 初始設定
+        updateAvailableQuantities();
+    </script>
+</body>
+</html>

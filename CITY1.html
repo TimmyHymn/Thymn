@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CITY CAFE 管理系統</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; background-color: #f1f5f9; margin: 0; padding: 15px; display: flex; justify-content: center; }
+        .container { background: white; width: 100%; max-width: 420px; border-radius: 30px; border-top: 8px solid #008d41; box-shadow: 0 10px 25px rgba(0,0,0,0.1); overflow: hidden; }
+        .header { padding: 20px; text-align: center; }
+        .header h1 { color: #008d41; margin: 0; font-style: italic; font-weight: 900; letter-spacing: -1px; }
+        .content { padding: 0 20px 25px 20px; }
+        .input-group { display: flex; gap: 8px; margin-bottom: 15px; }
+        input { border: 2px solid #e2e8f0; border-radius: 12px; padding: 12px; font-size: 16px; font-weight: bold; outline: none; transition: 0.2s; width: 100%; box-sizing: border-box; }
+        .btn-search { background: #f97316; color: white; border: none; border-radius: 12px; padding: 0 25px; font-weight: bold; cursor: pointer; }
+        button:disabled, input:disabled { opacity: 0.4 !important; cursor: wait !important; }
+        .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
+        .card { border-radius: 20px; padding: 15px; text-align: center; border: 1px solid #e2e8f0; }
+        .val { font-size: 42px; font-weight: 900; margin: 10px 0; }
+        .btn-use { width: 100%; padding: 12px; border-radius: 10px; border: none; color: white; font-weight: bold; cursor: pointer; margin-bottom: 5px; }
+        .admin-panel { background: #1e293b; border-radius: 25px; padding: 18px; color: white; margin-top: 20px; }
+        .panel-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+        .label { font-size: 11px; color: #94a3b8; margin-bottom: 4px; display: block; }
+        .btn-add-latte { background: #ea580c; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; }
+        .btn-add-ame { background: #15803d; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; }
+        .fix-link { font-size: 10px; color: #94a3b8; text-decoration: underline; background: none; border: none; cursor: pointer; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header"><h1>CITY CAFE ADMIN</h1></div>
+        <div class="content">
+            <div class="input-group">
+                <input id="phone" type="tel" placeholder="輸入手機或末3碼">
+                <button id="btn-search" class="btn-search" onclick="doAction('check')">查詢</button>
+            </div>
+
+            <div id="resultCard" class="hidden">
+                <div class="card-grid">
+                    <div class="card" style="background: #fffaf5;">
+                        <span style="color: #ea580c; font-weight: bold; font-size: 13px;">拿鐵剩餘</span>
+                        <div id="latteVal" class="val" style="color: #f97316;">0</div>
+                        <button class="btn-use" style="background: #f97316;" onclick="doAction('use','Latte')">兌換 1 杯</button>
+                        <button class="fix-link" onclick="manualFix('Latte')">修正數據</button>
+                    </div>
+                    <div class="card" style="background: #f0fdf4;">
+                        <span style="color: #15803d; font-weight: bold; font-size: 13px;">美式剩餘</span>
+                        <div id="ameVal" class="val" style="color: #16a34a;">0</div>
+                        <button class="btn-use" style="background: #16a34a;" onclick="doAction('use','Americano')">兌換 1 杯</button>
+                        <button class="fix-link" onclick="manualFix('Americano')">修正數據</button>
+                    </div>
+                </div>
+
+                <div class="admin-panel">
+                    <div class="panel-row">
+                        <div>
+                            <span class="label">儲值數量</span>
+                            <input id="amt" type="number" value="10" style="background: #334155; color: white; border: none; padding: 8px;">
+                        </div>
+                        <div>
+                            <span class="label">設定密碼</span>
+                            <input id="pwd" type="text" maxlength="4" placeholder="預設0000" style="background: #334155; color: white; border: none; padding: 8px;">
+                        </div>
+                    </div>
+                    <div class="panel-row">
+                        <button class="btn-add-latte" onclick="doAction('add','Latte')">儲值拿鐵</button>
+                        <button class="btn-add-ame" onclick="doAction('add','Americano')">儲值美式</button>
+                    </div>
+                    <p style="font-size: 10px; color: #64748b; text-align: center; margin: 0;">* 新帳號請輸入完整手機並點擊上方對應儲值鈕</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbyu9UqEIWM2eU61jmEatcfxkCBeU5uZF94hltR_yJ9kVMMIXLNcro9nkKlEPYbXCQ4I/exec";
+
+        function setLock(status) {
+            document.querySelectorAll('button, input').forEach(e => e.disabled = status);
+        }
+
+        function updateUI(data) {
+            document.getElementById('resultCard').classList.remove('hidden');
+            document.getElementById('latteVal').innerText = data.latte || 0;
+            document.getElementById('ameVal').innerText = data.ame || 0;
+            document.getElementById('pwd').value = data.pwd || "0000";
+            if (data.phone) document.getElementById('phone').value = data.phone;
+        }
+
+        async function doAction(action, item = 'Latte') {
+            const phone = document.getElementById('phone').value.trim();
+            if (!phone) return alert("請輸入手機號碼");
+            
+            setLock(true); 
+
+            try {
+                const body = {
+                    phone, action, item, 
+                    amount: parseInt(document.getElementById('amt').value),
+                    pwd: document.getElementById('pwd').value,
+                    isAdmin: true
+                };
+
+                const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(body) });
+                const res = await response.json();
+
+                if (res.status === "success") {
+                    updateUI(res); 
+                    if (action === "add") alert(`✅ ${item === 'Latte' ? '拿鐵' : '美式'} 儲值成功！`);
+                } else if (res.status === "new_user") {
+                    updateUI({ latte: 0, ame: 0, pwd: "0000" });
+                    alert("查無此人。新開戶請補全 10 位號碼後，直接點擊下方儲值鈕。");
+                } else {
+                    alert("❌ " + res.message);
+                }
+            } catch (e) {
+                alert("❌ 連線異常");
+            } finally {
+                setLock(false);
+            }
+        }
+
+        async function manualFix(item) {
+            const newVal = prompt(`修正 ${item} 為最終總杯數：`);
+            if (newVal === null || newVal === "") return;
+            setLock(true);
+            try {
+                const phone = document.getElementById('phone').value.trim();
+                await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ phone, action: "update", isAdmin: true, [item === 'Latte' ? 'newLatte' : 'newAme']: parseInt(newVal) })
+                });
+                const refresh = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ phone, action: 'check' }) });
+                updateUI(await refresh.json());
+            } catch (e) { alert("失敗"); }
+            finally { setLock(false); }
+        }
+    </script>
+</body>
+</html>
