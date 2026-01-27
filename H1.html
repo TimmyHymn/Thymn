@@ -136,35 +136,52 @@ numberValue = "";
   
   // 原有格式化歌詞函式（含動態字體調整、第一行紅字、點擊/雙擊朗讀等特效）
 // 搜尋並顯示歌詞，並依據歌本及號碼設定獨立 MSG key
+// 搜尋並顯示歌詞，並同步更新上方按鈕資訊
   function searchLyrics(book, code) {
-    // --- 新增：同步更新上方的顯示按鈕 ---
+    // 1. 同步更新上方的顯示按鈕值
     document.getElementById('book-display').value = book;
     document.getElementById('book-number').value = code;
-    // ------------------------------
+    
+    // 2. 重要：同步更新全域變數 numberValue，否則下次按數字鍵會出錯
+    numberValue = code.toString();
 
     const showDiv = document.getElementById('SHOW');
     showDiv.innerHTML = "";
+    
+    // 3. 從 localStorage 抓取完整的詩歌資料庫
     const hymns = JSON.parse(localStorage.getItem('hymns')) || [];
     const bookCodeMap = { '詩歌': 1, '補充': 2, '新頌': 3, '紅本': 4, '兒童': 5, '藍本': 6 };
-    const hymn = hymns.find(hymn => hymn.book === bookCodeMap[book] && hymn.code === code);
+    
+    // 4. 比對歌本代碼與號碼
+    const hymn = hymns.find(hymn => hymn.book === bookCodeMap[book] && hymn.code == code);
+
     if (hymn) {
+      // 5. 格式化歌詞並顯示
       const formattedLyrics = formatLyrics(hymn.lyrics);
       let result = formattedLyrics;
+      
       const favorite = hymn.favorite;
       if (favorite) {
         result += `<div style="font-size: 6vw; color: blue; background-color: #BDA589;">上次點歌日期: ${favorite}</div>`;
       }
-      // 產生獨立 MSG key，格式：MSG_歌本_號碼
+      
+      // 產生獨立 MSG key 並抓取感言
       const msgKey = "MSG_" + book + "_" + code;
       currentHymnMsgKey = msgKey;
       const msg = localStorage.getItem(msgKey);
       if (msg) {
         result += `<div id="feeling-msg" style="font-size: 6vw; color: green;">${msg}</div>`;
       }
+      
       showDiv.innerHTML = result;
       showDiv.style.display = 'block';
-      showDiv.scrollIntoView();
-      // 更新右下角按鈕：將【搜尋】變成【感覺】，【說明】變成【分享】
+      
+      // 延遲一下確保內容渲染後才捲動，避免捲動位置不準
+      setTimeout(() => {
+        showDiv.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+
+      // 6. 更新右下角按鈕狀態：從【搜尋/說明】切換為【感覺/分享】
       const searchMainBtn = document.getElementById('search-main-button');
       if (searchMainBtn) {
         searchMainBtn.value = "感覺";
@@ -176,9 +193,9 @@ numberValue = "";
         helpShareBtn.onclick = shareToLine;
       }
     } else {
-      alert('找不到對應的歌詞');
+      alert('找不到對應的歌詞，請確認資料庫是否已載入。');
     }
-  }  
+  }
   // 設定數字鍵及其他按鈕功能
   document.addEventListener('DOMContentLoaded', function() {
     const numberDisplay = document.getElementById('book-number');
@@ -463,6 +480,7 @@ results += `<div style="font-size: 6vw;">
 </script>
 </body>
 </html>
+
 
 
 
