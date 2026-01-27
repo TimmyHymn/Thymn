@@ -138,55 +138,58 @@ numberValue = "";
 // 搜尋並顯示歌詞，並依據歌本及號碼設定獨立 MSG key
 // 搜尋並顯示歌詞，並同步更新上方按鈕資訊
 function searchLyrics(book, code) {
-    const showDiv = document.getElementById('SHOW');
-    showDiv.innerHTML = "";
-    const hymns = JSON.parse(localStorage.getItem('hymns')) || [];
-    const bookCodeMap = { '詩歌': 1, '補充': 2, '新頌': 3, '紅本': 4, '兒童': 5, '藍本': 6 };
+  const showDiv = document.getElementById('SHOW');
+  showDiv.innerHTML = "";
+  const hymns = JSON.parse(localStorage.getItem('hymns')) || [];
+  const bookCodeMap = { '詩歌': 1, '補充': 2, '新頌': 3, '紅本': 4, '兒童': 5, '藍本': 6 };
+  
+  // 關鍵點 1：使用 == 確保搜尋傳入的字串 code 能匹配資料庫的數字 code
+  const hymn = hymns.find(hymn => hymn.book === bookCodeMap[book] && hymn.code == code);
+  
+  if (hymn) {
+    // 關鍵點 2：確保 formatLyrics 函式存在於此代碼之前或全域中
+    const formattedLyrics = formatLyrics(hymn.lyrics);
+    let result = formattedLyrics;
     
-    // 關鍵修正：使用 == 進行比對，確保字串與數字都能匹配成功
-    const hymn = hymns.find(hymn => hymn.book === bookCodeMap[book] && hymn.code == code);
-    
-    if (hymn) {
-      const formattedLyrics = formatLyrics(hymn.lyrics);
-      let result = formattedLyrics;
-      const favorite = hymn.favorite;
-      if (favorite) {
-        result += `<div style="font-size: 6vw; color: blue; background-color: #BDA589;">上次點歌日期: ${favorite}</div>`;
-      }
-      
-      const msgKey = "MSG_" + book + "_" + code;
-      currentHymnMsgKey = msgKey;
-      const msg = localStorage.getItem(msgKey);
-      if (msg) {
-        result += `<div id="feeling-msg" style="font-size: 6vw; color: green;">${msg}</div>`;
-      }
-      
-      showDiv.innerHTML = result;
-      showDiv.style.display = 'block';
-      showDiv.scrollIntoView();
-
-      // 更新右下角按鈕：將【搜尋】變成【感覺】
-      const searchMainBtn = document.getElementById('search-main-button');
-      if (searchMainBtn) {
-        searchMainBtn.value = "感覺";
-        searchMainBtn.onclick = recordFeeling;
-      }
-
-      // 更新右下角按鈕：將【說明】變成【分享】，並在此處同步更新上方按鈕與變數
-      const helpShareBtn = document.getElementById('help-share-button');
-      if (helpShareBtn) {
-        helpShareBtn.value = "分享";
-        helpShareBtn.onclick = shareToLine;
-
-        // --- 您要求的更新邏輯寫在這裡 ---
-        document.getElementById('book-display').value = book;   // 更新上方書名按鈕
-        document.getElementById('book-number').value = code;    // 更新上方編號按鈕
-        numberValue = code.toString();                          // 同步全域變數確保退格鍵正常
-      }
-    } else {
-      alert('找不到對應的歌詞');
+    const favorite = hymn.favorite;
+    if (favorite) {
+      result += `<div style="font-size: 6vw; color: blue; background-color: #BDA589;">上次點歌日期: ${favorite}</div>`;
     }
+    
+    const msgKey = "MSG_" + book + "_" + code;
+    currentHymnMsgKey = msgKey;
+    const msg = localStorage.getItem(msgKey);
+    if (msg) {
+      result += `<div id="feeling-msg" style="font-size: 6vw; color: green;">${msg}</div>`;
+    }
+    
+    showDiv.innerHTML = result;
+    showDiv.style.display = 'block';
+    showDiv.scrollIntoView();
+
+    const searchMainBtn = document.getElementById('search-main-button');
+    if (searchMainBtn) {
+      searchMainBtn.value = "感覺";
+      searchMainBtn.onclick = recordFeeling;
+    }
+
+    const helpShareBtn = document.getElementById('help-share-button');
+    if (helpShareBtn) {
+      helpShareBtn.value = "分享";
+      helpShareBtn.onclick = shareToLine;
+
+      // --- 你要求的邏輯：寫在 helpShareBtn 判斷式內 ---
+      // 使用 .value 語法更新上方顯示按鈕
+      document.getElementById('book-display').value = book;
+      document.getElementById('book-number').value = code;
+      
+      // 同步全域變數 numberValue，確保之後按「⌫」不會出錯
+      numberValue = code.toString(); 
+    }
+  } else {
+    alert('找不到對應的歌詞');
   }
+}
   // 設定數字鍵及其他按鈕功能
   document.addEventListener('DOMContentLoaded', function() {
     const numberDisplay = document.getElementById('book-number');
@@ -471,6 +474,7 @@ results += `<div style="font-size: 6vw;">
 </script>
 </body>
 </html>
+
 
 
 
