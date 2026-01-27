@@ -446,6 +446,13 @@ numberValue = "";
       if (displayTitle || displayLyrics) {
         if (lastCode && lastCode !== hymn.code) { results += '<br/><br/><br/>'; }
 //        results += `<div style="font-size: 6vw; color: darkblue;">${bookCodeMap[hymn.book]} ${hymn.code}: ${formatTitleLine(hymn.title, keyword)}</div>`;
+//results += `<div style="font-size: 6vw;">
+//  <a href="#" style="color: darkblue; text-decoration: underline;"
+//     onclick="searchLyrics('${bookCodeMap[hymn.book]}', ${hymn.code}); return false;">
+//     ${bookCodeMap[hymn.book]} ${hymn.code} ：${formatTitleLine(hymn.title, keyword)}
+//  </a>
+//</div>`;                  
+        
 results += `<div style="font-size: 6vw;">
   <a href="#" style="color: darkblue; text-decoration: underline;"
      onclick="
@@ -514,6 +521,7 @@ results += `<div style="font-size: 6vw;">
 </script>
 </body>
 </html>
+
 
 
 
