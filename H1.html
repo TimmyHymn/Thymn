@@ -212,11 +212,16 @@ numberValue = "";
       if (searchMainBtn) {
         searchMainBtn.value = "感覺";
         searchMainBtn.onclick = recordFeeling;
+        showBookName(2, '補充')
       }
       const helpShareBtn = document.getElementById('help-share-button');
       if (helpShareBtn) {
         helpShareBtn.value = "分享";
         helpShareBtn.onclick = shareToLine;
+        document.getElementById('book-display').value = book; 
+        document.getElementById('book-number').value = code.toString();     
+        // 重要：同步全域變數，確保按下鍵盤「退格」時不會跳回舊號碼
+        numberValue = code.toString();
       }
     } else {
       alert('找不到對應的歌詞');
@@ -507,6 +512,7 @@ results += `<div style="font-size: 6vw;">
 </script>
 </body>
 </html>
+
 
 
 
