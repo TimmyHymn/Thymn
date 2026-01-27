@@ -448,10 +448,17 @@ numberValue = "";
 //        results += `<div style="font-size: 6vw; color: darkblue;">${bookCodeMap[hymn.book]} ${hymn.code}: ${formatTitleLine(hymn.title, keyword)}</div>`;
 results += `<div style="font-size: 6vw;">
   <a href="#" style="color: darkblue; text-decoration: underline;"
-     onclick="searchLyrics('${bookCodeMap[hymn.book]}', ${hymn.code}); return false;">
+     onclick="
+       document.getElementById('book-display').value = '${bookCodeMap[hymn.book]}';
+       document.getElementById('book-number').value = '${hymn.code}';
+       numberValue = '${hymn.code}';
+       searchLyrics('${bookCodeMap[hymn.book]}', ${hymn.code});
+       return false;
+     ">
      ${bookCodeMap[hymn.book]} ${hymn.code} ：${formatTitleLine(hymn.title, keyword)}
   </a>
-</div>`;                  
+</div>`;
+        
         if (displayLyrics) { results += `<div style="font-size: 6vw;">${displayLyrics}</div>`; }
         lastCode = hymn.code;
       }
@@ -507,6 +514,7 @@ results += `<div style="font-size: 6vw;">
 </script>
 </body>
 </html>
+
 
 
 
