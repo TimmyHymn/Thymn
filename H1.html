@@ -111,7 +111,7 @@
   var lastConfirmedSong = null; // 格式：{bookName, songNumber, favorite, feeling}
 
   // 檢查版本並載入資料庫（hymns.js 或 replacedata.js）
-  const currentVersion = 20251221;
+  const currentVersion = 20260209;
   const storedVersion = localStorage.getItem('hymnsVersion');
   if (storedVersion !== String(currentVersion)) {
     const script = document.createElement('script');
@@ -521,6 +521,7 @@ results += `<div style="font-size: 6vw;">
 </script>
 </body>
 </html>
+
 
 
 
