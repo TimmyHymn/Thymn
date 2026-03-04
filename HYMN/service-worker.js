@@ -1,10 +1,10 @@
 const CACHE_NAME = 'hymn-book-v1';
 const ASSETS_TO_CACHE = [
   '/Thymn/HYMN/',
-  '/index.html',
-  '/src/main.tsx',
-  '/src/App.tsx',
-  '/src/index.css',
+  '/Thymn/HYMN/index.html',
+  '/Thymn/HYMN/src/main.tsx',
+  '/Thymn/HYMN/src/App.tsx',
+  '/Thymn/HYMN/src/index.css',
   'https://timmyhymn.github.io/Thymn/Bpm.ttf',
   'https://picsum.photos/seed/hymn/192/192',
   'https://picsum.photos/seed/hymn/512/512'
