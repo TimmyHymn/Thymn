@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hymn-book-v1';
+const CACHE_NAME = 'hymn-book-v2';
 const ASSETS_TO_CACHE = [
   'https://timmyhymn.github.io/Thymn/HYMN/',
   'https://timmyhymn.github.io/Thymn/HYMN/index.html',
@@ -6,8 +6,10 @@ const ASSETS_TO_CACHE = [
   'https://timmyhymn.github.io/Thymn/HYMN/src/App.tsx',
   'https://timmyhymn.github.io/Thymn/HYMN/src/index.css',
   'https://timmyhymn.github.io/Thymn/Bpm.ttf',
-  'https://picsum.photos/seed/hymn/192/192',
-  'https://picsum.photos/seed/hymn/512/512'
+
+  
+  'https://timmyhymn.github.io/Thymn/icon-192x192.png',
+  'https://timmyhymn.github.io/Thymn/icon-512x512.png'
 ];
 
 self.addEventListener('install', (event) => {
