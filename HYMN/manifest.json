@@ -2,7 +2,7 @@
   "name": "召會詩歌本III",
   "short_name": "召會詩歌本III",
   "description": "支援離線、注音字體、即時同步與自定義設定的行動詩歌本。",
-  "start_url": "/Thymn/HYMN",
+  "start_url": "/Thymn/HYMN/",
   "display": "standalone",
   "background_color": "#f7f7f7",
   "theme_color": "#4f46e5",
