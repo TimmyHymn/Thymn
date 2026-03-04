@@ -1,6 +1,6 @@
 const CACHE_NAME = 'hymn-book-v1';
 const ASSETS_TO_CACHE = [
-  '/',
+  '/Thymn/HYMN',
   '/index.html',
   '/src/main.tsx',
   '/src/App.tsx',
