@@ -1,13 +1,13 @@
 const CACHE_NAME = 'hymn-book-v1';
 const ASSETS_TO_CACHE = [
-  '../HYMN',
+  '/',
   '/index.html',
   '/src/main.tsx',
   '/src/App.tsx',
   '/src/index.css',
   'https://timmyhymn.github.io/Thymn/Bpm.ttf',
-  'https://timmyhymn.github.io/Thymn/icon-192x192.png',
-  'https://timmyhymn.github.io/Thymn/icon-512x512.png'
+  'https://picsum.photos/seed/hymn/192/192',
+  'https://picsum.photos/seed/hymn/512/512'
 ];
 
 self.addEventListener('install', (event) => {
