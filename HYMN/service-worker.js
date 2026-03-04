@@ -6,8 +6,8 @@ const ASSETS_TO_CACHE = [
   '/src/App.tsx',
   '/src/index.css',
   'https://timmyhymn.github.io/Thymn/Bpm.ttf',
-  'https://picsum.photos/seed/hymn/192/192',
-  'https://picsum.photos/seed/hymn/512/512'
+  'https://timmyhymn.github.io/Thymn/icon-192x192.png',
+  'https://timmyhymn.github.io/Thymn/icon-512x512.png'
 ];
 
 self.addEventListener('install', (event) => {
