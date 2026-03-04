@@ -1,7 +1,7 @@
 const CACHE_NAME = 'hymn-book-v2';
 const ASSETS_TO_CACHE = [
-  'https://timmyhymn.github.io/Thymn/HYMN/',
-  'https://timmyhymn.github.io/Thymn/HYMN/index.html',
+
+  '/Thymn/HYMN/index.html',
   'https://timmyhymn.github.io/Thymn/HYMN/src/main.tsx',
   'https://timmyhymn.github.io/Thymn/HYMN/src/App.tsx',
   'https://timmyhymn.github.io/Thymn/HYMN/src/index.css',
