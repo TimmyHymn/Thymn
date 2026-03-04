@@ -4,20 +4,20 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>召會詩歌本III</title>
-    <link rel="manifest" href="/manifest.json">
+    <link rel="manifest" href="../HYMN//manifest.json">
     <meta name="theme-color" content="#4f46e5">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="https://picsum.photos/seed/hymn/192/192">
-    <script type="module" crossorigin src="/assets/index-2CF57ZhO.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-BECk3B8d.css">
+    <link rel="apple-touch-icon" href="https://timmyhymn.github.io/Thymn/icon-192x192.png">
+    <script type="module" crossorigin src="../HYMN/assets/index-2CF57ZhO.js"></script>
+    <link rel="stylesheet" crossorigin href="../HYMN/assets/index-BECk3B8d.css">
   </head>
   <body>
     <div id="root"></div>
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/service-worker.js')
+          navigator.serviceWorker.register('../HYMN/service-worker.js')
             .then(reg => console.log('SW registered'))
             .catch(err => console.log('SW registration failed', err));
         });
