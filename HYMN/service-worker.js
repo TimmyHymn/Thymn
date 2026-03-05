@@ -53,10 +53,12 @@ self.addEventListener('fetch', (event) => {
         // Clone the response to store in cache
         const resClone = response.clone();
         caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, resClone);
+          // Store without query string for easier matching
+          const cleanUrl = event.request.url.split('?')[0];
+          cache.put(cleanUrl, resClone);
         });
         return response;
       })
-      .catch(() => caches.match(event.request).then((res) => res))
+      .catch(() => caches.match(event.request, { ignoreSearch: true }).then((res) => res))
   );
 });
