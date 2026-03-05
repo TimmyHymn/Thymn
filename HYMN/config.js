@@ -1,13 +1,14 @@
 const config = {
   "isAuthorized": true,
   "syncEnabled": true,
-  "message": "歡迎使用召會詩歌本III",
-  "selectBookMessage": "請選擇歌本",
+  "message": "召會詩歌本III",
+  "selectBookMessage": "選擇歌本",
   "bookNames": {
-    "1": "大本詩歌",
-    "2": "補充本詩歌",
-    "3": "新歌頌詠",
-    "4": "青少年詩歌",
-    "5": "兒童詩歌"
+    "1": "詩歌",
+    "2": "補充",
+    "3": "新頌",
+    "4": "紅本",
+    "5": "兒童"
+    "6": "藍本"    
   }
 };
