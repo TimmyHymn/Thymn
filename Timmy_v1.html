@@ -31,16 +31,16 @@
     <div class="header">
         <h1>📘 Timmy製 點擊顯示答案</h1>
         <p>完整500題學科題庫｜點擊顯示答案</p>
-        <div class="stats">✅ 全題目完整收錄｜僅供同學互助使用）</div>
+        <div class="stats">✅ 題目已隱藏答案｜點擊後顯示正確選項</div>
     </div>
     <div id="questionsContainer"></div>
-    <footer>💡 點擊題目區塊，下方即顯示正確答案（再次點擊可隱藏）。<br>✔️ 本頁面完整收錄500道考題，依據官方試題逐字建置，Timmy製作非營利，僅供同學互助使用。</footer>
+    <footer>💡 點擊題目區塊，下方即顯示正確答案（再次點擊可隱藏）。<br>✔️ 本頁面完整收錄500道考題，題目皆不含答案標記，僅供同學互助使用。</footer>
 </div>
 <button class="scroll-top" id="goTopBtn">↑ 回頂端</button>
 
 <script>
 // ======================= 完整 1~500 題題庫 =======================
-// 每題均為完整題幹與選項，繁體中文，已修正錯別字。
+// 每題均為原始完整題幹與選項（含答案標記），顯示時會自動移除答案標記
 const questions = [
 { text: "1. (4) 為預防泌尿道感染的措施，下列做法何者正確？ ①建議案主盆浴 ②建議每5～6小時解尿一次 ③維持尿液的鹼性，以增加抑菌能力 ④在無特殊疾病的飲水禁忌情況下，一般案主每天飲水量至少2000cc。", ans: "4" },
 { text: "2. (3) 修剪指甲的原則，何者為不正確？ ①手指甲剪成圓形 ②腳趾甲剪成平形 ③足部剪繭使用剪刀剪 ④指甲每兩週修剪一次。", ans: "3" },
@@ -552,8 +552,19 @@ for(let q of extra151_500) {
     let match = q.match(/^(\d+)\.\s*\((\d)\)\s*(.*)/);
     if(match) questions.push({ text: q, ans: match[2] });
 }
+
 // 排序確保題號順序
 questions.sort((a,b) => parseInt(a.text.split('.')[0]) - parseInt(b.text.split('.')[0]));
+
+// 移除題幹中的答案標記（例如 "1. (4) " → "1. "）
+function cleanQuestionText(raw) {
+    return raw.replace(/^\d+\.\s*\(\d\)\s*/, (match) => {
+        // 取出題號部分保留
+        const numMatch = match.match(/^(\d+)\./);
+        if(numMatch) return numMatch[1] + ". ";
+        return "";
+    });
+}
 
 // 渲染
 const container = document.getElementById('questionsContainer');
@@ -569,7 +580,8 @@ function render() {
         numSpan.innerText = `${idx+1}`;
         const qTextSpan = document.createElement('span');
         qTextSpan.className = 'question-text';
-        qTextSpan.innerHTML = item.text;
+        // 顯示清除答案標記後的題幹
+        qTextSpan.innerHTML = cleanQuestionText(item.text);
         qDiv.appendChild(numSpan);
         qDiv.appendChild(qTextSpan);
         const ansDiv = document.createElement('div');
