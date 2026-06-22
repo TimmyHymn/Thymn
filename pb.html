@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>台股股價淨值比(PB)查詢</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,'Segoe UI','Noto Sans TC',sans-serif;background:#f5f7fa;padding:16px;color:#333}
+.container{max-width:1000px;margin:0 auto}
+h1{font-size:22px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.bar input{padding:8px 12px;border:1px solid #ccc;border-radius:6px;font-size:14px;width:130px}
+.bar button{padding:8px 20px;border:none;border-radius:6px;font-size:14px;cursor:pointer;background:#1a73e8;color:#fff;font-weight:600}
+.bar button:disabled{background:#999;cursor:not-allowed}
+.info{background:#e8f0fe;padding:8px 14px;border-radius:6px;font-size:13px;margin-bottom:10px}
+.info .count{font-weight:700;color:#1a73e8}
+.wrap{background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.08);overflow:auto;max-height:80vh}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#f0f4f8;position:sticky;top:0;z-index:1;padding:10px 8px;text-align:left;cursor:pointer;user-select:none;white-space:nowrap}
+th:hover{background:#e2e8f0}
+th .arrow{font-size:10px;margin-left:3px}
+td{padding:7px 8px;border-top:1px solid #eee}
+tr:hover td{background:#f8faff}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.pb-low{color:#d93025;font-weight:600}
+.pb-mid{color:#e37400;font-weight:600}
+.pb-high{color:#188038}
+.tag{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:600}
+.tag-twse{background:#e8f0fe;color:#1a73e8}
+.tag-tpex{background:#fce8e6;color:#c5221f}
+.filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center}
+.filter-bar input,.filter-bar select{padding:6px 10px;border:1px solid #ccc;border-radius:6px;font-size:13px}
+.loading{text-align:center;padding:40px;color:#666}
+.spinner{display:inline-block;width:24px;height:24px;border:3px solid #e0e0e0;border-top-color:#1a73e8;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.error{text-align:center;padding:40px;color:#d93025}
+.footer{text-align:center;margin-top:12px;font-size:12px;color:#999}
+@media(max-width:600px){table{font-size:12px}th,td{padding:5px 4px}}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>&#128200; 台股股價淨值比(PB)</h1>
+<div class="bar">
+  <label>日期:</label>
+  <input type="text" id="dateInput" placeholder="YYYYMMDD">
+  <button id="fetchBtn" onclick="fetchData()">&#128269; 查詢</button>
+</div>
+<div class="info" id="infoBar">輸入日期後點擊查詢（自動往前嘗試最多2天）</div>
+<div class="filter-bar">
+  <input type="text" id="searchInput" placeholder="搜尋代碼或名稱..." oninput="render()">
+  <select id="marketFilter" onchange="render()">
+    <option value="">全部市場</option>
+    <option value="TWSE">TWSE 上市</option>
+    <option value="TPEx">TPEx 上櫃</option>
+  </select>
+  <select id="pbFilter" onchange="render()">
+    <option value="">全部PB</option>
+    <option value="1">PB &lt; 1</option>
+    <option value="2">1 &le; PB &lt; 2</option>
+    <option value="3">2 &le; PB &lt; 5</option>
+    <option value="4">PB &ge; 5</option>
+  </select>
+  <span style="font-size:13px;color:#666;">&#9660; 點欄位排序</span>
+</div>
+<div class="wrap" id="tableWrap"><div class="loading"><span class="spinner"></span>準備就緒</div></div>
+<div class="footer">資料來源：TWSE &amp; TPEx（透過代理伺服器）</div>
+</div>
+
+<script>
+const PROXY = 'https://api.allorigins.win/raw?url=';
+
+let stocks = [];
+let dateStr = '';
+let sortKey = 'code';
+let sortDir = 1;
+
+function fmt(s){return s.replace(/"/g,'').trim()}
+function pad6(c){return (c+'      ').slice(0,6)}
+
+async function fetchData(){
+  let d=document.getElementById('dateInput').value.replace(/[^0-9]/g,'');
+  if(!d){let n=new Date();d=n.getFullYear()+('0'+(n.getMonth()+1)).slice(-2)+('0'+n.getDate()).slice(-2)}
+  document.getElementById('fetchBtn').disabled=true;
+  document.getElementById('fetchBtn').textContent='載入中...';
+  document.getElementById('infoBar').textContent='查詢中...';
+  document.getElementById('tableWrap').innerHTML='<div class="loading"><span class="spinner"></span>載入中...</div>';
+  stocks=[];
+
+  for(let retry=0;retry<=2;retry++){
+    let td=dateAdd(d,-retry);
+    let yr=td.slice(0,4),mo=td.slice(4,6),dy=td.slice(6,8);
+    try{
+      let twse=await fetchProxy(`https://www.twse.com.tw/exchangeReport/BWIBBU_d?response=csv&date=${td}&selectType=ALL`);
+      if(twse&&twse.includes('"110')){
+        parseTWSE(twse);
+        dateStr=td;
+      }
+    }catch(e){}
+    try{
+      let tpex=await fetchProxy(`https://www.tpex.org.tw/web/stock/aftertrading/peratio_analysis/pera_result.php?l=zh-tw&d=${yr}/${mo}/${dy}`);
+      if(tpex){
+        let j=JSON.parse(tpex);
+        if(j.totalCount>0){parseTPEx(j);if(!dateStr)dateStr=td}
+      }
+    }catch(e){}
+    if(stocks.length>0)break;
+  }
+  if(!dateStr)dateStr=dateAdd(d,0);
+
+  document.getElementById('fetchBtn').disabled=false;
+  document.getElementById('fetchBtn').textContent='查詢';
+  let roc=(parseInt(dateStr.slice(0,4))-1911)+'/'+dateStr.slice(4,6)+'/'+dateStr.slice(6,8);
+  document.getElementById('infoBar').innerHTML=`日期：<b>${dateStr}</b> (民國 ${roc})，共 <span class="count">${stocks.length}</span> 筆`;
+  render();
+}
+
+async function fetchProxy(url){
+  let r=await fetch(PROXY+encodeURIComponent(url));
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  return r.text();
+}
+
+function parseTWSE(text){
+  let lines=text.split('\n');
+  for(let i=2;i<lines.length;i++){
+    let s=lines[i].trim();
+    if(!s)continue;
+    let c=s.split(',');
+    if(c.length<7)continue;
+    let code=fmt(c[0]);
+    if(!code||isNaN(code))continue;
+    let name=fmt(c[1]);
+    let pb=fmt(c[6]);
+    if(!pb||pb==='-')pb='0';
+    stocks.push({code,name,pb:parseFloat(pb),market:'TWSE'});
+  }
+}
+
+function parseTPEx(json){
+  let data=json.data||json.aaData||[];
+  for(let i=0;i<data.length;i++){
+    let r=data[i];
+    if(r.length<7)continue;
+    let code=String(r[0]).trim();
+    if(!code||isNaN(code))continue;
+    let name=String(r[1]).trim();
+    let pb=String(r[6]).trim();
+    if(!pb||pb==='-')pb='0';
+    stocks.push({code,name,pb:parseFloat(pb),market:'TPEx'});
+  }
+}
+
+function dateAdd(ds,off){
+  let d=new Date(+ds.slice(0,4),+ds.slice(4,6)-1,+ds.slice(6,8)+off);
+  return d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2);
+}
+
+function render(){
+  let kw=document.getElementById('searchInput').value.trim().toLowerCase();
+  let mkt=document.getElementById('marketFilter').value;
+  let pbr=document.getElementById('pbFilter').value;
+  let f=stocks.filter(s=>{
+    if(kw&&!s.code.includes(kw)&&!s.name.toLowerCase().includes(kw))return false;
+    if(mkt&&s.market!==mkt)return false;
+    if(pbr==='1'&&s.pb>=1)return false;
+    if(pbr==='2'&&(s.pb<1||s.pb>=2))return false;
+    if(pbr==='3'&&(s.pb<2||s.pb>=5))return false;
+    if(pbr==='4'&&s.pb<5)return false;
+    return true;
+  });
+  f.sort((a,b)=>{let va=a[sortKey],vb=b[sortKey];return sortDir*(typeof va==='string'?va.localeCompare(vb,'zh-TW'):va-vb)});
+
+  if(f.length===0){document.getElementById('tableWrap').innerHTML='<div class="loading">無符合條件的資料</div>';updateArrows();return}
+  let h='<table><thead><tr>'+
+    '<th onclick="sort(\'code\')">代碼<span class="arrow" id="a-code"></span></th>'+
+    '<th onclick="sort(\'name\')">名稱<span class="arrow" id="a-name"></span></th>'+
+    '<th onclick="sort(\'pb\')" style="text-align:right">PB<span class="arrow" id="a-pb"></span></th>'+
+    '<th onclick="sort(\'market\')">市場<span class="arrow" id="a-market"></span></th></tr></thead><tbody>';
+  for(let s of f){
+    let cls=s.pb<1?'pb-low':s.pb<2?'pb-mid':'pb-high';
+    let tag=s.market==='TWSE'?'<span class="tag tag-twse">上市</span>':'<span class="tag tag-tpex">上櫃</span>';
+    h+=`<tr><td><b>${s.code}</b></td><td>${s.name}</td><td class="num"><span class="${cls}">${s.pb.toFixed(2)}</span></td><td>${tag}</td></tr>`;
+  }
+  h+='</tbody></table>';
+  document.getElementById('tableWrap').innerHTML=h;
+  updateArrows();
+}
+
+function sort(k){
+  if(sortKey===k)sortDir=-sortDir;else{sortKey=k;sortDir=k==='code'?1:-1}
+  render();
+}
+function updateArrows(){
+  let m={code:'',name:'',pb:'',market:''};m[sortKey]=sortDir===1?'&#9650;':'&#9660;';
+  for(let k in m){let e=document.getElementById('a-'+k);if(e)e.innerHTML=m[k]}
+}
+
+window.onload=function(){
+  let n=new Date();
+  document.getElementById('dateInput').value=n.getFullYear()+('0'+(n.getMonth()+1)).slice(-2)+('0'+n.getDate()).slice(-2);
+};
+</script>
+</body>
+</html>
